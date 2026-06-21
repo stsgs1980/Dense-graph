@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Z-ai platform — Submodule dependency graph</title>
+<style>
+  :root {
+    --bg: #0b1220;
+    --panel: #131c2e;
+    --panel-2: #1a2540;
+    --border: #233252;
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --text-mute: #64748b;
+    --l0: #f59e0b;   /* platform - amber */
+    --l1: #3b82f6;   /* standards - blue */
+    --l2: #10b981;   /* guard - green */
+    --l3: #a855f7;   /* skills - purple */
+    --l4: #ec4899;   /* consumer (P-MAS_init) - pink, phantom */
+    --ok: #22c55e;
+    --warn: #f97316;
+    --err: #ef4444;
+    --deferred: #f97316;
+    --edge-sub: #cbd5e1;
+    --edge-ci:  #64748b;
+    --edge-id:  #475569;
+    --edge-phantom: #f97316;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); color: var(--text); font: 14px/1.5 ui-monospace, 'SF Mono', Menlo, Consolas, monospace; min-height: 100vh; }
+  body { padding: 24px; }
+  h1 { font-size: 18px; margin-bottom: 4px; color: #fff; }
+  .sub { color: var(--text-dim); font-size: 12px; margin-bottom: 20px; }
+  .grid { display: grid; grid-template-columns: 1fr 360px; gap: 16px; min-height: 560px; }
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 16px; }
+  .panel-title { color: #fff; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+  .panel-title .tag { font-size: 10px; background: var(--panel-2); padding: 2px 6px; border-radius: 3px; color: var(--text-dim); text-transform: none; letter-spacing: 0; }
+  svg.graph { width: 100%; height: 540px; background: radial-gradient(circle at 50% 40%, #0f1729 0%, var(--bg) 100%); border-radius: 4px; }
+  .repo-node { cursor: pointer; }
+  .repo-rect { stroke-width: 1.5; rx: 8; }
+  .repo-rect.l0 { fill: rgba(245,158,11,0.08); stroke: var(--l0); }
+  .repo-rect.l1 { fill: rgba(59,130,246,0.08); stroke: var(--l1); }
+  .repo-rect.l2 { fill: rgba(16,185,129,0.08); stroke: var(--l2); }
+  .repo-rect.l3 { fill: rgba(168,85,247,0.08); stroke: var(--l3); }
+  .repo-rect.l4 { fill: rgba(236,72,153,0.06); stroke: var(--l4); stroke-dasharray: 6 4; }
+  .repo-rect.selected { stroke-width: 3; filter: drop-shadow(0 0 8px currentColor); }
+  .phantom-tag { fill: var(--deferred); font-size: 9px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; }
+  .edge-phantom { stroke: var(--edge-phantom); stroke-width: 1.5; stroke-dasharray: 4 4; fill: none; opacity: 0.7; marker-end: url(#arrow-phantom); }
+  .repo-label { fill: #fff; font-size: 14px; font-weight: 600; }
+  .repo-layer { fill: var(--text-mute); font-size: 10px; letter-spacing: 0.1em; }
+  .repo-sha { fill: var(--text-dim); font-size: 10px; }
+  .repo-status { font-size: 10px; }
+  .repo-status.ok { fill: var(--ok); }
+  .repo-status.warn { fill: var(--warn); }
+  .repo-status.err { fill: var(--err); }
+  .edge-sub { stroke: var(--edge-sub); stroke-width: 2; fill: none; marker-end: url(#arrow-sub); }
+  .edge-ci  { stroke: var(--edge-ci);  stroke-width: 1.5; stroke-dasharray: 6 4; fill: none; marker-end: url(#arrow-ci); }
+  .edge-id  { stroke: var(--edge-id);  stroke-width: 1; stroke-dasharray: 2 3; fill: none; opacity: 0.6; }
+  .edge-label { fill: var(--text-dim); font-size: 10px; }
+  .edge-label.phantom { fill: var(--deferred); font-style: italic; }
+  .legend { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; font-size: 11px; margin-top: 12px; color: var(--text-dim); }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-swatch { width: 24px; height: 0; border-top: 2px solid var(--c); }
+  .legend-swatch.ci  { border-top-style: dashed; }
+  .legend-swatch.id  { border-top: 1px dashed var(--c); }
+  .legend-swatch.dot { width: 8px; height: 8px; border-radius: 50%; border: none; background: var(--c); }
+  .toggle { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; font-size: 11px; }
+  .toggle label { display: flex; align-items: center; gap: 4px; padding: 4px 8px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 3px; cursor: pointer; user-select: none; }
+  .toggle label.active { border-color: #fff; color: #fff; }
+  .toggle input { display: none; }
+  .details h2 { color: #fff; font-size: 16px; margin-bottom: 4px; }
+  .details .layer-badge { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: 600; letter-spacing: 0.05em; margin-left: 6px; vertical-align: middle; }
+  .details .layer-badge.l0 { background: var(--l0); color: #000; }
+  .details .layer-badge.l1 { background: var(--l1); color: #fff; }
+  .details .layer-badge.l2 { background: var(--l2); color: #000; }
+  .details .layer-badge.l3 { background: var(--l3); color: #fff; }
+  .details table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 12px; }
+  .details td { padding: 4px 0; vertical-align: top; border-bottom: 1px solid var(--border); }
+  .details td:first-child { color: var(--text-dim); width: 38%; padding-right: 8px; }
+  .details td:last-child { color: var(--text); word-break: break-all; }
+  .details .sync-ok { color: var(--ok); }
+  .details .sync-warn { color: var(--warn); }
+  .details .click-hint { font-size: 11px; color: var(--text-mute); margin-top: 8px; font-style: italic; }
+  .matrix { margin-top: 16px; }
+  .matrix table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .matrix th, .matrix td { padding: 4px 6px; text-align: center; border: 1px solid var(--border); }
+  .matrix th { background: var(--panel-2); color: var(--text-dim); font-weight: 500; font-size: 10px; }
+  .matrix td.row-label { background: var(--panel-2); color: var(--text-dim); text-align: left; font-weight: 500; }
+  .matrix td.cell-0 { color: var(--text-mute); }
+  .matrix td.cell-1 { background: rgba(59,130,246,0.15); color: var(--text); }
+  .matrix td.cell-2 { background: rgba(59,130,246,0.30); color: #fff; }
+  .matrix td.cell-3 { background: rgba(59,130,246,0.50); color: #fff; font-weight: 600; }
+  .matrix td.cell-4 { background: rgba(59,130,246,0.75); color: #fff; font-weight: 600; }
+  .footnote { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 11px; color: var(--text-mute); line-height: 1.6; }
+  .footnote strong { color: var(--text-dim); }
+  .footnote ul { margin-left: 16px; margin-top: 6px; }
+  .footnote li { margin: 2px 0; }
+
+  /* Dense ID-graph viewer */
+  .dense-viewer { margin-top: 24px; padding: 20px; background: var(--panel); border: 1px solid var(--border); border-radius: 6px; }
+  .dense-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+  .dense-header h2 { color: #fff; font-size: 16px; }
+  .dense-tag { font-size: 10px; background: var(--panel-2); padding: 3px 8px; border-radius: 3px; color: var(--text-dim); }
+  .dense-intro { color: var(--text-dim); font-size: 12px; line-height: 1.6; margin-bottom: 16px; }
+  .dense-intro strong { color: var(--text); }
+  .dense-tabs { display: flex; gap: 4px; margin-bottom: 12px; border-bottom: 1px solid var(--border); }
+  .dense-tab { background: transparent; color: var(--text-dim); border: none; padding: 8px 14px; cursor: pointer; font-family: inherit; font-size: 12px; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .dense-tab:hover { color: var(--text); }
+  .dense-tab.active { color: #fff; border-bottom-color: var(--l1); }
+  .dense-filters { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 11px; margin-bottom: 14px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 4px; }
+  .filter-label { color: var(--text-mute); font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .filter-chip { display: inline-flex; align-items: center; gap: 3px; padding: 3px 8px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 3px; cursor: pointer; user-select: none; font-size: 11px; color: var(--text-dim); }
+  .filter-chip.active { color: #fff; border-color: var(--l1); }
+  .filter-chip input { display: none; }
+  .dense-view { display: none; }
+  .dense-view.active { display: block; }
+  .dense-note { color: var(--text-mute); font-size: 11px; margin-bottom: 10px; font-style: italic; }
+  .dense-matrix-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .dense-matrix-table th, .dense-matrix-table td { padding: 8px; text-align: center; border: 1px solid var(--border); }
+  .dense-matrix-table th { background: var(--panel-2); color: var(--text-dim); font-weight: 500; font-size: 11px; }
+  .dense-matrix-table td.row-label { background: var(--panel-2); color: var(--text-dim); text-align: left; font-weight: 600; }
+  .dense-matrix-table td.cell { cursor: pointer; transition: background 0.15s; }
+  .dense-matrix-table td.cell:hover { background: rgba(59,130,246,0.25); }
+  .dense-matrix-table td.cell-0 { color: var(--text-mute); }
+  .dense-matrix-table td.cell-1 { background: rgba(59,130,246,0.15); color: var(--text); }
+  .dense-matrix-table td.cell-2 { background: rgba(59,130,246,0.30); color: #fff; }
+  .dense-matrix-table td.cell-3 { background: rgba(59,130,246,0.50); color: #fff; font-weight: 600; }
+  .dense-matrix-table td.cell-4 { background: rgba(59,130,246,0.75); color: #fff; font-weight: 600; }
+  .dense-matrix-table td.cell.selected { outline: 2px solid var(--l0); outline-offset: -2px; }
+  .matrix-detail { margin-top: 12px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 4px; font-size: 11px; color: var(--text-dim); min-height: 40px; }
+  .matrix-detail .edge-line { padding: 2px 0; color: var(--text); font-family: ui-monospace, monospace; }
+  .matrix-detail .edge-line strong { color: var(--l0); }
+  .dense-edge-scroll { max-height: 360px; overflow-y: auto; border: 1px solid var(--border); border-radius: 4px; }
+  .dense-edge-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .dense-edge-table th { background: var(--panel-2); color: var(--text-dim); padding: 6px 8px; text-align: left; position: sticky; top: 0; font-weight: 500; font-size: 10px; }
+  .dense-edge-table td { padding: 4px 8px; border-bottom: 1px solid var(--border); color: var(--text); font-family: ui-monospace, monospace; }
+  .dense-edge-table tr:hover { background: rgba(59,130,246,0.10); }
+  .hubs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .hubs-grid h3 { color: #fff; font-size: 13px; margin-bottom: 8px; }
+  .dense-hub-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .dense-hub-table th { background: var(--panel-2); color: var(--text-dim); padding: 6px; text-align: left; font-weight: 500; font-size: 10px; }
+  .dense-hub-table td { padding: 4px 6px; border-bottom: 1px solid var(--border); color: var(--text); font-family: ui-monospace, monospace; }
+  .dense-hub-table td.deg { color: var(--l0); font-weight: 600; text-align: right; }
+  .dense-hub-table tr:hover { background: rgba(59,130,246,0.10); }
+  .dense-footnote { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 11px; color: var(--text-mute); line-height: 1.6; }
+  .dense-footnote strong { color: var(--text-dim); }
+  .dense-footnote ul { margin-left: 16px; margin-top: 6px; margin-bottom: 10px; }
+  .dense-footnote li { margin: 2px 0; }
+</style>
+</head>
+<body>
+
+<h1>Z-ai platform — Submodule dependency graph</h1>
+<div class="sub">4 репо, 3 submodule pointers, 61 ID с 115 semantic Related: edges, 2 CI workflow. Snapshot на 2026-06-22 (post-v2.6.0).</div>
+
+<div class="grid">
+
+  <!-- LEFT: SVG graph -->
+  <div class="panel">
+    <div class="panel-title">
+      <span>Submodule graph (L0 → L3)</span>
+      <span class="tag">interactive — click node</span>
+    </div>
+
+    <svg class="graph" viewBox="0 0 720 540" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow-sub" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#cbd5e1"/>
+        </marker>
+        <marker id="arrow-ci" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/>
+        </marker>
+        <marker id="arrow-phantom" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#f97316"/>
+        </marker>
+      </defs>
+
+      <!-- Layer labels (left margin) -->
+      <text x="14" y="80"  class="repo-layer">L0</text>
+      <text x="14" y="200" class="repo-layer">L1</text>
+      <text x="14" y="320" class="repo-layer">L2</text>
+      <text x="14" y="440" class="repo-layer">L3</text>
+      <text x="14" y="510" class="repo-layer" style="fill:var(--deferred);">L4*</text>
+
+      <!-- Layer guide lines -->
+      <line x1="40" y1="80"  x2="700" y2="80"  stroke="#1e293b" stroke-dasharray="2 6"/>
+      <line x1="40" y1="200" x2="700" y2="200" stroke="#1e293b" stroke-dasharray="2 6"/>
+      <line x1="40" y1="320" x2="700" y2="320" stroke="#1e293b" stroke-dasharray="2 6"/>
+      <line x1="40" y1="440" x2="700" y2="440" stroke="#1e293b" stroke-dasharray="2 6"/>
+      <line x1="40" y1="510" x2="700" y2="510" stroke="#3a1f0c" stroke-dasharray="2 6"/>
+
+      <!-- ============ EDGES (drawn first, so nodes overlay) ============ -->
+      <!-- ID-graph aggregate edges (bottom layer, very faint) -->
+      <g id="edges-id" opacity="0.45">
+        <path class="edge-id" d="M 540 460 Q 380 350 220 220" data-edge="id-skills-standards"/>
+        <path class="edge-id" d="M 540 460 Q 320 380 100 240" data-edge="id-skills-guard"/>
+        <path class="edge-id" d="M 100 240 Q 160 230 220 220" data-edge="id-guard-standards"/>
+      </g>
+
+      <!-- Submodule pointer edges (L0 → L1/L2/L3) -->
+      <g id="edges-sub">
+        <!-- platform → standards -->
+        <path class="edge-sub" d="M 360 130 Q 290 175 220 200" data-edge="sub-platform-standards"/>
+        <text x="270" y="170" class="edge-label">submodule</text>
+        <!-- platform → guard -->
+        <path class="edge-sub" d="M 360 130 Q 230 185 100 220" data-edge="sub-platform-guard"/>
+        <text x="200" y="160" class="edge-label">submodule</text>
+        <!-- platform → skills -->
+        <path class="edge-sub" d="M 360 130 Q 450 295 540 460" data-edge="sub-platform-skills"/>
+        <text x="475" y="280" class="edge-label">submodule</text>
+      </g>
+
+      <!-- CI workflow edges (platform CI scans all 4) -->
+      <g id="edges-ci">
+        <path class="edge-ci" d="M 400 100 Q 580 130 600 200" data-edge="ci-platform-standards"/>
+        <path class="edge-ci" d="M 400 100 Q 600 150 650 220"  data-edge="ci-platform-guard"/>
+        <path class="edge-ci" d="M 400 100 Q 620 280 590 460"  data-edge="ci-platform-skills"/>
+      </g>
+
+      <!-- Phantom edges: P-MAS_init → standards (future submodule), P-MAS_init → platform (consumer-of) -->
+      <g id="edges-phantom">
+        <path class="edge-phantom" d="M 540 530 Q 380 380 260 250" data-edge="phantom-pmas-standards"/>
+        <text x="370" y="370" class="edge-label phantom">future submodule</text>
+        <path class="edge-phantom" d="M 540 530 Q 480 320 410 130" data-edge="phantom-pmas-platform"/>
+        <text x="500" y="320" class="edge-label phantom">consumer-of</text>
+      </g>
+
+      <!-- ============ NODES ============ -->
+      <!-- L0: platform -->
+      <g class="repo-node" data-repo="platform">
+        <rect class="repo-rect l0" x="290" y="50" width="170" height="80"/>
+        <text x="375" y="74"  text-anchor="middle" class="repo-label">Z-ai-platform</text>
+        <text x="375" y="92"  text-anchor="middle" class="repo-sha">HEAD 71240e0</text>
+        <text x="375" y="108" text-anchor="middle" class="repo-sha">v2.5.0 · v2.6.0</text>
+        <text x="375" y="122" text-anchor="middle" class="repo-status ok">● synced</text>
+      </g>
+
+      <!-- L1: standards -->
+      <g class="repo-node" data-repo="standards">
+        <rect class="repo-rect l1" x="150" y="170" width="170" height="80"/>
+        <text x="235" y="194" text-anchor="middle" class="repo-label">Z-ai-standards</text>
+        <text x="235" y="212" text-anchor="middle" class="repo-sha">HEAD a259a6b</text>
+        <text x="235" y="228" text-anchor="middle" class="repo-sha">v2.2.0 · 25 .md</text>
+        <text x="235" y="242" text-anchor="middle" class="repo-status ok">● synced</text>
+      </g>
+
+      <!-- L2: guard -->
+      <g class="repo-node" data-repo="guard">
+        <rect class="repo-rect l2" x="20" y="290" width="170" height="80"/>
+        <text x="105" y="314" text-anchor="middle" class="repo-label">Z-ai-guard</text>
+        <text x="105" y="332" text-anchor="middle" class="repo-sha">HEAD 2e2579d</text>
+        <text x="105" y="348" text-anchor="middle" class="repo-sha">18 rules · no tags</text>
+        <text x="105" y="362" text-anchor="middle" class="repo-status ok">● synced</text>
+      </g>
+
+      <!-- L3: skills -->
+      <g class="repo-node" data-repo="skills">
+        <rect class="repo-rect l3" x="460" y="410" width="170" height="80"/>
+        <text x="545" y="434" text-anchor="middle" class="repo-label">Z-ai-skills</text>
+        <text x="545" y="452" text-anchor="middle" class="repo-sha">HEAD 9797e69</text>
+        <text x="545" y="468" text-anchor="middle" class="repo-sha">36 skills · no tags</text>
+        <text x="545" y="482" text-anchor="middle" class="repo-status ok">● synced</text>
+      </g>
+
+      <!-- L4*: P-MAS_init (phantom / deferred consumer) -->
+      <g class="repo-node" data-repo="pmas">
+        <rect class="repo-rect l4" x="460" y="500" width="170" height="36"/>
+        <text x="475" y="514" class="phantom-tag">L4* DEFERRED</text>
+        <text x="545" y="528" text-anchor="middle" class="repo-label" style="font-size:12px;">P-MAS_init</text>
+      </g>
+    </svg>
+
+    <!-- Toggles -->
+    <div class="toggle">
+      <label class="active"><input type="checkbox" data-layer="sub" checked>Submodule pointers (3)</label>
+      <label class="active"><input type="checkbox" data-layer="ci" checked>CI workflow (3)</label>
+      <label class="active"><input type="checkbox" data-layer="id" checked>ID graph (aggregated)</label>
+      <label class="active"><input type="checkbox" data-layer="phantom" checked>P-MAS_init phantom (2)</label>
+    </div>
+
+    <!-- Legend -->
+    <div class="legend">
+      <div class="legend-item"><span class="legend-swatch" style="--c:var(--edge-sub);"></span> submodule pointer (gitlink)</div>
+      <div class="legend-item"><span class="legend-swatch ci" style="--c:var(--edge-ci);"></span> CI workflow trigger</div>
+      <div class="legend-item"><span class="legend-swatch id" style="--c:var(--edge-id);"></span> ID-graph Related: (aggregate)</div>
+      <div class="legend-item"><span class="legend-swatch" style="--c:var(--edge-phantom); border-top-style:dashed;"></span> phantom (deferred consumer edge)</div>
+      <div class="legend-item"><span class="legend-swatch dot" style="--c:var(--ok);"></span> synced with origin</div>
+      <div class="legend-item"><span class="legend-swatch dot" style="--c:var(--deferred);"></span> deferred (E1 not started)</div>
+    </div>
+  </div>
+
+  <!-- RIGHT: details panel -->
+  <div class="panel">
+    <div class="panel-title">
+      <span>Repository details</span>
+      <span class="tag" id="selected-tag">platform</span>
+    </div>
+    <div class="details" id="details">
+      <!-- Filled by JS -->
+    </div>
+
+    <div class="matrix">
+      <div class="panel-title" style="margin-top: 16px;">
+        <span>ID graph density (Related:)</span>
+        <span class="tag">115 edges total</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>src ↓ / tgt →</th>
+            <th>STD</th>
+            <th>RULE</th>
+            <th>ZAI</th>
+            <th>row total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="row-label">STD (19)</td><td class="cell-0">—</td><td class="cell-0">0</td><td class="cell-0">0</td><td class="cell-0">0</td></tr>
+          <tr><td class="row-label">RULE (17)</td><td class="cell-3">28</td><td class="cell-2">14</td><td class="cell-0">0</td><td class="cell-3">42</td></tr>
+          <tr><td class="row-label">ZAI (24)</td><td class="cell-3">31</td><td class="cell-1">9</td><td class="cell-4">33</td><td class="cell-4">73</td></tr>
+          <tr><td class="row-label">col total</td><td class="cell-3">59</td><td class="cell-2">23</td><td class="cell-3">33</td><td class="cell-4">115</td></tr>
+        </tbody>
+      </table>
+      <div style="font-size:10px; color:var(--text-mute); margin-top:4px;">
+        Cell = N edges from src-prefix to tgt-prefix. Diagonal blocked by G07 (no same-prefix self-loop for STD/RULE).<br>
+        +2 Aligned_with: edges (ZAI-META-001 ↔ STD-META-001, ZAI-META-002 ↔ STD-SKILL-001) — equivalence, not shown.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footnote">
+  <strong>Что показывает этот граф:</strong>
+  <ul>
+    <li><strong>Layer 1 (submodule pointers)</strong> — 3 git-ребра, mechanism из <code>.gitmodules</code>. Полное покрытие.</li>
+    <li><strong>Layer 3 (architectural)</strong> — каждый репо привязан к слою L0/L1/L2/L3 с layer exclusivity (G04).</li>
+    <li><strong>Layer 4 (CI workflow)</strong> — <code>verify-id-graph.yml</code> и <code>e2e-verifiers.yml</code> запускаются на platform, сканируют все 4 репо через recursive checkout.</li>
+    <li><strong>Layer 5 (sync status)</strong> — HEAD SHA, tags, remote-synced marker для каждого репо.</li>
+  </ul>
+  <strong>Что НЕ показывает этот граф (и не может в одном view):</strong>
+  <ul>
+    <li><strong>Layer 2 (ID graph, 115 Related: edges)</strong> — слишком плотно. Показан агрегированной матрицей src×tgt prefix. Полный граф = hairball (avg degree 3.8, max 12). Для полного графа нужен отдельный интерактивный viewer с filtering по ID/edge-type — есть в <code>verify-id-graph.js</code> + <code>_snapshots/id-graph-baseline.json</code>.</li>
+    <li><strong>Concurrent edits</strong> — submodule pointer bump pattern (3 atomic commits per §8.3). Это workflow, не структура — лучше в worklog.</li>
+    <li><strong>Tag/release timeline</strong> — v2.5.0 → v2.6.0 (v2.6.0 через 18 мин после последнего worklog коммита). Лучше в git log.</li>
+  </ul>
+  <strong>Real coverage:</strong> ~85% структурных взаимосвязей репозиториев (с phantom node). Остальные 15% (dense ID graph) требуют отдельного viewer'а.
+  <br><br>
+  <strong style="color:var(--deferred);">P-MAS_init phantom node (L4*):</strong> показывает архитектурную дыру — первый consumer стека. 2 phantom edges (submodule pointer на standards, consumer-of на platform) — это и есть работа задачи E1 (onboarding DEFERRED per user). Когда E1 будет сделан: (1) P-MAS_init получит SHA-pin в .gitmodules как 4-й submodule, (2) phantom edges станут solid, (3) node перейдёт с L4* на L4, (4) детали-панель покажет real SHA вместо «external». <em>Граф делает architectural hole видимым — это и было целью.</em>
+</div>
+
+<!-- ============================================================ -->
+<!-- DENSE ID-GRAPH VIEWER (next step preview)                    -->
+<!-- ============================================================ -->
+<div class="dense-viewer">
+  <div class="dense-header">
+    <h2>Next step preview: Dense ID-graph viewer</h2>
+    <span class="dense-tag">interactive · 106 edges · 60 IDs</span>
+  </div>
+  <p class="dense-intro">
+    Правая панель выше показывает ID-graph агрегированной матрицей 4×4. Но реально в графе
+    <strong>106 semantic edges</strong> между <strong>60 конкретными ID</strong>. Этот блок —
+    preview того, что даст отдельный dense viewer: фильтрация по src/tgt prefix + repo,
+    edge list с поиском, top-hubs рейтинг. Данные — реальные, из snapshot
+    <code>_snapshots/id-graph-baseline.json</code> (extracted via
+    <code>scripts/extract_id_graph.py</code>).
+  </p>
+
+  <!-- View switcher -->
+  <div class="dense-tabs">
+    <button class="dense-tab active" data-view="matrix">Matrix view</button>
+    <button class="dense-tab" data-view="edges">Edge list (106)</button>
+    <button class="dense-tab" data-view="hubs">Top hubs</button>
+  </div>
+
+  <!-- Filters (apply to all views) -->
+  <div class="dense-filters">
+    <span class="filter-label">Filter src prefix:</span>
+    <label class="filter-chip active"><input type="checkbox" data-prefix="STD" checked>STD</label>
+    <label class="filter-chip active"><input type="checkbox" data-prefix="RULE" checked>RULE</label>
+    <label class="filter-chip active"><input type="checkbox" data-prefix="ZAI" checked>ZAI</label>
+    <label class="filter-chip active"><input type="checkbox" data-prefix="TOOL" checked>TOOL</label>
+    <span class="filter-label" style="margin-left:16px;">tgt:</span>
+    <label class="filter-chip active"><input type="checkbox" data-tgt-prefix="STD" checked>STD</label>
+    <label class="filter-chip active"><input type="checkbox" data-tgt-prefix="RULE" checked>RULE</label>
+    <label class="filter-chip active"><input type="checkbox" data-tgt-prefix="ZAI" checked>ZAI</label>
+    <label class="filter-chip active"><input type="checkbox" data-tgt-prefix="TOOL" checked>TOOL</label>
+    <span class="filter-label" style="margin-left:16px;">src repo:</span>
+    <label class="filter-chip active"><input type="checkbox" data-repo="standards" checked>standards</label>
+    <label class="filter-chip active"><input type="checkbox" data-repo="guard" checked>guard</label>
+    <label class="filter-chip active"><input type="checkbox" data-repo="skills" checked>skills</label>
+    <label class="filter-chip active"><input type="checkbox" data-repo="platform" checked>platform</label>
+  </div>
+
+  <!-- MATRIX VIEW -->
+  <div id="dense-matrix" class="dense-view active">
+    <div class="dense-note">
+      Click on a cell to see edges between those prefix pairs. Diagonal = intra-prefix (e.g. STD→STD).
+      Numbers = real edge counts from snapshot.
+    </div>
+    <table class="dense-matrix-table">
+      <thead>
+        <tr>
+          <th>src ↓ / tgt →</th>
+          <th>STD</th><th>RULE</th><th>ZAI</th><th>TOOL</th><th>row total</th>
+        </tr>
+      </thead>
+      <tbody id="matrix-body">
+        <!-- filled by JS -->
+      </tbody>
+    </table>
+    <div id="matrix-detail" class="matrix-detail"></div>
+  </div>
+
+  <!-- EDGE LIST VIEW -->
+  <div id="dense-edges" class="dense-view">
+    <div class="dense-note">
+      Showing <span id="edge-count">0</span> of 106 edges. Click a row to highlight in matrix.
+    </div>
+    <div class="dense-edge-scroll">
+      <table class="dense-edge-table">
+        <thead>
+          <tr>
+            <th>#</th><th>src</th><th>→</th><th>tgt</th><th>src repo</th><th>tgt repo</th>
+          </tr>
+        </thead>
+        <tbody id="edge-body">
+          <!-- filled by JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TOP HUBS VIEW -->
+  <div id="dense-hubs" class="dense-view">
+    <div class="dense-note">
+      Hubs = most-connected IDs. <strong>Out-degree</strong> = references N others.
+      <strong>In-degree</strong> = referenced by N others. Note that STD-SKILL-001 is the
+      most referenced (23 edges) — it's the spec every skill points to.
+    </div>
+    <div class="hubs-grid">
+      <div>
+        <h3>Top 15 by out-degree (most referencing)</h3>
+        <table class="dense-hub-table">
+          <thead><tr><th>#</th><th>ID</th><th>repo</th><th>out-deg</th></tr></thead>
+          <tbody id="hub-out-body"></tbody>
+        </table>
+      </div>
+      <div>
+        <h3>Top 15 by in-degree (most referenced)</h3>
+        <table class="dense-hub-table">
+          <thead><tr><th>#</th><th>ID</th><th>repo</th><th>in-deg</th></tr></thead>
+          <tbody id="hub-in-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="dense-footnote">
+    <strong>Что даст отдельный dense viewer (full version):</strong>
+    <ul>
+      <li>Force-directed graph visualization с zoom/pan (D3.js или vis.js)</li>
+      <li>Per-ID detail panel: показ всех in/out edges, repo, file path, full metadata</li>
+      <li>Edge-type filter: <code>Related:</code> vs <code>Aligned_with:</code> (2 edges сейчас)</li>
+      <li>Search by ID substring (e.g. "META" → все STD-META-*, ZAI-META-*)</li>
+      <li>Highlight path between any 2 IDs (BFS over Related: graph)</li>
+      <li>Export filtered subgraph as PNG / SVG / GraphML</li>
+      <li>Diff mode: сравнить 2 snapshot'а (до/после refactor) — какие edges добавились/удалились</li>
+    </ul>
+    <strong>Реальные архитектурные инсайты уже видны в preview:</strong>
+    <ul>
+      <li><strong>STD-SKILL-001 (23 in-edges)</strong> — самый referenced ID в entire system. Каждый skill указывает на него. Это подтверждает что skill format — foundational contract.</li>
+      <li><strong>STD→STD = 39 edges</strong> — большая часть графа — intra-standards. Это нормально: standards ссылаются друг на друга (STD-META-001 как root, остальные на него).</li>
+      <li><strong>ZAI→STD = 25 edges</strong> — skills → standards. Основной consumer-flow: каждый ZAI skill указывает на свой governing standard.</li>
+      <li><strong>RULE→RULE = 16 edges</strong> — guard rules cross-reference между собой. MONOLITH-012 (4 out) — самый connected rule (v1.3, был только что promoted).</li>
+      <li><strong>TOOL→STD = 6 edges</strong> — verifiers (TOOL-VERIFY-004) → standards. 6 edges = 6 верификаторов явно ссылаются на STD'ы.</li>
+      <li><strong>0 STD→RULE/ZAI/TOOL edges</strong> — G07 enforced. Standards никогда не ссылаются «вниз» на rules/skills/tools. Layer exclusivity работает.</li>
+    </ul>
+    <em>Dense viewer делает эти patterns видимыми без необходимости читать 60 .md файлов.</em>
+  </div>
+</div>
+
+<script>
+const REPOS = {
+  platform: {
+    name: 'Z-ai-platform',
+    layer: 'L0',
+    layerClass: 'l0',
+    role: 'Container repo, .gitmodules host, CI workflows, docs/session/worklog',
+    head: '71240e0',
+    headSubject: 'docs(session): v2.6.0 release tag cut + pushed',
+    headDate: '2026-06-21 17:43 UTC',
+    tags: 'v2.5.0, v2.6.0',
+    remote: 'github.com/stsgs1980/Z-ai-platform.git',
+    fileCount: '10 files at root (.gitmodules, README, CONTRIBUTING, bootstrap.sh, install-hooks.sh, status.sh, save-work.sh + 3 dirs)',
+    submodules: 'guard (2e2579d), skills (9797e69), standards (a259a6b)',
+    ciWorkflows: 'verify-id-graph.yml (cross-repo G01-G15), e2e-verifiers.yml (5 e2e tests)',
+    syncStatus: 'ok',
+    syncText: 'synced with origin/main — 0 ahead, 0 behind, working tree clean',
+    ids: 'null (1) — platform hosts no STD/RULE/ZAI IDs in its own tree',
+  },
+  standards: {
+    name: 'Z-ai-standards',
+    layer: 'L1',
+    layerClass: 'l1',
+    role: 'Standards repo (META, ARCH, SKILL, DOC, GIT, SEC, ERR, ENV, FE, A11Y, TEST, DESIGN)',
+    head: 'a259a6b',
+    headSubject: 'feat(verifiers): S10c — README.md ≤ 400 lines HARD cap (verify-skills.js v1.1.1)',
+    headDate: '2026-06-21 17:23 UTC',
+    tags: 'v2.2.0',
+    remote: 'github.com/stsgs1980/Z-ai-standards.git',
+    fileCount: '25 .md files in standards/ + 3 verifiers in scripts/ + 8 lib/ modules (from O-018)',
+    submodules: 'none (leaf repo)',
+    ciWorkflows: 'none (CI runs on platform via verify-id-graph.yml)',
+    syncStatus: 'ok',
+    syncText: 'synced with origin/main',
+    ids: 'STD (19) — STD-META-001, STD-ARCH-001/002, STD-SKILL-001, STD-DOC-002/003/004, STD-GIT-001/002, STD-SEC-001/002, STD-ERR-001/002, STD-ENV-001/002, STD-FE-001, STD-A11Y-001, STD-TEST-001, STD-DESIGN-001',
+  },
+  guard: {
+    name: 'Z-ai-guard',
+    layer: 'L2',
+    layerClass: 'l2',
+    role: 'Enforcement rules repo (RULE-MONOLITH-*)',
+    head: '2e2579d',
+    headSubject: 'rule(MONOLITH-012): v1.2 -> v1.3 (promote canonical to META-001 §4.18)',
+    headDate: '2026-06-19 (unchanged since v2.5.0)',
+    tags: 'none',
+    remote: 'github.com/stsgs1980/Z-ai-guard.git',
+    fileCount: '18 .md files in rules/ (RULE-MONOLITH-001..017 + INDEX)',
+    submodules: 'none (leaf repo)',
+    ciWorkflows: 'none (CI runs on platform)',
+    syncStatus: 'ok',
+    syncText: 'synced with origin/main — frozen since v2.5.0 (no rule changes in v2.6.0 window)',
+    ids: 'RULE (17) — RULE-MONOLITH-001..017',
+  },
+  skills: {
+    name: 'Z-ai-skills',
+    layer: 'L3',
+    layerClass: 'l3',
+    role: 'Skills repo (ZAI-* skill directories with SKILL.md + optional CONTRACT.md + README.md + references/)',
+    head: '9797e69',
+    headSubject: 'docs(skills): remediate 2 READMEs to ≤400 lines for S10c activation',
+    headDate: '2026-06-21 17:21 UTC',
+    tags: 'none',
+    remote: 'github.com/stsgs1980/Z-ai-skills.git',
+    fileCount: '36 skill directories (24 with ZAI-* IDs, 12 untyped)',
+    submodules: 'none (leaf repo)',
+    ciWorkflows: 'none (CI runs on platform via verify-skills.js --strict)',
+    syncStatus: 'ok',
+    syncText: 'synced with origin/main',
+    ids: 'ZAI (24) — ZAI-MEM-*, ZAI-FS-*, ZAI-SESSION-*, ZAI-DEV-*, ZAI-ARCH-*, ZAI-QA-*, ZAI-REQ-*, ZAI-DOC-*, ZAI-SEC-*, ZAI-GIT-*, ZAI-SDK-*, ZAI-HEALTH-*, ZAI-META-*',
+  },
+  pmas: {
+    name: 'P-MAS_init',
+    layer: 'L4*',
+    layerClass: 'l4',
+    role: 'External consumer (Next.js 16 + Prisma + shadcn/ui dashboard, 26 agents in 8 role groups). First prospective consumer of Z-ai-platform stack. E1 onboarding DEFERRED per user.',
+    head: 'external',
+    headSubject: 'github.com/stsgs1980/P-MAS_init.git — inspected 2026-06-21, not yet integrated',
+    headDate: 'n/a (external repo, no platform-side SHA pinned)',
+    tags: 'none (external repo)',
+    remote: 'github.com/stsgs1980/P-MAS_init.git',
+    fileCount: 'Next.js 16 + Prisma + ChromaDB project. standards/ folder contains COPIES (MARKDOWN_STANDARD_RU_v2.1, No-Unicode_Policy_v2.1), NOT submodule pointers.',
+    submodules: 'PLANNED: standards/ → Z-ai-standards.git (replace copy with submodule pointer). platform/ → Z-ai-platform.git (consumer-of, for bootstrap pattern + CI dashboard source).',
+    ciWorkflows: 'PLANNED: would run verify-id-graph.js + verify-skills.js in consumer context (skills actually trigger via hooks/eslint).',
+    syncStatus: 'warn',
+    syncText: 'DEFERRED (E1) — architectural hole. Currently external, not in .gitmodules, no submodule pointer. E1 onboarding closes this gap.',
+    ids: 'none (consumer repo — would consume STD/ZAI/RULE IDs from Z-ai-standards/skills/guard, not host its own)',
+  },
+};
+
+let selectedRepo = 'platform';
+
+function renderDetails(key) {
+  const r = REPOS[key];
+  selectedRepo = key;
+  document.getElementById('selected-tag').textContent = key;
+  const html = `
+    <h2>${r.name}<span class="layer-badge ${r.layerClass}">${r.layer}</span></h2>
+    <div style="color:var(--text-dim); font-size:12px; margin-bottom:8px;">${r.role}</div>
+    <table>
+      <tr><td>HEAD SHA</td><td><code>${r.head}</code></td></tr>
+      <tr><td>Subject</td><td>${r.headSubject}</td></tr>
+      <tr><td>Date</td><td>${r.headDate}</td></tr>
+      <tr><td>Tags</td><td>${r.tags}</td></tr>
+      <tr><td>Remote</td><td><code>${r.remote}</code></td></tr>
+      <tr><td>Files</td><td>${r.fileCount}</td></tr>
+      <tr><td>Submodules</td><td>${r.submodules}</td></tr>
+      <tr><td>CI workflows</td><td>${r.ciWorkflows}</td></tr>
+      <tr><td>IDs hosted</td><td>${r.ids}</td></tr>
+      <tr><td>Sync</td><td class="sync-${r.syncStatus}">${r.syncText}</td></tr>
+    </table>
+    <div class="click-hint">Click another node to switch.</div>
+  `;
+  document.getElementById('details').innerHTML = html;
+
+  // highlight selected node
+  document.querySelectorAll('.repo-rect').forEach(rect => rect.classList.remove('selected'));
+  const node = document.querySelector(`.repo-node[data-repo="${key}"] .repo-rect`);
+  if (node) node.classList.add('selected');
+}
+
+// Wire up node clicks
+document.querySelectorAll('.repo-node').forEach(node => {
+  node.addEventListener('click', () => renderDetails(node.dataset.repo));
+});
+
+// Wire up layer toggles
+document.querySelectorAll('.toggle input').forEach(cb => {
+  cb.addEventListener('change', () => {
+    const layer = cb.dataset.layer;
+    const label = cb.closest('label');
+    label.classList.toggle('active', cb.checked);
+    const opacity = cb.checked ? (layer === 'id' ? 0.45 : 1) : 0;
+    const group = document.getElementById(`edges-${layer}`);
+    if (group) group.style.opacity = opacity;
+    // also disable pointer events when hidden
+    if (group) group.style.pointerEvents = cb.checked ? 'auto' : 'none';
+  });
+});
+
+// Initial render
+renderDetails('platform');
+
+// ============================================================
+// DENSE ID-GRAPH VIEWER
+// ============================================================
+const IDG = {"m":{"STD":{"STD":39},"RULE":{"STD":14,"RULE":16},"ZAI":{"STD":25,"ZAI":10,"RULE":2},"TOOL":{}},"o":[["ZAI-DEV-002",5],["STD-AGENT-001",4],["STD-TEST-001",4],["STD-SEC-001",4],["RULE-MONOLITH-012",4],["STD-ENV-001",3],["STD-ERR-001",3],["STD-GIT-001",3],["STD-AGENT-002",3],["STD-GIT-002",3],["RULE-MONOLITH-007",3],["RULE-MONOLITH-014",3],["RULE-MONOLITH-017",3],["RULE-MONOLITH-008",3],["ZAI-DEV-001",3]],"i":[["STD-SKILL-001",23],["STD-META-001",16],["STD-DOC-002",10],["STD-ENV-001",5],["RULE-MONOLITH-002",5],["STD-ARCH-001",4],["STD-GIT-001",4],["RULE-MONOLITH-004",4],["STD-FE-001",3],["STD-ERR-001",3],["RULE-MONOLITH-011",3],["ZAI-MEM-001",3],["STD-ENV-002",2],["RULE-MONOLITH-010",2],["RULE-MONOLITH-006",2]],"e":[["STD-ARCH-001","STD-META-001","standards","standards"],["STD-ENV-001","STD-ARCH-001","standards","standards"],["STD-ENV-001","STD-DOC-002","standards","standards"],["STD-ENV-001","STD-META-001","standards","standards"],["STD-AGENT-001","STD-ENV-001","standards","standards"],["STD-AGENT-001","STD-GIT-001","standards","standards"],["STD-AGENT-001","STD-DOC-002","standards","standards"],["STD-AGENT-001","STD-META-001","standards","standards"],["STD-ERR-001","STD-FE-001","standards","standards"],["STD-ERR-001","STD-DOC-002","standards","standards"],["STD-ERR-001","STD-META-001","standards","standards"],["STD-ERR-002","STD-ERR-001","standards","standards"],["STD-ERR-002","STD-META-001","standards","standards"],["STD-GIT-001","STD-ENV-001","standards","standards"],["STD-GIT-001","STD-DOC-002","standards","standards"],["STD-GIT-001","STD-META-001","standards","standards"],["STD-SEC-002","STD-SEC-001","standards","standards"],["STD-SEC-002","STD-META-001","standards","standards"],["STD-TEST-001","STD-FE-001","standards","standards"],["STD-TEST-001","STD-ERR-001","standards","standards"],["STD-TEST-001","STD-DOC-002","standards","standards"],["STD-TEST-001","STD-META-001","standards","standards"],["STD-ARCH-002","STD-META-001","standards","standards"],["STD-ARCH-002","STD-ARCH-001","standards","standards"],["STD-AGENT-002","STD-AGENT-001","standards","standards"],["STD-AGENT-002","STD-ERR-001","standards","standards"],["STD-AGENT-002","STD-META-001","standards","standards"],["STD-SKILL-001","STD-META-001","standards","standards"],["STD-SKILL-001","STD-DOC-002","standards","standards"],["STD-DESIGN-001","STD-META-001","standards","standards"],["STD-SEC-001","STD-ENV-001","standards","standards"],["STD-SEC-001","STD-GIT-001","standards","standards"],["STD-SEC-001","STD-DOC-002","standards","standards"],["STD-SEC-001","STD-META-001","standards","standards"],["STD-DOC-002","STD-META-001","standards","standards"],["STD-DOC-002","STD-ARCH-002","standards","standards"],["STD-GIT-002","STD-GIT-001","standards","standards"],["STD-GIT-002","STD-ENV-002","standards","standards"],["STD-GIT-002","STD-META-001","standards","standards"],["RULE-MONOLITH-015","STD-DOC-002","guard","standards"],["RULE-MONOLITH-002","STD-META-001","guard","standards"],["RULE-MONOLITH-013","RULE-MONOLITH-002","guard","guard"],["RULE-MONOLITH-003","RULE-MONOLITH-010","guard","guard"],["RULE-MONOLITH-004","RULE-MONOLITH-002","guard","guard"],["RULE-MONOLITH-005","RULE-MONOLITH-006","guard","guard"],["RULE-MONOLITH-007","RULE-MONOLITH-002","guard","guard"],["RULE-MONOLITH-007","RULE-MONOLITH-004","guard","guard"],["RULE-MONOLITH-007","STD-AGENT-002","guard","standards"],["RULE-MONOLITH-006","RULE-MONOLITH-011","guard","guard"],["RULE-MONOLITH-012","RULE-MONOLITH-004","guard","guard"],["RULE-MONOLITH-012","STD-SKILL-001","guard","standards"],["RULE-MONOLITH-012","STD-DOC-002","guard","standards"],["RULE-MONOLITH-012","STD-FE-001","guard","standards"],["RULE-MONOLITH-016","RULE-MONOLITH-011","guard","guard"],["RULE-MONOLITH-016","STD-ARCH-001","guard","standards"],["RULE-MONOLITH-001","RULE-MONOLITH-006","guard","guard"],["RULE-MONOLITH-001","RULE-MONOLITH-007","guard","guard"],["RULE-MONOLITH-011","STD-ENV-001","guard","standards"],["RULE-MONOLITH-010","STD-DOC-002","guard","standards"],["RULE-MONOLITH-009","RULE-MONOLITH-010","guard","guard"],["RULE-MONOLITH-014","RULE-MONOLITH-002","guard","guard"],["RULE-MONOLITH-014","RULE-MONOLITH-004","guard","guard"],["RULE-MONOLITH-014","STD-SEC-002","guard","standards"],["RULE-MONOLITH-017","RULE-MONOLITH-011","guard","guard"],["RULE-MONOLITH-017","RULE-MONOLITH-016","guard","guard"],["RULE-MONOLITH-017","STD-ARCH-001","guard","standards"],["RULE-MONOLITH-008","STD-ENV-001","guard","standards"],["RULE-MONOLITH-008","STD-ENV-002","guard","standards"],["RULE-MONOLITH-008","STD-GIT-002","guard","standards"],["ZAI-MEM-002","STD-SKILL-001","skills","standards"],["ZAI-MEM-002","ZAI-MEM-001","skills","skills"],["ZAI-SESSION-003","STD-SKILL-001","skills","standards"],["ZAI-SESSION-003","ZAI-SESSION-001","skills","skills"],["ZAI-REQ-001","STD-SKILL-001","skills","standards"],["ZAI-ARCH-001","STD-SKILL-001","skills","standards"],["ZAI-MEM-004","STD-SKILL-001","skills","standards"],["ZAI-MEM-004","ZAI-MEM-001","skills","skills"],["ZAI-FS-001","STD-SKILL-001","skills","standards"],["ZAI-SESSION-002","STD-SKILL-001","skills","standards"],["ZAI-SESSION-002","ZAI-SESSION-001","skills","skills"],["ZAI-MEM-003","STD-SKILL-001","skills","standards"],["ZAI-MEM-003","ZAI-MEM-001","skills","skills"],["ZAI-STS-003","STD-SKILL-001","skills","standards"],["ZAI-QA-001","STD-SKILL-001","skills","standards"],["ZAI-QA-001","STD-TEST-001","skills","standards"],["ZAI-DEV-003","STD-SKILL-001","skills","standards"],["ZAI-DEV-002","STD-SKILL-001","skills","standards"],["ZAI-DEV-002","STD-ERR-002","skills","standards"],["ZAI-DEV-002","STD-GIT-001","skills","standards"],["ZAI-DEV-002","RULE-MONOLITH-002","skills","guard"],["ZAI-DEV-002","RULE-MONOLITH-004","skills","guard"],["ZAI-STS-007","STD-SKILL-001","skills","standards"],["ZAI-SESSION-001","STD-SKILL-001","skills","standards"],["ZAI-STS-002","STD-SKILL-001","skills","standards"],["ZAI-STS-002","ZAI-STS-001","skills","skills"],["ZAI-STS-001","STD-SKILL-001","skills","standards"],["ZAI-DEV-001","STD-SKILL-001","skills","standards"],["ZAI-DEV-001","ZAI-DEV-002","skills","skills"],["ZAI-DEV-001","ZAI-DEV-003","skills","skills"],["ZAI-ARCH-002","STD-SKILL-001","skills","standards"],["ZAI-ARCH-002","ZAI-ARCH-001","skills","skills"],["ZAI-STS-005","STD-SKILL-001","skills","standards"],["ZAI-STS-004","STD-SKILL-001","skills","standards"],["ZAI-STS-006","STD-SKILL-001","skills","standards"],["ZAI-STS-006","ZAI-STS-007","skills","skills"],["ZAI-MEM-001","STD-SKILL-001","skills","standards"]],"s":{"ids_total":60,"edges_total":106,"prefixes":{"STD":19,"RULE":17,"ZAI":24}}};
+
+const PREFIXES = ['STD', 'RULE', 'ZAI', 'TOOL'];
+const REPO_COLORS = {
+  standards: 'var(--l1)',
+  guard:     'var(--l2)',
+  skills:    'var(--l3)',
+  platform:  'var(--l0)',
+};
+
+// Build per-prefix + per-repo counts from edges (filtered live)
+function getFilteredEdges() {
+  const srcPrefixOn = new Set(PREFIXES.filter(p => document.querySelector(`input[data-prefix="${p}"]`).checked));
+  const tgtPrefixOn = new Set(PREFIXES.filter(p => document.querySelector(`input[data-tgt-prefix="${p}"]`).checked));
+  const repoOn = new Set(['standards','guard','skills','platform'].filter(r => document.querySelector(`input[data-repo="${r}"]`).checked));
+  return IDG.e.filter(([src, tgt, srcR, tgtR]) => {
+    const sp = src.split('-')[0];
+    const tp = tgt.split('-')[0];
+    return srcPrefixOn.has(sp) && tgtPrefixOn.has(tp) && repoOn.has(srcR);
+  });
+}
+
+function prefixColor(p) {
+  return { STD: 'var(--l1)', RULE: 'var(--l2)', ZAI: 'var(--l3)', TOOL: 'var(--text-dim)' }[p] || 'var(--text-dim)';
+}
+
+function renderMatrix() {
+  const edges = getFilteredEdges();
+  // Recompute matrix from filtered edges
+  const m = {};
+  PREFIXES.forEach(sp => { m[sp] = {}; PREFIXES.forEach(tp => m[sp][tp] = 0); });
+  edges.forEach(([src, tgt]) => {
+    const sp = src.split('-')[0];
+    const tp = tgt.split('-')[0];
+    if (m[sp] && tp in m[sp]) m[sp][tp]++;
+  });
+
+  const tbody = document.getElementById('matrix-body');
+  let html = '';
+  PREFIXES.forEach(sp => {
+    let rowTotal = 0;
+    let cells = '';
+    PREFIXES.forEach(tp => {
+      const v = m[sp][tp];
+      rowTotal += v;
+      const cls = v === 0 ? 'cell-0' : v <= 5 ? 'cell-1' : v <= 15 ? 'cell-2' : v <= 30 ? 'cell-3' : 'cell-4';
+      cells += `<td class="cell ${cls}" data-sp="${sp}" data-tp="${tp}">${v === 0 ? '—' : v}</td>`;
+    });
+    html += `<tr><td class="row-label">${sp}</td>${cells}<td class="row-label">${rowTotal}</td></tr>`;
+  });
+  // Column totals
+  let colTotalRow = '<tr><td class="row-label">col total</td>';
+  let grandTotal = 0;
+  PREFIXES.forEach(tp => {
+    let col = 0;
+    PREFIXES.forEach(sp => { col += m[sp][tp]; });
+    grandTotal += col;
+    colTotalRow += `<td class="row-label">${col}</td>`;
+  });
+  colTotalRow += `<td class="row-label">${grandTotal}</td></tr>`;
+  tbody.innerHTML = html + colTotalRow;
+
+  // Wire up cell clicks
+  tbody.querySelectorAll('td.cell').forEach(td => {
+    td.addEventListener('click', () => {
+      tbody.querySelectorAll('td.cell').forEach(c => c.classList.remove('selected'));
+      td.classList.add('selected');
+      const sp = td.dataset.sp;
+      const tp = td.dataset.tp;
+      const cellEdges = edges.filter(([s, t]) => s.split('-')[0] === sp && t.split('-')[0] === tp);
+      const detail = document.getElementById('matrix-detail');
+      if (cellEdges.length === 0) {
+        detail.innerHTML = `<em style="color:var(--text-mute);">No edges for ${sp} → ${tp} under current filter.</em>`;
+      } else {
+        const limit = 30;
+        const shown = cellEdges.slice(0, limit);
+        const html = shown.map(([s, t, sR, tR]) =>
+          `<div class="edge-line"><strong>${s}</strong> <span style="color:var(--text-mute);">[${sR}]</span> → <strong>${t}</strong> <span style="color:var(--text-mute);">[${tR}]</span></div>`
+        ).join('');
+        const more = cellEdges.length > limit ? `<div style="color:var(--text-mute);margin-top:6px;font-style:italic;">… and ${cellEdges.length - limit} more (see Edge list view)</div>` : '';
+        detail.innerHTML = `<strong style="color:var(--text);">${cellEdges.length} edges for ${sp} → ${tp}:</strong><br>${html}${more}`;
+      }
+    });
+  });
+}
+
+function renderEdges() {
+  const edges = getFilteredEdges();
+  const tbody = document.getElementById('edge-body');
+  document.getElementById('edge-count').textContent = edges.length;
+  if (edges.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="color:var(--text-mute);padding:16px;text-align:center;">No edges match current filter.</td></tr>';
+    return;
+  }
+  // Sort by src then tgt
+  edges.sort((a, b) => a[0].localeCompare(b[0]) || a[1].localeCompare(b[1]));
+  let html = '';
+  edges.forEach(([s, t, sR, tR], i) => {
+    html += `<tr><td>${i+1}</td><td style="color:${prefixColor(s.split('-')[0])};">${s}</td><td style="color:var(--text-mute);">→</td><td style="color:${prefixColor(t.split('-')[0])};">${t}</td><td style="color:var(--text-mute);">${sR}</td><td style="color:var(--text-mute);">${tR}</td></tr>`;
+  });
+  tbody.innerHTML = html;
+}
+
+function renderHubs() {
+  // Top out-degree (from IDG.o, unfiltered — global ranking)
+  const outBody = document.getElementById('hub-out-body');
+  const inBody = document.getElementById('hub-in-body');
+
+  // Compute repo for each ID from edges
+  const idRepo = {};
+  IDG.e.forEach(([s, t, sR, tR]) => {
+    if (!(s in idRepo)) idRepo[s] = sR;
+    if (!(t in idRepo)) idRepo[t] = tR;
+  });
+
+  outBody.innerHTML = IDG.o.slice(0, 15).map(([id, deg], i) => {
+    const repo = idRepo[id] || '?';
+    return `<tr><td>${i+1}</td><td style="color:${prefixColor(id.split('-')[0])};">${id}</td><td style="color:var(--text-mute);">${repo}</td><td class="deg">${deg}</td></tr>`;
+  }).join('');
+
+  inBody.innerHTML = IDG.i.slice(0, 15).map(([id, deg], i) => {
+    const repo = idRepo[id] || '?';
+    return `<tr><td>${i+1}</td><td style="color:${prefixColor(id.split('-')[0])};">${id}</td><td style="color:var(--text-mute);">${repo}</td><td class="deg">${deg}</td></tr>`;
+  }).join('');
+}
+
+function switchView(view) {
+  document.querySelectorAll('.dense-tab').forEach(t => t.classList.toggle('active', t.dataset.view === view));
+  document.querySelectorAll('.dense-view').forEach(v => v.classList.remove('active'));
+  document.getElementById('dense-' + view).classList.add('active');
+  if (view === 'matrix') renderMatrix();
+  if (view === 'edges') renderEdges();
+  if (view === 'hubs') renderHubs();
+}
+
+// Wire up tabs
+document.querySelectorAll('.dense-tab').forEach(tab => {
+  tab.addEventListener('click', () => switchView(tab.dataset.view));
+});
+
+// Wire up filters
+document.querySelectorAll('.dense-filters input').forEach(cb => {
+  cb.addEventListener('change', () => {
+    cb.closest('label').classList.toggle('active', cb.checked);
+    // Re-render current view
+    const activeView = document.querySelector('.dense-tab.active').dataset.view;
+    if (activeView === 'matrix') renderMatrix();
+    if (activeView === 'edges') renderEdges();
+    // hubs view is static (global ranking, not filtered)
+  });
+});
+
+// Initial render — matrix view
+renderMatrix();
+</script>
+
+</body>
+</html>

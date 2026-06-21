@@ -1,0 +1,1242 @@
+{
+  "ids": {
+    "STD-ARCH-001": {
+      "repo": "standards",
+      "file": "standards/standards/ARCH-001-architecture-and-repo-layout.md"
+    },
+    "STD-ENV-001": {
+      "repo": "standards",
+      "file": "standards/standards/ENV-001-reproducibility.md"
+    },
+    "STD-AGENT-001": {
+      "repo": "standards",
+      "file": "standards/standards/AGENT-001-subagent.md"
+    },
+    "STD-ERR-001": {
+      "repo": "standards",
+      "file": "standards/standards/ERR-001-error-handling.md"
+    },
+    "STD-ERR-002": {
+      "repo": "standards",
+      "file": "standards/standards/ERR-002-error-recovery.md"
+    },
+    "STD-GIT-001": {
+      "repo": "standards",
+      "file": "standards/standards/GIT-001-github.md"
+    },
+    "STD-SEC-002": {
+      "repo": "standards",
+      "file": "standards/standards/SEC-002-security-extended.md"
+    },
+    "STD-TEST-001": {
+      "repo": "standards",
+      "file": "standards/standards/TEST-001-testing.md"
+    },
+    "STD-META-001": {
+      "repo": "standards",
+      "file": "standards/standards/META-001-standard-id-system.md"
+    },
+    "STD-DOC-003": {
+      "repo": "standards",
+      "file": "standards/standards/DOC-003-unicode-policy.md"
+    },
+    "STD-ENV-002": {
+      "repo": "standards",
+      "file": "standards/standards/ENV-002-zai-integration.md"
+    },
+    "STD-ARCH-002": {
+      "repo": "standards",
+      "file": "standards/standards/ARCH-002-implementation-order.md"
+    },
+    "STD-AGENT-002": {
+      "repo": "standards",
+      "file": "standards/standards/AGENT-002-orchestration.md"
+    },
+    "STD-FE-001": {
+      "repo": "standards",
+      "file": "standards/standards/FE-001-frontend.md"
+    },
+    "STD-SKILL-001": {
+      "repo": "standards",
+      "file": "standards/standards/SKILL-001-skill-format.md"
+    },
+    "STD-DESIGN-001": {
+      "repo": "standards",
+      "file": "standards/standards/DESIGN-001-design-system.md"
+    },
+    "STD-SEC-001": {
+      "repo": "standards",
+      "file": "standards/standards/SEC-001-security-core.md"
+    },
+    "STD-DOC-002": {
+      "repo": "standards",
+      "file": "standards/standards/DOC-002-markdown-standard.md"
+    },
+    "STD-GIT-002": {
+      "repo": "standards",
+      "file": "standards/standards/GIT-002-github-sandbox.md"
+    },
+    "RULE-MONOLITH-015": {
+      "repo": "guard",
+      "file": "guard/rules/RULE-MONOLITH-015.md"
+    },
+    "RULE-MONOLITH-002": {
+      "repo": "guard",
+      "file": "guard/rules/RULE-MONOLITH-002.md"
+    },
+    "RULE-MONOLITH-013": {
+      "repo": "guard",
+      "file": "guard/rules/RULE-MONOLITH-013.md"
+    },
+    "RULE-MONOLITH-003": {
+      "repo": "guard",
+      "file": "guard/rules/RULE-MONOLITH-003.md"
+    },
+    "RULE-MONOLITH-004": {
+      "repo": "guard",
+      "file": "guard/rules/RULE-MONOLITH-004.md"
+    },
+    "RULE-MONOLITH-005": {
+      "repo": "guard",
+      "file": "guard/rules/RULE-MONOLITH-005.md"
+    },
+    "RULE-MONOLITH-007": {
+      "repo": "guard",
+      "file": "guard/rules/RULE-MONOLITH-007.md"
+    },
+    "RULE-MONOLITH-006": {
+      "repo": "guard",
+      "file": "guard/rules/RULE-MONOLITH-006.md"
+    },
+    "RULE-MONOLITH-012": {
+      "repo": "guard",
+      "file": "guard/rules/RULE-MONOLITH-012.md"
+    },
+    "RULE-MONOLITH-016": {
+      "repo": "guard",
+      "file": "guard/rules/RULE-MONOLITH-016.md"
+    },
+    "RULE-MONOLITH-001": {
+      "repo": "guard",
+      "file": "guard/rules/RULE-MONOLITH-001.md"
+    },
+    "RULE-MONOLITH-011": {
+      "repo": "guard",
+      "file": "guard/rules/RULE-MONOLITH-011.md"
+    },
+    "RULE-MONOLITH-010": {
+      "repo": "guard",
+      "file": "guard/rules/RULE-MONOLITH-010.md"
+    },
+    "RULE-MONOLITH-009": {
+      "repo": "guard",
+      "file": "guard/rules/RULE-MONOLITH-009.md"
+    },
+    "RULE-MONOLITH-014": {
+      "repo": "guard",
+      "file": "guard/rules/RULE-MONOLITH-014.md"
+    },
+    "RULE-MONOLITH-017": {
+      "repo": "guard",
+      "file": "guard/rules/RULE-MONOLITH-017.md"
+    },
+    "RULE-MONOLITH-008": {
+      "repo": "guard",
+      "file": "guard/rules/RULE-MONOLITH-008.md"
+    },
+    "ZAI-META-002": {
+      "repo": "skills",
+      "file": "skills/skills/zai-skill-registry/SKILL.md"
+    },
+    "ZAI-MEM-002": {
+      "repo": "skills",
+      "file": "skills/skills/memory-query/SKILL.md"
+    },
+    "ZAI-SESSION-003": {
+      "repo": "skills",
+      "file": "skills/skills/session-experience/SKILL.md"
+    },
+    "ZAI-REQ-001": {
+      "repo": "skills",
+      "file": "skills/skills/requirements-clarity/SKILL.md"
+    },
+    "ZAI-ARCH-001": {
+      "repo": "skills",
+      "file": "skills/skills/mermaid-diagrams/SKILL.md"
+    },
+    "ZAI-MEM-004": {
+      "repo": "skills",
+      "file": "skills/skills/memory-export/SKILL.md"
+    },
+    "ZAI-FS-001": {
+      "repo": "skills",
+      "file": "skills/skills/folder-indexer/SKILL.md"
+    },
+    "ZAI-SESSION-002": {
+      "repo": "skills",
+      "file": "skills/skills/context-consolidation/SKILL.md"
+    },
+    "ZAI-MEM-003": {
+      "repo": "skills",
+      "file": "skills/skills/memory-delete/SKILL.md"
+    },
+    "ZAI-STS-003": {
+      "repo": "skills",
+      "file": "skills/skills/performance-code-generator_sts/SKILL.md"
+    },
+    "ZAI-QA-001": {
+      "repo": "skills",
+      "file": "skills/skills/qa-test-planner/SKILL.md"
+    },
+    "ZAI-META-001": {
+      "repo": "skills",
+      "file": "skills/skills/skill-id-system/SKILL.md"
+    },
+    "ZAI-DEV-003": {
+      "repo": "skills",
+      "file": "skills/skills/database-schema-designer/SKILL.md"
+    },
+    "ZAI-DEV-002": {
+      "repo": "skills",
+      "file": "skills/skills/commit-work/SKILL.md"
+    },
+    "ZAI-STS-007": {
+      "repo": "skills",
+      "file": "skills/skills/workflow-discipline_sts/SKILL.md"
+    },
+    "ZAI-SESSION-001": {
+      "repo": "skills",
+      "file": "skills/skills/session-log/SKILL.md"
+    },
+    "ZAI-STS-002": {
+      "repo": "skills",
+      "file": "skills/skills/sync-toolkit_sts/SKILL.md"
+    },
+    "ZAI-STS-001": {
+      "repo": "skills",
+      "file": "skills/skills/prompt-engineering_sts/SKILL.md"
+    },
+    "ZAI-DEV-001": {
+      "repo": "skills",
+      "file": "skills/skills/project-clone/SKILL.md"
+    },
+    "ZAI-ARCH-002": {
+      "repo": "skills",
+      "file": "skills/skills/anti-monolith/SKILL.md"
+    },
+    "ZAI-STS-005": {
+      "repo": "skills",
+      "file": "skills/skills/phi-layout_sts/SKILL.md"
+    },
+    "ZAI-STS-004": {
+      "repo": "skills",
+      "file": "skills/skills/frontend-styling-expert_sts/SKILL.md"
+    },
+    "ZAI-STS-006": {
+      "repo": "skills",
+      "file": "skills/skills/zai-ui-composer_sts/SKILL.md"
+    },
+    "ZAI-MEM-001": {
+      "repo": "skills",
+      "file": "skills/skills/memory-store/SKILL.md"
+    }
+  },
+  "edges": [
+    {
+      "src": "STD-ARCH-001",
+      "tgt": "STD-META-001",
+      "src_repo": "standards",
+      "tgt_repo": "standards",
+      "src_file": "standards/standards/ARCH-001-architecture-and-repo-layout.md",
+      "tgt_file": "standards/standards/META-001-standard-id-system.md"
+    },
+    {
+      "src": "STD-ENV-001",
+      "tgt": "STD-ARCH-001",
+      "src_repo": "standards",
+      "tgt_repo": "standards",
+      "src_file": "standards/standards/ENV-001-reproducibility.md",
+      "tgt_file": "standards/standards/ARCH-001-architecture-and-repo-layout.md"
+    },
+    {
+      "src": "STD-ENV-001",
+      "tgt": "STD-DOC-002",
+      "src_repo": "standards",
+      "tgt_repo": "standards",
+      "src_file": "standards/standards/ENV-001-reproducibility.md",
+      "tgt_file": "standards/standards/DOC-002-markdown-standard.md"
+    },
+    {
+      "src": "STD-ENV-001",
+      "tgt": "STD-META-001",
+      "src_repo": "standards",
+      "tgt_repo": "standards",
+      "src_file": "standards/standards/ENV-001-reproducibility.md",
+      "tgt_file": "standards/standards/META-001-standard-id-system.md"
+    },
+    {
+      "src": "STD-AGENT-001",
+      "tgt": "STD-ENV-001",
+      "src_repo": "standards",
+      "tgt_repo": "standards",
+      "src_file": "standards/standards/AGENT-001-subagent.md",
+      "tgt_file": "standards/standards/ENV-001-reproducibility.md"
+    },
+    {
+      "src": "STD-AGENT-001",
+      "tgt": "STD-GIT-001",
+      "src_repo": "standards",
+      "tgt_repo": "standards",
+      "src_file": "standards/standards/AGENT-001-subagent.md",
+      "tgt_file": "standards/standards/GIT-001-github.md"
+    },
+    {
+      "src": "STD-AGENT-001",
+      "tgt": "STD-DOC-002",
+      "src_repo": "standards",
+      "tgt_repo": "standards",
+      "src_file": "standards/standards/AGENT-001-subagent.md",
+      "tgt_file": "standards/standards/DOC-002-markdown-standard.md"
+    },
+    {
+      "src": "STD-AGENT-001",
+      "tgt": "STD-META-001",
+      "src_repo": "standards",
+      "tgt_repo": "standards",
+      "src_file": "standards/standards/AGENT-001-subagent.md",
+      "tgt_file": "standards/standards/META-001-standard-id-system.md"
+    },
+    {
+      "src": "STD-ERR-001",
+      "tgt": "STD-FE-001",
+      "src_repo": "standards",
+      "tgt_repo": "standards",
+      "src_file": "standards/standards/ERR-001-error-handling.md",
+      "tgt_file": "standards/standards/FE-001-frontend.md"
+    },
+    {
+      "src": "STD-ERR-001",
+      "tgt": "STD-DOC-002",
+      "src_repo": "standards",
+      "tgt_repo": "standards",
+      "src_file": "standards/standards/ERR-001-error-handling.md",
+      "tgt_file": "standards/standards/DOC-002-markdown-standard.md"
+    },
+    {
+      "src": "STD-ERR-001",
+      "tgt": "STD-META-001",
+      "src_repo": "standards",
+      "tgt_repo": "standards",
+      "src_file": "standards/standards/ERR-001-error-handling.md",
+      "tgt_file": "standards/standards/META-001-standard-id-system.md"
+    },
+    {
+      "src": "STD-ERR-002",
+      "tgt": "STD-ERR-001",
+      "src_repo": "standards",
+      "tgt_repo": "standards",
+      "src_file": "standards/standards/ERR-002-error-recovery.md",
+      "tgt_file": "standards/standards/ERR-001-error-handling.md"
+    },
+    {
+      "src": "STD-ERR-002",
+      "tgt": "STD-META-001",
+      "src_repo": "standards",
+      "tgt_repo": "standards",
+      "src_file": "standards/standards/ERR-002-error-recovery.md",
+      "tgt_file": "standards/standards/META-001-standard-id-system.md"
+    },
+    {
+      "src": "STD-GIT-001",
+      "tgt": "STD-ENV-001",
+      "src_repo": "standards",
+      "tgt_repo": "standards",
+      "src_file": "standards/standards/GIT-001-github.md",
+      "tgt_file": "standards/standards/ENV-001-reproducibility.md"
+    },
+    {
+      "src": "STD-GIT-001",
+      "tgt": "STD-DOC-002",
+      "src_repo": "standards",
+      "tgt_repo": "standards",
+      "src_file": "standards/standards/GIT-001-github.md",
+      "tgt_file": "standards/standards/DOC-002-markdown-standard.md"
+    },
+    {
+      "src": "STD-GIT-001",
+      "tgt": "STD-META-001",
+      "src_repo": "standards",
+      "tgt_repo": "standards",
+      "src_file": "standards/standards/GIT-001-github.md",
+      "tgt_file": "standards/standards/META-001-standard-id-system.md"
+    },
+    {
+      "src": "STD-SEC-002",
+      "tgt": "STD-SEC-001",
+      "src_repo": "standards",
+      "tgt_repo": "standards",
+      "src_file": "standards/standards/SEC-002-security-extended.md",
+      "tgt_file": "standards/standards/SEC-001-security-core.md"
+    },
+    {
+      "src": "STD-SEC-002",
+      "tgt": "STD-META-001",
+      "src_repo": "standards",
+      "tgt_repo": "standards",
+      "src_file": "standards/standards/SEC-002-security-extended.md",
+      "tgt_file": "standards/standards/META-001-standard-id-system.md"
+    },
+    {
+      "src": "STD-TEST-001",
+      "tgt": "STD-FE-001",
+      "src_repo": "standards",
+      "tgt_repo": "standards",
+      "src_file": "standards/standards/TEST-001-testing.md",
+      "tgt_file": "standards/standards/FE-001-frontend.md"
+    },
+    {
+      "src": "STD-TEST-001",
+      "tgt": "STD-ERR-001",
+      "src_repo": "standards",
+      "tgt_repo": "standards",
+      "src_file": "standards/standards/TEST-001-testing.md",
+      "tgt_file": "standards/standards/ERR-001-error-handling.md"
+    },
+    {
+      "src": "STD-TEST-001",
+      "tgt": "STD-DOC-002",
+      "src_repo": "standards",
+      "tgt_repo": "standards",
+      "src_file": "standards/standards/TEST-001-testing.md",
+      "tgt_file": "standards/standards/DOC-002-markdown-standard.md"
+    },
+    {
+      "src": "STD-TEST-001",
+      "tgt": "STD-META-001",
+      "src_repo": "standards",
+      "tgt_repo": "standards",
+      "src_file": "standards/standards/TEST-001-testing.md",
+      "tgt_file": "standards/standards/META-001-standard-id-system.md"
+    },
+    {
+      "src": "STD-ARCH-002",
+      "tgt": "STD-META-001",
+      "src_repo": "standards",
+      "tgt_repo": "standards",
+      "src_file": "standards/standards/ARCH-002-implementation-order.md",
+      "tgt_file": "standards/standards/META-001-standard-id-system.md"
+    },
+    {
+      "src": "STD-ARCH-002",
+      "tgt": "STD-ARCH-001",
+      "src_repo": "standards",
+      "tgt_repo": "standards",
+      "src_file": "standards/standards/ARCH-002-implementation-order.md",
+      "tgt_file": "standards/standards/ARCH-001-architecture-and-repo-layout.md"
+    },
+    {
+      "src": "STD-AGENT-002",
+      "tgt": "STD-AGENT-001",
+      "src_repo": "standards",
+      "tgt_repo": "standards",
+      "src_file": "standards/standards/AGENT-002-orchestration.md",
+      "tgt_file": "standards/standards/AGENT-001-subagent.md"
+    },
+    {
+      "src": "STD-AGENT-002",
+      "tgt": "STD-ERR-001",
+      "src_repo": "standards",
+      "tgt_repo": "standards",
+      "src_file": "standards/standards/AGENT-002-orchestration.md",
+      "tgt_file": "standards/standards/ERR-001-error-handling.md"
+    },
+    {
+      "src": "STD-AGENT-002",
+      "tgt": "STD-META-001",
+      "src_repo": "standards",
+      "tgt_repo": "standards",
+      "src_file": "standards/standards/AGENT-002-orchestration.md",
+      "tgt_file": "standards/standards/META-001-standard-id-system.md"
+    },
+    {
+      "src": "STD-SKILL-001",
+      "tgt": "STD-META-001",
+      "src_repo": "standards",
+      "tgt_repo": "standards",
+      "src_file": "standards/standards/SKILL-001-skill-format.md",
+      "tgt_file": "standards/standards/META-001-standard-id-system.md"
+    },
+    {
+      "src": "STD-SKILL-001",
+      "tgt": "STD-DOC-002",
+      "src_repo": "standards",
+      "tgt_repo": "standards",
+      "src_file": "standards/standards/SKILL-001-skill-format.md",
+      "tgt_file": "standards/standards/DOC-002-markdown-standard.md"
+    },
+    {
+      "src": "STD-DESIGN-001",
+      "tgt": "STD-META-001",
+      "src_repo": "standards",
+      "tgt_repo": "standards",
+      "src_file": "standards/standards/DESIGN-001-design-system.md",
+      "tgt_file": "standards/standards/META-001-standard-id-system.md"
+    },
+    {
+      "src": "STD-SEC-001",
+      "tgt": "STD-ENV-001",
+      "src_repo": "standards",
+      "tgt_repo": "standards",
+      "src_file": "standards/standards/SEC-001-security-core.md",
+      "tgt_file": "standards/standards/ENV-001-reproducibility.md"
+    },
+    {
+      "src": "STD-SEC-001",
+      "tgt": "STD-GIT-001",
+      "src_repo": "standards",
+      "tgt_repo": "standards",
+      "src_file": "standards/standards/SEC-001-security-core.md",
+      "tgt_file": "standards/standards/GIT-001-github.md"
+    },
+    {
+      "src": "STD-SEC-001",
+      "tgt": "STD-DOC-002",
+      "src_repo": "standards",
+      "tgt_repo": "standards",
+      "src_file": "standards/standards/SEC-001-security-core.md",
+      "tgt_file": "standards/standards/DOC-002-markdown-standard.md"
+    },
+    {
+      "src": "STD-SEC-001",
+      "tgt": "STD-META-001",
+      "src_repo": "standards",
+      "tgt_repo": "standards",
+      "src_file": "standards/standards/SEC-001-security-core.md",
+      "tgt_file": "standards/standards/META-001-standard-id-system.md"
+    },
+    {
+      "src": "STD-DOC-002",
+      "tgt": "STD-META-001",
+      "src_repo": "standards",
+      "tgt_repo": "standards",
+      "src_file": "standards/standards/DOC-002-markdown-standard.md",
+      "tgt_file": "standards/standards/META-001-standard-id-system.md"
+    },
+    {
+      "src": "STD-DOC-002",
+      "tgt": "STD-ARCH-002",
+      "src_repo": "standards",
+      "tgt_repo": "standards",
+      "src_file": "standards/standards/DOC-002-markdown-standard.md",
+      "tgt_file": "standards/standards/ARCH-002-implementation-order.md"
+    },
+    {
+      "src": "STD-GIT-002",
+      "tgt": "STD-GIT-001",
+      "src_repo": "standards",
+      "tgt_repo": "standards",
+      "src_file": "standards/standards/GIT-002-github-sandbox.md",
+      "tgt_file": "standards/standards/GIT-001-github.md"
+    },
+    {
+      "src": "STD-GIT-002",
+      "tgt": "STD-ENV-002",
+      "src_repo": "standards",
+      "tgt_repo": "standards",
+      "src_file": "standards/standards/GIT-002-github-sandbox.md",
+      "tgt_file": "standards/standards/ENV-002-zai-integration.md"
+    },
+    {
+      "src": "STD-GIT-002",
+      "tgt": "STD-META-001",
+      "src_repo": "standards",
+      "tgt_repo": "standards",
+      "src_file": "standards/standards/GIT-002-github-sandbox.md",
+      "tgt_file": "standards/standards/META-001-standard-id-system.md"
+    },
+    {
+      "src": "RULE-MONOLITH-015",
+      "tgt": "STD-DOC-002",
+      "src_repo": "guard",
+      "tgt_repo": "standards",
+      "src_file": "guard/rules/RULE-MONOLITH-015.md",
+      "tgt_file": "standards/standards/DOC-002-markdown-standard.md"
+    },
+    {
+      "src": "RULE-MONOLITH-002",
+      "tgt": "STD-META-001",
+      "src_repo": "guard",
+      "tgt_repo": "standards",
+      "src_file": "guard/rules/RULE-MONOLITH-002.md",
+      "tgt_file": "standards/standards/META-001-standard-id-system.md"
+    },
+    {
+      "src": "RULE-MONOLITH-013",
+      "tgt": "RULE-MONOLITH-002",
+      "src_repo": "guard",
+      "tgt_repo": "guard",
+      "src_file": "guard/rules/RULE-MONOLITH-013.md",
+      "tgt_file": "guard/rules/RULE-MONOLITH-002.md"
+    },
+    {
+      "src": "RULE-MONOLITH-003",
+      "tgt": "RULE-MONOLITH-010",
+      "src_repo": "guard",
+      "tgt_repo": "guard",
+      "src_file": "guard/rules/RULE-MONOLITH-003.md",
+      "tgt_file": "guard/rules/RULE-MONOLITH-010.md"
+    },
+    {
+      "src": "RULE-MONOLITH-004",
+      "tgt": "RULE-MONOLITH-002",
+      "src_repo": "guard",
+      "tgt_repo": "guard",
+      "src_file": "guard/rules/RULE-MONOLITH-004.md",
+      "tgt_file": "guard/rules/RULE-MONOLITH-002.md"
+    },
+    {
+      "src": "RULE-MONOLITH-005",
+      "tgt": "RULE-MONOLITH-006",
+      "src_repo": "guard",
+      "tgt_repo": "guard",
+      "src_file": "guard/rules/RULE-MONOLITH-005.md",
+      "tgt_file": "guard/rules/RULE-MONOLITH-006.md"
+    },
+    {
+      "src": "RULE-MONOLITH-007",
+      "tgt": "RULE-MONOLITH-002",
+      "src_repo": "guard",
+      "tgt_repo": "guard",
+      "src_file": "guard/rules/RULE-MONOLITH-007.md",
+      "tgt_file": "guard/rules/RULE-MONOLITH-002.md"
+    },
+    {
+      "src": "RULE-MONOLITH-007",
+      "tgt": "RULE-MONOLITH-004",
+      "src_repo": "guard",
+      "tgt_repo": "guard",
+      "src_file": "guard/rules/RULE-MONOLITH-007.md",
+      "tgt_file": "guard/rules/RULE-MONOLITH-004.md"
+    },
+    {
+      "src": "RULE-MONOLITH-007",
+      "tgt": "STD-AGENT-002",
+      "src_repo": "guard",
+      "tgt_repo": "standards",
+      "src_file": "guard/rules/RULE-MONOLITH-007.md",
+      "tgt_file": "standards/standards/AGENT-002-orchestration.md"
+    },
+    {
+      "src": "RULE-MONOLITH-006",
+      "tgt": "RULE-MONOLITH-011",
+      "src_repo": "guard",
+      "tgt_repo": "guard",
+      "src_file": "guard/rules/RULE-MONOLITH-006.md",
+      "tgt_file": "guard/rules/RULE-MONOLITH-011.md"
+    },
+    {
+      "src": "RULE-MONOLITH-012",
+      "tgt": "RULE-MONOLITH-004",
+      "src_repo": "guard",
+      "tgt_repo": "guard",
+      "src_file": "guard/rules/RULE-MONOLITH-012.md",
+      "tgt_file": "guard/rules/RULE-MONOLITH-004.md"
+    },
+    {
+      "src": "RULE-MONOLITH-012",
+      "tgt": "STD-SKILL-001",
+      "src_repo": "guard",
+      "tgt_repo": "standards",
+      "src_file": "guard/rules/RULE-MONOLITH-012.md",
+      "tgt_file": "standards/standards/SKILL-001-skill-format.md"
+    },
+    {
+      "src": "RULE-MONOLITH-012",
+      "tgt": "STD-DOC-002",
+      "src_repo": "guard",
+      "tgt_repo": "standards",
+      "src_file": "guard/rules/RULE-MONOLITH-012.md",
+      "tgt_file": "standards/standards/DOC-002-markdown-standard.md"
+    },
+    {
+      "src": "RULE-MONOLITH-012",
+      "tgt": "STD-FE-001",
+      "src_repo": "guard",
+      "tgt_repo": "standards",
+      "src_file": "guard/rules/RULE-MONOLITH-012.md",
+      "tgt_file": "standards/standards/FE-001-frontend.md"
+    },
+    {
+      "src": "RULE-MONOLITH-016",
+      "tgt": "RULE-MONOLITH-011",
+      "src_repo": "guard",
+      "tgt_repo": "guard",
+      "src_file": "guard/rules/RULE-MONOLITH-016.md",
+      "tgt_file": "guard/rules/RULE-MONOLITH-011.md"
+    },
+    {
+      "src": "RULE-MONOLITH-016",
+      "tgt": "STD-ARCH-001",
+      "src_repo": "guard",
+      "tgt_repo": "standards",
+      "src_file": "guard/rules/RULE-MONOLITH-016.md",
+      "tgt_file": "standards/standards/ARCH-001-architecture-and-repo-layout.md"
+    },
+    {
+      "src": "RULE-MONOLITH-001",
+      "tgt": "RULE-MONOLITH-006",
+      "src_repo": "guard",
+      "tgt_repo": "guard",
+      "src_file": "guard/rules/RULE-MONOLITH-001.md",
+      "tgt_file": "guard/rules/RULE-MONOLITH-006.md"
+    },
+    {
+      "src": "RULE-MONOLITH-001",
+      "tgt": "RULE-MONOLITH-007",
+      "src_repo": "guard",
+      "tgt_repo": "guard",
+      "src_file": "guard/rules/RULE-MONOLITH-001.md",
+      "tgt_file": "guard/rules/RULE-MONOLITH-007.md"
+    },
+    {
+      "src": "RULE-MONOLITH-011",
+      "tgt": "STD-ENV-001",
+      "src_repo": "guard",
+      "tgt_repo": "standards",
+      "src_file": "guard/rules/RULE-MONOLITH-011.md",
+      "tgt_file": "standards/standards/ENV-001-reproducibility.md"
+    },
+    {
+      "src": "RULE-MONOLITH-010",
+      "tgt": "STD-DOC-002",
+      "src_repo": "guard",
+      "tgt_repo": "standards",
+      "src_file": "guard/rules/RULE-MONOLITH-010.md",
+      "tgt_file": "standards/standards/DOC-002-markdown-standard.md"
+    },
+    {
+      "src": "RULE-MONOLITH-009",
+      "tgt": "RULE-MONOLITH-010",
+      "src_repo": "guard",
+      "tgt_repo": "guard",
+      "src_file": "guard/rules/RULE-MONOLITH-009.md",
+      "tgt_file": "guard/rules/RULE-MONOLITH-010.md"
+    },
+    {
+      "src": "RULE-MONOLITH-014",
+      "tgt": "RULE-MONOLITH-002",
+      "src_repo": "guard",
+      "tgt_repo": "guard",
+      "src_file": "guard/rules/RULE-MONOLITH-014.md",
+      "tgt_file": "guard/rules/RULE-MONOLITH-002.md"
+    },
+    {
+      "src": "RULE-MONOLITH-014",
+      "tgt": "RULE-MONOLITH-004",
+      "src_repo": "guard",
+      "tgt_repo": "guard",
+      "src_file": "guard/rules/RULE-MONOLITH-014.md",
+      "tgt_file": "guard/rules/RULE-MONOLITH-004.md"
+    },
+    {
+      "src": "RULE-MONOLITH-014",
+      "tgt": "STD-SEC-002",
+      "src_repo": "guard",
+      "tgt_repo": "standards",
+      "src_file": "guard/rules/RULE-MONOLITH-014.md",
+      "tgt_file": "standards/standards/SEC-002-security-extended.md"
+    },
+    {
+      "src": "RULE-MONOLITH-017",
+      "tgt": "RULE-MONOLITH-011",
+      "src_repo": "guard",
+      "tgt_repo": "guard",
+      "src_file": "guard/rules/RULE-MONOLITH-017.md",
+      "tgt_file": "guard/rules/RULE-MONOLITH-011.md"
+    },
+    {
+      "src": "RULE-MONOLITH-017",
+      "tgt": "RULE-MONOLITH-016",
+      "src_repo": "guard",
+      "tgt_repo": "guard",
+      "src_file": "guard/rules/RULE-MONOLITH-017.md",
+      "tgt_file": "guard/rules/RULE-MONOLITH-016.md"
+    },
+    {
+      "src": "RULE-MONOLITH-017",
+      "tgt": "STD-ARCH-001",
+      "src_repo": "guard",
+      "tgt_repo": "standards",
+      "src_file": "guard/rules/RULE-MONOLITH-017.md",
+      "tgt_file": "standards/standards/ARCH-001-architecture-and-repo-layout.md"
+    },
+    {
+      "src": "RULE-MONOLITH-008",
+      "tgt": "STD-ENV-001",
+      "src_repo": "guard",
+      "tgt_repo": "standards",
+      "src_file": "guard/rules/RULE-MONOLITH-008.md",
+      "tgt_file": "standards/standards/ENV-001-reproducibility.md"
+    },
+    {
+      "src": "RULE-MONOLITH-008",
+      "tgt": "STD-ENV-002",
+      "src_repo": "guard",
+      "tgt_repo": "standards",
+      "src_file": "guard/rules/RULE-MONOLITH-008.md",
+      "tgt_file": "standards/standards/ENV-002-zai-integration.md"
+    },
+    {
+      "src": "RULE-MONOLITH-008",
+      "tgt": "STD-GIT-002",
+      "src_repo": "guard",
+      "tgt_repo": "standards",
+      "src_file": "guard/rules/RULE-MONOLITH-008.md",
+      "tgt_file": "standards/standards/GIT-002-github-sandbox.md"
+    },
+    {
+      "src": "ZAI-MEM-002",
+      "tgt": "STD-SKILL-001",
+      "src_repo": "skills",
+      "tgt_repo": "standards",
+      "src_file": "skills/skills/memory-query/SKILL.md",
+      "tgt_file": "standards/standards/SKILL-001-skill-format.md"
+    },
+    {
+      "src": "ZAI-MEM-002",
+      "tgt": "ZAI-MEM-001",
+      "src_repo": "skills",
+      "tgt_repo": "skills",
+      "src_file": "skills/skills/memory-query/SKILL.md",
+      "tgt_file": "skills/skills/memory-store/SKILL.md"
+    },
+    {
+      "src": "ZAI-SESSION-003",
+      "tgt": "STD-SKILL-001",
+      "src_repo": "skills",
+      "tgt_repo": "standards",
+      "src_file": "skills/skills/session-experience/SKILL.md",
+      "tgt_file": "standards/standards/SKILL-001-skill-format.md"
+    },
+    {
+      "src": "ZAI-SESSION-003",
+      "tgt": "ZAI-SESSION-001",
+      "src_repo": "skills",
+      "tgt_repo": "skills",
+      "src_file": "skills/skills/session-experience/SKILL.md",
+      "tgt_file": "skills/skills/session-log/SKILL.md"
+    },
+    {
+      "src": "ZAI-REQ-001",
+      "tgt": "STD-SKILL-001",
+      "src_repo": "skills",
+      "tgt_repo": "standards",
+      "src_file": "skills/skills/requirements-clarity/SKILL.md",
+      "tgt_file": "standards/standards/SKILL-001-skill-format.md"
+    },
+    {
+      "src": "ZAI-ARCH-001",
+      "tgt": "STD-SKILL-001",
+      "src_repo": "skills",
+      "tgt_repo": "standards",
+      "src_file": "skills/skills/mermaid-diagrams/SKILL.md",
+      "tgt_file": "standards/standards/SKILL-001-skill-format.md"
+    },
+    {
+      "src": "ZAI-MEM-004",
+      "tgt": "STD-SKILL-001",
+      "src_repo": "skills",
+      "tgt_repo": "standards",
+      "src_file": "skills/skills/memory-export/SKILL.md",
+      "tgt_file": "standards/standards/SKILL-001-skill-format.md"
+    },
+    {
+      "src": "ZAI-MEM-004",
+      "tgt": "ZAI-MEM-001",
+      "src_repo": "skills",
+      "tgt_repo": "skills",
+      "src_file": "skills/skills/memory-export/SKILL.md",
+      "tgt_file": "skills/skills/memory-store/SKILL.md"
+    },
+    {
+      "src": "ZAI-FS-001",
+      "tgt": "STD-SKILL-001",
+      "src_repo": "skills",
+      "tgt_repo": "standards",
+      "src_file": "skills/skills/folder-indexer/SKILL.md",
+      "tgt_file": "standards/standards/SKILL-001-skill-format.md"
+    },
+    {
+      "src": "ZAI-SESSION-002",
+      "tgt": "STD-SKILL-001",
+      "src_repo": "skills",
+      "tgt_repo": "standards",
+      "src_file": "skills/skills/context-consolidation/SKILL.md",
+      "tgt_file": "standards/standards/SKILL-001-skill-format.md"
+    },
+    {
+      "src": "ZAI-SESSION-002",
+      "tgt": "ZAI-SESSION-001",
+      "src_repo": "skills",
+      "tgt_repo": "skills",
+      "src_file": "skills/skills/context-consolidation/SKILL.md",
+      "tgt_file": "skills/skills/session-log/SKILL.md"
+    },
+    {
+      "src": "ZAI-MEM-003",
+      "tgt": "STD-SKILL-001",
+      "src_repo": "skills",
+      "tgt_repo": "standards",
+      "src_file": "skills/skills/memory-delete/SKILL.md",
+      "tgt_file": "standards/standards/SKILL-001-skill-format.md"
+    },
+    {
+      "src": "ZAI-MEM-003",
+      "tgt": "ZAI-MEM-001",
+      "src_repo": "skills",
+      "tgt_repo": "skills",
+      "src_file": "skills/skills/memory-delete/SKILL.md",
+      "tgt_file": "skills/skills/memory-store/SKILL.md"
+    },
+    {
+      "src": "ZAI-STS-003",
+      "tgt": "STD-SKILL-001",
+      "src_repo": "skills",
+      "tgt_repo": "standards",
+      "src_file": "skills/skills/performance-code-generator_sts/SKILL.md",
+      "tgt_file": "standards/standards/SKILL-001-skill-format.md"
+    },
+    {
+      "src": "ZAI-QA-001",
+      "tgt": "STD-SKILL-001",
+      "src_repo": "skills",
+      "tgt_repo": "standards",
+      "src_file": "skills/skills/qa-test-planner/SKILL.md",
+      "tgt_file": "standards/standards/SKILL-001-skill-format.md"
+    },
+    {
+      "src": "ZAI-QA-001",
+      "tgt": "STD-TEST-001",
+      "src_repo": "skills",
+      "tgt_repo": "standards",
+      "src_file": "skills/skills/qa-test-planner/SKILL.md",
+      "tgt_file": "standards/standards/TEST-001-testing.md"
+    },
+    {
+      "src": "ZAI-DEV-003",
+      "tgt": "STD-SKILL-001",
+      "src_repo": "skills",
+      "tgt_repo": "standards",
+      "src_file": "skills/skills/database-schema-designer/SKILL.md",
+      "tgt_file": "standards/standards/SKILL-001-skill-format.md"
+    },
+    {
+      "src": "ZAI-DEV-002",
+      "tgt": "STD-SKILL-001",
+      "src_repo": "skills",
+      "tgt_repo": "standards",
+      "src_file": "skills/skills/commit-work/SKILL.md",
+      "tgt_file": "standards/standards/SKILL-001-skill-format.md"
+    },
+    {
+      "src": "ZAI-DEV-002",
+      "tgt": "STD-ERR-002",
+      "src_repo": "skills",
+      "tgt_repo": "standards",
+      "src_file": "skills/skills/commit-work/SKILL.md",
+      "tgt_file": "standards/standards/ERR-002-error-recovery.md"
+    },
+    {
+      "src": "ZAI-DEV-002",
+      "tgt": "STD-GIT-001",
+      "src_repo": "skills",
+      "tgt_repo": "standards",
+      "src_file": "skills/skills/commit-work/SKILL.md",
+      "tgt_file": "standards/standards/GIT-001-github.md"
+    },
+    {
+      "src": "ZAI-DEV-002",
+      "tgt": "RULE-MONOLITH-002",
+      "src_repo": "skills",
+      "tgt_repo": "guard",
+      "src_file": "skills/skills/commit-work/SKILL.md",
+      "tgt_file": "guard/rules/RULE-MONOLITH-002.md"
+    },
+    {
+      "src": "ZAI-DEV-002",
+      "tgt": "RULE-MONOLITH-004",
+      "src_repo": "skills",
+      "tgt_repo": "guard",
+      "src_file": "skills/skills/commit-work/SKILL.md",
+      "tgt_file": "guard/rules/RULE-MONOLITH-004.md"
+    },
+    {
+      "src": "ZAI-STS-007",
+      "tgt": "STD-SKILL-001",
+      "src_repo": "skills",
+      "tgt_repo": "standards",
+      "src_file": "skills/skills/workflow-discipline_sts/SKILL.md",
+      "tgt_file": "standards/standards/SKILL-001-skill-format.md"
+    },
+    {
+      "src": "ZAI-SESSION-001",
+      "tgt": "STD-SKILL-001",
+      "src_repo": "skills",
+      "tgt_repo": "standards",
+      "src_file": "skills/skills/session-log/SKILL.md",
+      "tgt_file": "standards/standards/SKILL-001-skill-format.md"
+    },
+    {
+      "src": "ZAI-STS-002",
+      "tgt": "STD-SKILL-001",
+      "src_repo": "skills",
+      "tgt_repo": "standards",
+      "src_file": "skills/skills/sync-toolkit_sts/SKILL.md",
+      "tgt_file": "standards/standards/SKILL-001-skill-format.md"
+    },
+    {
+      "src": "ZAI-STS-002",
+      "tgt": "ZAI-STS-001",
+      "src_repo": "skills",
+      "tgt_repo": "skills",
+      "src_file": "skills/skills/sync-toolkit_sts/SKILL.md",
+      "tgt_file": "skills/skills/prompt-engineering_sts/SKILL.md"
+    },
+    {
+      "src": "ZAI-STS-001",
+      "tgt": "STD-SKILL-001",
+      "src_repo": "skills",
+      "tgt_repo": "standards",
+      "src_file": "skills/skills/prompt-engineering_sts/SKILL.md",
+      "tgt_file": "standards/standards/SKILL-001-skill-format.md"
+    },
+    {
+      "src": "ZAI-DEV-001",
+      "tgt": "STD-SKILL-001",
+      "src_repo": "skills",
+      "tgt_repo": "standards",
+      "src_file": "skills/skills/project-clone/SKILL.md",
+      "tgt_file": "standards/standards/SKILL-001-skill-format.md"
+    },
+    {
+      "src": "ZAI-DEV-001",
+      "tgt": "ZAI-DEV-002",
+      "src_repo": "skills",
+      "tgt_repo": "skills",
+      "src_file": "skills/skills/project-clone/SKILL.md",
+      "tgt_file": "skills/skills/commit-work/SKILL.md"
+    },
+    {
+      "src": "ZAI-DEV-001",
+      "tgt": "ZAI-DEV-003",
+      "src_repo": "skills",
+      "tgt_repo": "skills",
+      "src_file": "skills/skills/project-clone/SKILL.md",
+      "tgt_file": "skills/skills/database-schema-designer/SKILL.md"
+    },
+    {
+      "src": "ZAI-ARCH-002",
+      "tgt": "STD-SKILL-001",
+      "src_repo": "skills",
+      "tgt_repo": "standards",
+      "src_file": "skills/skills/anti-monolith/SKILL.md",
+      "tgt_file": "standards/standards/SKILL-001-skill-format.md"
+    },
+    {
+      "src": "ZAI-ARCH-002",
+      "tgt": "ZAI-ARCH-001",
+      "src_repo": "skills",
+      "tgt_repo": "skills",
+      "src_file": "skills/skills/anti-monolith/SKILL.md",
+      "tgt_file": "skills/skills/mermaid-diagrams/SKILL.md"
+    },
+    {
+      "src": "ZAI-STS-005",
+      "tgt": "STD-SKILL-001",
+      "src_repo": "skills",
+      "tgt_repo": "standards",
+      "src_file": "skills/skills/phi-layout_sts/SKILL.md",
+      "tgt_file": "standards/standards/SKILL-001-skill-format.md"
+    },
+    {
+      "src": "ZAI-STS-004",
+      "tgt": "STD-SKILL-001",
+      "src_repo": "skills",
+      "tgt_repo": "standards",
+      "src_file": "skills/skills/frontend-styling-expert_sts/SKILL.md",
+      "tgt_file": "standards/standards/SKILL-001-skill-format.md"
+    },
+    {
+      "src": "ZAI-STS-006",
+      "tgt": "STD-SKILL-001",
+      "src_repo": "skills",
+      "tgt_repo": "standards",
+      "src_file": "skills/skills/zai-ui-composer_sts/SKILL.md",
+      "tgt_file": "standards/standards/SKILL-001-skill-format.md"
+    },
+    {
+      "src": "ZAI-STS-006",
+      "tgt": "ZAI-STS-007",
+      "src_repo": "skills",
+      "tgt_repo": "skills",
+      "src_file": "skills/skills/zai-ui-composer_sts/SKILL.md",
+      "tgt_file": "skills/skills/workflow-discipline_sts/SKILL.md"
+    },
+    {
+      "src": "ZAI-MEM-001",
+      "tgt": "STD-SKILL-001",
+      "src_repo": "skills",
+      "tgt_repo": "standards",
+      "src_file": "skills/skills/memory-store/SKILL.md",
+      "tgt_file": "standards/standards/SKILL-001-skill-format.md"
+    }
+  ],
+  "matrix": {
+    "STD": {
+      "STD": 39
+    },
+    "RULE": {
+      "STD": 14,
+      "RULE": 16
+    },
+    "ZAI": {
+      "STD": 25,
+      "ZAI": 10,
+      "RULE": 2
+    },
+    "TOOL": {}
+  },
+  "top_out": [
+    [
+      "ZAI-DEV-002",
+      5
+    ],
+    [
+      "STD-AGENT-001",
+      4
+    ],
+    [
+      "STD-TEST-001",
+      4
+    ],
+    [
+      "STD-SEC-001",
+      4
+    ],
+    [
+      "RULE-MONOLITH-012",
+      4
+    ],
+    [
+      "STD-ENV-001",
+      3
+    ],
+    [
+      "STD-ERR-001",
+      3
+    ],
+    [
+      "STD-GIT-001",
+      3
+    ],
+    [
+      "STD-AGENT-002",
+      3
+    ],
+    [
+      "STD-GIT-002",
+      3
+    ],
+    [
+      "RULE-MONOLITH-007",
+      3
+    ],
+    [
+      "RULE-MONOLITH-014",
+      3
+    ],
+    [
+      "RULE-MONOLITH-017",
+      3
+    ],
+    [
+      "RULE-MONOLITH-008",
+      3
+    ],
+    [
+      "ZAI-DEV-001",
+      3
+    ]
+  ],
+  "top_in": [
+    [
+      "STD-SKILL-001",
+      23
+    ],
+    [
+      "STD-META-001",
+      16
+    ],
+    [
+      "STD-DOC-002",
+      10
+    ],
+    [
+      "STD-ENV-001",
+      5
+    ],
+    [
+      "RULE-MONOLITH-002",
+      5
+    ],
+    [
+      "STD-ARCH-001",
+      4
+    ],
+    [
+      "STD-GIT-001",
+      4
+    ],
+    [
+      "RULE-MONOLITH-004",
+      4
+    ],
+    [
+      "STD-FE-001",
+      3
+    ],
+    [
+      "STD-ERR-001",
+      3
+    ],
+    [
+      "RULE-MONOLITH-011",
+      3
+    ],
+    [
+      "ZAI-MEM-001",
+      3
+    ],
+    [
+      "STD-ENV-002",
+      2
+    ],
+    [
+      "RULE-MONOLITH-010",
+      2
+    ],
+    [
+      "RULE-MONOLITH-006",
+      2
+    ]
+  ],
+  "summary": {
+    "ids_total": 60,
+    "edges_total": 106,
+    "prefixes": {
+      "STD": 19,
+      "RULE": 17,
+      "ZAI": 24
+    }
+  }
+}

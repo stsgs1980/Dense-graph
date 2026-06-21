@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Z-ai platform — Dense ID-graph viewer (D3.js)</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+  :root {
+    --bg: #0b1220;
+    --panel: #131c2e;
+    --panel-2: #1a2540;
+    --border: #233252;
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --text-mute: #64748b;
+    --l0: #f59e0b;
+    --l1: #3b82f6;
+    --l2: #10b981;
+    --l3: #a855f7;
+    --l4: #ec4899;
+    --ok: #22c55e;
+    --warn: #f97316;
+    --err: #ef4444;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); color: var(--text); font: 13px/1.5 ui-monospace, 'SF Mono', Menlo, Consolas, monospace; height: 100vh; overflow: hidden; }
+  body { display: flex; flex-direction: column; }
+
+  header { padding: 12px 16px; background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  header h1 { font-size: 16px; color: #fff; }
+  header .sub { color: var(--text-dim); font-size: 11px; margin-top: 2px; }
+
+  .layout { flex: 1; display: grid; grid-template-columns: 240px 1fr 340px; min-height: 0; }
+
+  /* LEFT: controls */
+  .controls { background: var(--panel); border-right: 1px solid var(--border); padding: 12px; overflow-y: auto; }
+  .controls section { margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+  .controls section:last-child { border-bottom: none; }
+  .controls h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin-bottom: 8px; }
+
+  .chip-group { display: flex; flex-wrap: wrap; gap: 4px; }
+  .chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 3px; cursor: pointer; user-select: none; font-size: 11px; color: var(--text-dim); }
+  .chip.active { color: #fff; }
+  .chip.active[data-prefix="STD"]  { border-color: var(--l1); background: rgba(59,130,246,0.15); }
+  .chip.active[data-prefix="RULE"] { border-color: var(--l2); background: rgba(16,185,129,0.15); }
+  .chip.active[data-prefix="ZAI"]  { border-color: var(--l3); background: rgba(168,85,247,0.15); }
+  .chip.active[data-prefix="TOOL"] { border-color: var(--l0); background: rgba(245,158,11,0.15); }
+  .chip.active[data-repo="standards"] { border-color: var(--l1); }
+  .chip.active[data-repo="guard"]     { border-color: var(--l2); }
+  .chip.active[data-repo="skills"]    { border-color: var(--l3); }
+  .chip.active[data-repo="platform"]  { border-color: var(--l0); }
+  .chip.active[data-edge="related"]   { border-color: var(--text); }
+  .chip.active[data-edge="aligned"]   { border-color: var(--l4); }
+  .chip input { display: none; }
+
+  .search-box { width: 100%; background: var(--panel-2); border: 1px solid var(--border); border-radius: 3px; padding: 6px 8px; color: var(--text); font: inherit; font-size: 12px; }
+  .search-box:focus { outline: none; border-color: var(--l1); }
+
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 11px; }
+  .stat { background: var(--panel-2); padding: 6px 8px; border-radius: 3px; }
+  .stat-label { color: var(--text-mute); font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .stat-value { color: #fff; font-size: 16px; font-weight: 600; margin-top: 2px; }
+
+  .btn { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); padding: 6px 10px; border-radius: 3px; cursor: pointer; font: inherit; font-size: 11px; width: 100%; text-align: left; }
+  .btn:hover { border-color: var(--text-dim); color: #fff; }
+  .btn.active { background: var(--l1); border-color: var(--l1); color: #fff; }
+
+  select { width: 100%; background: var(--panel-2); border: 1px solid var(--border); color: var(--text); padding: 6px 8px; border-radius: 3px; font: inherit; font-size: 12px; }
+  select:focus { outline: none; border-color: var(--l1); }
+
+  /* CENTER: graph canvas */
+  .canvas-wrap { position: relative; background: radial-gradient(circle at 50% 40%, #0f1729 0%, var(--bg) 100%); overflow: hidden; }
+  svg.graph { width: 100%; height: 100%; cursor: grab; }
+  svg.graph:active { cursor: grabbing; }
+  .zoom-hint { position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.6); border: 1px solid var(--border); border-radius: 4px; padding: 6px 10px; font-size: 10px; color: var(--text-mute); pointer-events: none; }
+  .legend-floating { position: absolute; bottom: 12px; left: 12px; background: rgba(0,0,0,0.7); border: 1px solid var(--border); border-radius: 4px; padding: 8px 10px; font-size: 10px; pointer-events: none; }
+  .legend-floating .row { display: flex; align-items: center; gap: 6px; margin: 2px 0; color: var(--text-dim); }
+  .legend-floating .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .legend-floating .line { width: 16px; height: 0; border-top: 2px solid; }
+  .path-banner { position: absolute; top: 12px; left: 12px; background: rgba(34,197,94,0.15); border: 1px solid var(--ok); border-radius: 4px; padding: 8px 12px; font-size: 11px; color: #fff; max-width: 60%; display: none; }
+  .path-banner.visible { display: block; }
+  .path-banner .close { float: right; cursor: pointer; color: var(--text-mute); margin-left: 8px; }
+  .path-banner .close:hover { color: var(--err); }
+
+  /* RIGHT: detail panel */
+  .detail-panel { background: var(--panel); border-left: 1px solid var(--border); overflow-y: auto; display: flex; flex-direction: column; }
+  .detail-tabs { display: flex; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .detail-tab { flex: 1; padding: 10px; background: transparent; color: var(--text-dim); border: none; border-bottom: 2px solid transparent; cursor: pointer; font: inherit; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .detail-tab.active { color: #fff; border-bottom-color: var(--l1); }
+  .detail-content { flex: 1; padding: 14px; overflow-y: auto; }
+  .detail-section { display: none; }
+  .detail-section.active { display: block; }
+
+  .id-card h2 { color: #fff; font-size: 15px; word-break: break-all; }
+  .id-card .title-line { color: var(--text-dim); font-size: 12px; margin-top: 4px; margin-bottom: 12px; }
+  .id-card table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 8px; }
+  .id-card td { padding: 4px 0; vertical-align: top; border-bottom: 1px solid var(--border); }
+  .id-card td:first-child { color: var(--text-mute); width: 35%; padding-right: 8px; }
+  .id-card td:last-child { color: var(--text); word-break: break-all; }
+  .edge-list { margin-top: 12px; }
+  .edge-list h3 { color: var(--text-dim); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+  .edge-list .edge-row { padding: 4px 6px; background: var(--panel-2); border-radius: 3px; margin-bottom: 3px; font-size: 11px; cursor: pointer; word-break: break-all; }
+  .edge-list .edge-row:hover { background: rgba(59,130,246,0.2); }
+  .edge-list .edge-row .arrow { color: var(--text-mute); margin: 0 4px; }
+  .edge-list .edge-row.aligned { border-left: 2px solid var(--l4); }
+  .edge-list .edge-row.related { border-left: 2px solid var(--text-dim); }
+  .empty-state { color: var(--text-mute); font-style: italic; text-align: center; padding: 40px 16px; font-size: 12px; }
+
+  .path-section label { display: block; color: var(--text-mute); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 10px; margin-bottom: 4px; }
+  .path-section .path-result { margin-top: 16px; padding: 10px; background: var(--panel-2); border-radius: 4px; font-size: 11px; }
+  .path-section .path-result.found { border-left: 3px solid var(--ok); }
+  .path-section .path-result.notfound { border-left: 3px solid var(--err); color: var(--text-dim); }
+  .path-section .path-step { padding: 4px 0; word-break: break-all; }
+  .path-section .path-step .arrow { color: var(--text-mute); margin: 0 6px; }
+  .path-section .path-step.current { color: var(--ok); font-weight: 600; }
+
+  .graph-stats h2 { color: #fff; font-size: 14px; margin-bottom: 12px; }
+  .graph-stats .hub-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .graph-stats .hub-table th { background: var(--panel-2); color: var(--text-dim); padding: 5px 6px; text-align: left; font-weight: 500; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .graph-stats .hub-table td { padding: 4px 6px; border-bottom: 1px solid var(--border); word-break: break-all; }
+  .graph-stats .hub-table td.deg { color: var(--l0); font-weight: 600; text-align: right; }
+  .graph-stats h3 { color: var(--text); font-size: 12px; margin: 14px 0 6px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Z-ai platform — Dense ID-graph viewer</h1>
+  <div class="sub">D3.js v7 force-directed · 60 IDs · 113 edges (106 Related + 7 Aligned_with) · click node for details · scroll to zoom · drag to pan · drag node to reposition</div>
+</header>
+
+<div class="layout">
+
+  <!-- LEFT: controls -->
+  <aside class="controls">
+    <section>
+      <h2>Stats</h2>
+      <div class="stat-grid">
+        <div class="stat"><div class="stat-label">IDs</div><div class="stat-value" id="stat-ids">60</div></div>
+        <div class="stat"><div class="stat-label">Edges</div><div class="stat-value" id="stat-edges">113</div></div>
+        <div class="stat"><div class="stat-label">STD</div><div class="stat-value" style="color:var(--l1);">19</div></div>
+        <div class="stat"><div class="stat-label">RULE</div><div class="stat-value" style="color:var(--l2);">17</div></div>
+        <div class="stat"><div class="stat-label">ZAI</div><div class="stat-value" style="color:var(--l3);">24</div></div>
+        <div class="stat"><div class="stat-label">Shown</div><div class="stat-value" id="stat-shown" style="color:var(--ok);">113</div></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Search</h2>
+      <input type="text" class="search-box" id="search" placeholder="e.g. META, MONOLITH-012, STD-SKILL">
+      <div style="font-size:10px;color:var(--text-mute);margin-top:4px;">Matches highlight in graph.</div>
+    </section>
+
+    <section>
+      <h2>Filter: src prefix</h2>
+      <div class="chip-group" id="filter-src-prefix">
+        <label class="chip active" data-prefix="STD"><input type="checkbox" checked>STD</label>
+        <label class="chip active" data-prefix="RULE"><input type="checkbox" checked>RULE</label>
+        <label class="chip active" data-prefix="ZAI"><input type="checkbox" checked>ZAI</label>
+        <label class="chip active" data-prefix="TOOL"><input type="checkbox" checked>TOOL</label>
+      </div>
+    </section>
+
+    <section>
+      <h2>Filter: tgt prefix</h2>
+      <div class="chip-group" id="filter-tgt-prefix">
+        <label class="chip active" data-tgt-prefix="STD"><input type="checkbox" checked>STD</label>
+        <label class="chip active" data-tgt-prefix="RULE"><input type="checkbox" checked>RULE</label>
+        <label class="chip active" data-tgt-prefix="ZAI"><input type="checkbox" checked>ZAI</label>
+        <label class="chip active" data-tgt-prefix="TOOL"><input type="checkbox" checked>TOOL</label>
+      </div>
+    </section>
+
+    <section>
+      <h2>Filter: repo</h2>
+      <div class="chip-group" id="filter-repo">
+        <label class="chip active" data-repo="standards"><input type="checkbox" checked>standards</label>
+        <label class="chip active" data-repo="guard"><input type="checkbox" checked>guard</label>
+        <label class="chip active" data-repo="skills"><input type="checkbox" checked>skills</label>
+      </div>
+    </section>
+
+    <section>
+      <h2>Edge type</h2>
+      <div class="chip-group" id="filter-edge">
+        <label class="chip active" data-edge="related"><input type="checkbox" checked>Related (106)</label>
+        <label class="chip active" data-edge="aligned"><input type="checkbox" checked>Aligned_with (7)</label>
+      </div>
+    </section>
+
+    <section>
+      <h2>Force settings</h2>
+      <label style="font-size:10px;color:var(--text-mute);">Charge (repulsion): <span id="charge-val">-300</span></label>
+      <input type="range" id="charge-slider" min="-800" max="-50" value="-300" step="50" style="width:100%;">
+      <label style="font-size:10px;color:var(--text-mute);margin-top:6px;display:block;">Link distance: <span id="linkdist-val">60</span></label>
+      <input type="range" id="linkdist-slider" min="20" max="200" value="60" step="5" style="width:100%;margin-bottom:8px;">
+      <button class="btn" id="reheat">Reheat simulation</button>
+      <button class="btn" id="reset-zoom" style="margin-top:4px;">Reset zoom</button>
+    </section>
+  </aside>
+
+  <!-- CENTER: graph -->
+  <div class="canvas-wrap">
+    <svg class="graph" id="graph"></svg>
+    <div class="zoom-hint">scroll = zoom · drag bg = pan · drag node = move · click node = details · dbl-click = reset</div>
+    <div class="path-banner" id="path-banner">
+      <span id="path-banner-text"></span>
+      <span class="close" id="path-banner-close">×</span>
+    </div>
+    <div class="legend-floating">
+      <div class="row"><span class="dot" style="background:var(--l1);"></span>STD (standards)</div>
+      <div class="row"><span class="dot" style="background:var(--l2);"></span>RULE (guard)</div>
+      <div class="row"><span class="dot" style="background:var(--l3);"></span>ZAI (skills)</div>
+      <div class="row"><span class="line" style="border-color:var(--text-dim);"></span>Related:</div>
+      <div class="row"><span class="line" style="border-color:var(--l4); border-top-style:dashed;"></span>Aligned_with:</div>
+    </div>
+  </div>
+
+  <!-- RIGHT: detail panel -->
+  <aside class="detail-panel">
+    <div class="detail-tabs">
+      <button class="detail-tab active" data-tab="id">ID details</button>
+      <button class="detail-tab" data-tab="path">BFS path</button>
+      <button class="detail-tab" data-tab="stats">Stats</button>
+    </div>
+    <div class="detail-content">
+
+      <!-- TAB: ID details -->
+      <div class="detail-section active" id="section-id">
+        <div class="empty-state" id="id-empty">Click a node in the graph to see its details.</div>
+        <div class="id-card" id="id-card" style="display:none;">
+          <h2 id="id-id"></h2>
+          <div class="title-line" id="id-title"></div>
+          <table>
+            <tr><td>Prefix</td><td id="id-prefix"></td></tr>
+            <tr><td>Repo</td><td id="id-repo"></td></tr>
+            <tr><td>File</td><td id="id-file"></td></tr>
+            <tr><td>In-degree</td><td id="id-indeg"></td></tr>
+            <tr><td>Out-degree</td><td id="id-outdeg"></td></tr>
+            <tr><td>Total</td><td id="id-totaldeg"></td></tr>
+          </table>
+          <div class="edge-list">
+            <h3>Outgoing edges (<span id="id-out-count">0</span>)</h3>
+            <div id="id-out-list"></div>
+          </div>
+          <div class="edge-list">
+            <h3>Incoming edges (<span id="id-in-count">0</span>)</h3>
+            <div id="id-in-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: BFS path -->
+      <div class="detail-section" id="section-path">
+        <h2 style="color:#fff;font-size:14px;margin-bottom:8px;">BFS shortest path</h2>
+        <p style="font-size:11px;color:var(--text-dim);margin-bottom:12px;">Find shortest path between 2 IDs over Related: graph. Edges followed in either direction.</p>
+        <label for="path-from">From ID</label>
+        <select id="path-from"></select>
+        <label for="path-to">To ID</label>
+        <select id="path-to"></select>
+        <button class="btn" id="path-find" style="margin-top:10px;background:var(--l1);border-color:var(--l1);color:#fff;">Find path</button>
+        <button class="btn" id="path-clear" style="margin-top:4px;">Clear</button>
+        <div class="path-result" id="path-result" style="display:none;"></div>
+      </div>
+
+      <!-- TAB: Stats -->
+      <div class="detail-section graph-stats" id="section-stats">
+        <h2>Top 15 by total degree</h2>
+        <table class="hub-table">
+          <thead><tr><th>#</th><th>ID</th><th>repo</th><th>in</th><th>out</th><th>total</th></tr></thead>
+          <tbody id="stats-top-body"></tbody>
+        </table>
+        <h3>Density (prefix × prefix)</h3>
+        <table class="hub-table" style="margin-top:6px;">
+          <thead><tr><th>src\tgt</th><th>STD</th><th>RULE</th><th>ZAI</th></tr></thead>
+          <tbody id="stats-matrix-body"></tbody>
+        </table>
+      </div>
+
+    </div>
+  </aside>
+</div>
+
+<script>
+const IDG = {"nodes":[{"id":"STD-ARCH-001","r":"standards","t":"Architecture & Repo Layout","p":"STD","f":"standards/standards/ARCH-001-architecture-and-repo-layout.md"},{"id":"STD-ENV-001","r":"standards","t":"Reproducibility","p":"STD","f":"standards/standards/ENV-001-reproducibility.md"},{"id":"STD-AGENT-001","r":"standards","t":"Subagent Standard","p":"STD","f":"standards/standards/AGENT-001-subagent.md"},{"id":"STD-ERR-001","r":"standards","t":"Error Handling Core","p":"STD","f":"standards/standards/ERR-001-error-handling.md"},{"id":"STD-ERR-002","r":"standards","t":"Error Recovery","p":"STD","f":"standards/standards/ERR-002-error-recovery.md"},{"id":"STD-GIT-001","r":"standards","t":"GitHub Core","p":"STD","f":"standards/standards/GIT-001-github.md"},{"id":"STD-SEC-002","r":"standards","t":"Security Extended","p":"STD","f":"standards/standards/SEC-002-security-extended.md"},{"id":"STD-TEST-001","r":"standards","t":"Testing","p":"STD","f":"standards/standards/TEST-001-testing.md"},{"id":"STD-META-001","r":"standards","t":"Standard ID System","p":"STD","f":"standards/standards/META-001-standard-id-system.md"},{"id":"STD-DOC-003","r":"standards","t":"No-Unicode Policy","p":"STD","f":"standards/standards/DOC-003-unicode-policy.md"},{"id":"STD-ENV-002","r":"standards","t":"Z.ai Integration","p":"STD","f":"standards/standards/ENV-002-zai-integration.md"},{"id":"STD-ARCH-002","r":"standards","t":"Implementation Order","p":"STD","f":"standards/standards/ARCH-002-implementation-order.md"},{"id":"STD-AGENT-002","r":"standards","t":"Orchestration Standard","p":"STD","f":"standards/standards/AGENT-002-orchestration.md"},{"id":"STD-FE-001","r":"standards","t":"Frontend Development","p":"STD","f":"standards/standards/FE-001-frontend.md"},{"id":"STD-SKILL-001","r":"standards","t":"Skill Format & Identification","p":"STD","f":"standards/standards/SKILL-001-skill-format.md"},{"id":"STD-DESIGN-001","r":"standards","t":"Design System Standard","p":"STD","f":"standards/standards/DESIGN-001-design-system.md"},{"id":"STD-SEC-001","r":"standards","t":"Security Core","p":"STD","f":"standards/standards/SEC-001-security-core.md"},{"id":"STD-DOC-002","r":"standards","t":"Markdown Formatting","p":"STD","f":"standards/standards/DOC-002-markdown-standard.md"},{"id":"STD-GIT-002","r":"standards","t":"GitHub Sandbox Safety","p":"STD","f":"standards/standards/GIT-002-github-sandbox.md"},{"id":"RULE-MONOLITH-015","r":"guard","t":"No Unicode graphics (UNICODE_POLICY compliance)","p":"RULE","f":"guard/rules/RULE-MONOLITH-015.md"},{"id":"RULE-MONOLITH-002","r":"guard","t":"worklog -- BEFORE and AFTER every action","p":"RULE","f":"guard/rules/RULE-MONOLITH-002.md"},{"id":"RULE-MONOLITH-013","r":"guard","t":"Use ahg bump for version updates","p":"RULE","f":"guard/rules/RULE-MONOLITH-013.md"},{"id":"RULE-MONOLITH-003","r":"guard","t":"Read before write","p":"RULE","f":"guard/rules/RULE-MONOLITH-003.md"},{"id":"RULE-MONOLITH-004","r":"guard","t":"One logical block -- one commit","p":"RULE","f":"guard/rules/RULE-MONOLITH-004.md"},{"id":"RULE-MONOLITH-005","r":"guard","t":"No loops","p":"RULE","f":"guard/rules/RULE-MONOLITH-005.md"},{"id":"RULE-MONOLITH-007","r":"guard","t":"Work structure","p":"RULE","f":"guard/rules/RULE-MONOLITH-007.md"},{"id":"RULE-MONOLITH-006","r":"guard","t":"Honest reporting","p":"RULE","f":"guard/rules/RULE-MONOLITH-006.md"},{"id":"RULE-MONOLITH-012","r":"guard","t":"Anti-monolith (file size by category)","p":"RULE","f":"guard/rules/RULE-MONOLITH-012.md"},{"id":"RULE-MONOLITH-016","r":"guard","t":"AHG submodule is immutable architecture (no removal, no inlining)","p":"RULE","f":"guard/rules/RULE-MONOLITH-016.md"},{"id":"RULE-MONOLITH-001","r":"guard","t":"Answer before act (no unsolicited action)","p":"RULE","f":"guard/rules/RULE-MONOLITH-001.md"},{"id":"RULE-MONOLITH-011","r":"guard","t":"Integrity protection (no self-sabotage)","p":"RULE","f":"guard/rules/RULE-MONOLITH-011.md"},{"id":"RULE-MONOLITH-010","r":"guard","t":"Documentation sync (no code without docs)","p":"RULE","f":"guard/rules/RULE-MONOLITH-010.md"},{"id":"RULE-MONOLITH-009","r":"guard","t":"Session Start Protocol (drift prevention)","p":"RULE","f":"guard/rules/RULE-MONOLITH-009.md"},{"id":"RULE-MONOLITH-014","r":"guard","t":"Pre-commit mandatory checklist","p":"RULE","f":"guard/rules/RULE-MONOLITH-014.md"},{"id":"RULE-MONOLITH-017","r":"guard","t":"Upstream write protection (no consumer agent may push to AHG)","p":"RULE","f":"guard/rules/RULE-MONOLITH-017.md"},{"id":"RULE-MONOLITH-008","r":"guard","t":"Sandbox verification (no fake setup)","p":"RULE","f":"guard/rules/RULE-MONOLITH-008.md"},{"id":"ZAI-META-002","r":"skills","t":"Skill: Z.ai Skill Registry","p":"ZAI","f":"skills/skills/zai-skill-registry/SKILL.md"},{"id":"ZAI-MEM-002","r":"skills","t":"Skill: Memory Query","p":"ZAI","f":"skills/skills/memory-query/SKILL.md"},{"id":"ZAI-SESSION-003","r":"skills","t":"Session Experience","p":"ZAI","f":"skills/skills/session-experience/SKILL.md"},{"id":"ZAI-REQ-001","r":"skills","t":"Skill: Requirements Clarity","p":"ZAI","f":"skills/skills/requirements-clarity/SKILL.md"},{"id":"ZAI-ARCH-001","r":"skills","t":"Skill: Mermaid Diagramming","p":"ZAI","f":"skills/skills/mermaid-diagrams/SKILL.md"},{"id":"ZAI-MEM-004","r":"skills","t":"Skill: Memory Export","p":"ZAI","f":"skills/skills/memory-export/SKILL.md"},{"id":"ZAI-FS-001","r":"skills","t":"Skill: Folder Indexer","p":"ZAI","f":"skills/skills/folder-indexer/SKILL.md"},{"id":"ZAI-SESSION-002","r":"skills","t":"Skill: Context Consolidation","p":"ZAI","f":"skills/skills/context-consolidation/SKILL.md"},{"id":"ZAI-MEM-003","r":"skills","t":"Skill: Memory Delete","p":"ZAI","f":"skills/skills/memory-delete/SKILL.md"},{"id":"ZAI-STS-003","r":"skills","t":"Skill: Performance Code Generator","p":"ZAI","f":"skills/skills/performance-code-generator_sts/SKILL.md"},{"id":"ZAI-QA-001","r":"skills","t":"Skill: QA Test Planner","p":"ZAI","f":"skills/skills/qa-test-planner/SKILL.md"},{"id":"ZAI-META-001","r":"skills","t":"Skill: Skill ID System","p":"ZAI","f":"skills/skills/skill-id-system/SKILL.md"},{"id":"ZAI-DEV-003","r":"skills","t":"Skill: Database Schema Designer","p":"ZAI","f":"skills/skills/database-schema-designer/SKILL.md"},{"id":"ZAI-DEV-002","r":"skills","t":"Skill: Commit Work","p":"ZAI","f":"skills/skills/commit-work/SKILL.md"},{"id":"ZAI-STS-007","r":"skills","t":"Skill: Workflow Discipline","p":"ZAI","f":"skills/skills/workflow-discipline_sts/SKILL.md"},{"id":"ZAI-SESSION-001","r":"skills","t":"Session Log","p":"ZAI","f":"skills/skills/session-log/SKILL.md"},{"id":"ZAI-STS-002","r":"skills","t":"Skill: Sync Toolkit","p":"ZAI","f":"skills/skills/sync-toolkit_sts/SKILL.md"},{"id":"ZAI-STS-001","r":"skills","t":"Skill: Prompt Engineering","p":"ZAI","f":"skills/skills/prompt-engineering_sts/SKILL.md"},{"id":"ZAI-DEV-001","r":"skills","t":"Skill: Project Clone","p":"ZAI","f":"skills/skills/project-clone/SKILL.md"},{"id":"ZAI-ARCH-002","r":"skills","t":"Skill: Anti-Monolith","p":"ZAI","f":"skills/skills/anti-monolith/SKILL.md"},{"id":"ZAI-STS-005","r":"skills","t":"Skill: Phi Layout","p":"ZAI","f":"skills/skills/phi-layout_sts/SKILL.md"},{"id":"ZAI-STS-004","r":"skills","t":"Skill: Frontend Styling Expert","p":"ZAI","f":"skills/skills/frontend-styling-expert_sts/SKILL.md"},{"id":"ZAI-STS-006","r":"skills","t":"ZAI UI Composer Skill","p":"ZAI","f":"skills/skills/zai-ui-composer_sts/SKILL.md"},{"id":"ZAI-MEM-001","r":"skills","t":"Skill: Memory Store","p":"ZAI","f":"skills/skills/memory-store/SKILL.md"}],"links":[{"s":"STD-ARCH-001","t":"STD-META-001","k":"related"},{"s":"STD-ENV-001","t":"STD-ARCH-001","k":"related"},{"s":"STD-ENV-001","t":"STD-DOC-002","k":"related"},{"s":"STD-ENV-001","t":"STD-META-001","k":"related"},{"s":"STD-AGENT-001","t":"STD-ENV-001","k":"related"},{"s":"STD-AGENT-001","t":"STD-GIT-001","k":"related"},{"s":"STD-AGENT-001","t":"STD-DOC-002","k":"related"},{"s":"STD-AGENT-001","t":"STD-META-001","k":"related"},{"s":"STD-ERR-001","t":"STD-FE-001","k":"related"},{"s":"STD-ERR-001","t":"STD-DOC-002","k":"related"},{"s":"STD-ERR-001","t":"STD-META-001","k":"related"},{"s":"STD-ERR-002","t":"STD-ERR-001","k":"related"},{"s":"STD-ERR-002","t":"STD-META-001","k":"related"},{"s":"STD-GIT-001","t":"STD-ENV-001","k":"related"},{"s":"STD-GIT-001","t":"STD-DOC-002","k":"related"},{"s":"STD-GIT-001","t":"STD-META-001","k":"related"},{"s":"STD-SEC-002","t":"STD-SEC-001","k":"related"},{"s":"STD-SEC-002","t":"STD-META-001","k":"related"},{"s":"STD-TEST-001","t":"STD-FE-001","k":"related"},{"s":"STD-TEST-001","t":"STD-ERR-001","k":"related"},{"s":"STD-TEST-001","t":"STD-DOC-002","k":"related"},{"s":"STD-TEST-001","t":"STD-META-001","k":"related"},{"s":"STD-ARCH-002","t":"STD-META-001","k":"related"},{"s":"STD-ARCH-002","t":"STD-ARCH-001","k":"related"},{"s":"STD-AGENT-002","t":"STD-AGENT-001","k":"related"},{"s":"STD-AGENT-002","t":"STD-ERR-001","k":"related"},{"s":"STD-AGENT-002","t":"STD-META-001","k":"related"},{"s":"STD-SKILL-001","t":"STD-META-001","k":"related"},{"s":"STD-SKILL-001","t":"STD-DOC-002","k":"related"},{"s":"STD-DESIGN-001","t":"STD-META-001","k":"related"},{"s":"STD-SEC-001","t":"STD-ENV-001","k":"related"},{"s":"STD-SEC-001","t":"STD-GIT-001","k":"related"},{"s":"STD-SEC-001","t":"STD-DOC-002","k":"related"},{"s":"STD-SEC-001","t":"STD-META-001","k":"related"},{"s":"STD-DOC-002","t":"STD-META-001","k":"related"},{"s":"STD-DOC-002","t":"STD-ARCH-002","k":"related"},{"s":"STD-GIT-002","t":"STD-GIT-001","k":"related"},{"s":"STD-GIT-002","t":"STD-ENV-002","k":"related"},{"s":"STD-GIT-002","t":"STD-META-001","k":"related"},{"s":"RULE-MONOLITH-015","t":"STD-DOC-002","k":"related"},{"s":"RULE-MONOLITH-002","t":"STD-META-001","k":"related"},{"s":"RULE-MONOLITH-013","t":"RULE-MONOLITH-002","k":"related"},{"s":"RULE-MONOLITH-003","t":"RULE-MONOLITH-010","k":"related"},{"s":"RULE-MONOLITH-004","t":"RULE-MONOLITH-002","k":"related"},{"s":"RULE-MONOLITH-005","t":"RULE-MONOLITH-006","k":"related"},{"s":"RULE-MONOLITH-007","t":"RULE-MONOLITH-002","k":"related"},{"s":"RULE-MONOLITH-007","t":"RULE-MONOLITH-004","k":"related"},{"s":"RULE-MONOLITH-007","t":"STD-AGENT-002","k":"related"},{"s":"RULE-MONOLITH-006","t":"RULE-MONOLITH-011","k":"related"},{"s":"RULE-MONOLITH-012","t":"RULE-MONOLITH-004","k":"related"},{"s":"RULE-MONOLITH-012","t":"STD-SKILL-001","k":"related"},{"s":"RULE-MONOLITH-012","t":"STD-DOC-002","k":"related"},{"s":"RULE-MONOLITH-012","t":"STD-FE-001","k":"related"},{"s":"RULE-MONOLITH-016","t":"RULE-MONOLITH-011","k":"related"},{"s":"RULE-MONOLITH-016","t":"STD-ARCH-001","k":"related"},{"s":"RULE-MONOLITH-001","t":"RULE-MONOLITH-006","k":"related"},{"s":"RULE-MONOLITH-001","t":"RULE-MONOLITH-007","k":"related"},{"s":"RULE-MONOLITH-011","t":"STD-ENV-001","k":"related"},{"s":"RULE-MONOLITH-010","t":"STD-DOC-002","k":"related"},{"s":"RULE-MONOLITH-009","t":"RULE-MONOLITH-010","k":"related"},{"s":"RULE-MONOLITH-014","t":"RULE-MONOLITH-002","k":"related"},{"s":"RULE-MONOLITH-014","t":"RULE-MONOLITH-004","k":"related"},{"s":"RULE-MONOLITH-014","t":"STD-SEC-002","k":"related"},{"s":"RULE-MONOLITH-017","t":"RULE-MONOLITH-011","k":"related"},{"s":"RULE-MONOLITH-017","t":"RULE-MONOLITH-016","k":"related"},{"s":"RULE-MONOLITH-017","t":"STD-ARCH-001","k":"related"},{"s":"RULE-MONOLITH-008","t":"STD-ENV-001","k":"related"},{"s":"RULE-MONOLITH-008","t":"STD-ENV-002","k":"related"},{"s":"RULE-MONOLITH-008","t":"STD-GIT-002","k":"related"},{"s":"ZAI-MEM-002","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-MEM-002","t":"ZAI-MEM-001","k":"related"},{"s":"ZAI-SESSION-003","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-SESSION-003","t":"ZAI-SESSION-001","k":"related"},{"s":"ZAI-REQ-001","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-ARCH-001","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-MEM-004","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-MEM-004","t":"ZAI-MEM-001","k":"related"},{"s":"ZAI-FS-001","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-SESSION-002","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-SESSION-002","t":"ZAI-SESSION-001","k":"related"},{"s":"ZAI-MEM-003","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-MEM-003","t":"ZAI-MEM-001","k":"related"},{"s":"ZAI-STS-003","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-QA-001","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-QA-001","t":"STD-TEST-001","k":"related"},{"s":"ZAI-DEV-003","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-DEV-002","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-DEV-002","t":"STD-ERR-002","k":"related"},{"s":"ZAI-DEV-002","t":"STD-GIT-001","k":"related"},{"s":"ZAI-DEV-002","t":"RULE-MONOLITH-002","k":"related"},{"s":"ZAI-DEV-002","t":"RULE-MONOLITH-004","k":"related"},{"s":"ZAI-STS-007","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-SESSION-001","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-STS-002","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-STS-002","t":"ZAI-STS-001","k":"related"},{"s":"ZAI-STS-001","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-DEV-001","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-DEV-001","t":"ZAI-DEV-002","k":"related"},{"s":"ZAI-DEV-001","t":"ZAI-DEV-003","k":"related"},{"s":"ZAI-ARCH-002","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-ARCH-002","t":"ZAI-ARCH-001","k":"related"},{"s":"ZAI-STS-005","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-STS-004","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-STS-006","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-STS-006","t":"ZAI-STS-007","k":"related"},{"s":"ZAI-MEM-001","t":"STD-SKILL-001","k":"related"},{"s":"STD-META-001","t":"ZAI-ARCH-002","k":"aligned"},{"s":"STD-META-001","t":"STD-FE-001","k":"aligned"},{"s":"STD-META-001","t":"STD-DESIGN-001","k":"aligned"},{"s":"STD-SKILL-001","t":"ZAI-META-001","k":"aligned"},{"s":"STD-SKILL-001","t":"ZAI-META-002","k":"aligned"},{"s":"ZAI-META-002","t":"STD-SKILL-001","k":"aligned"},{"s":"ZAI-META-001","t":"STD-SKILL-001","k":"aligned"}],"summary":{"ids_total":60,"related_edges":106,"aligned_edges":7,"total_edges":113,"prefixes":{"STD":19,"RULE":17,"ZAI":24},"by_repo":{"standards":19,"guard":17,"skills":24}}};
+
+const PREFIX_COLORS = {
+  STD:  '#3b82f6',
+  RULE: '#10b981',
+  ZAI:  '#a855f7',
+  TOOL: '#f59e0b',
+};
+const EDGE_COLORS = {
+  related: '#94a3b8',
+  aligned: '#ec4899',
+};
+
+// ============ BUILD GRAPH ============
+const allNodes = IDG.nodes.map(n => ({
+  id: n.id,
+  repo: n.r,
+  title: n.t,
+  prefix: n.p,
+  file: n.f,
+}));
+const allLinks = IDG.links.map(l => ({
+  source: l.s,
+  target: l.t,
+  type: l.k,
+}));
+
+// Build lookup
+const nodeById = {};
+allNodes.forEach(n => { nodeById[n.id] = n; });
+
+// Compute degrees (in/out)
+allNodes.forEach(n => { n.inDeg = 0; n.outDeg = 0; });
+allLinks.forEach(l => {
+  if (nodeById[l.source]) nodeById[l.source].outDeg++;
+  if (nodeById[l.target]) nodeById[l.target].inDeg++;
+});
+allNodes.forEach(n => { n.totalDeg = n.inDeg + n.outDeg; });
+
+// ============ FILTERS ============
+function getActiveFilters() {
+  const srcP = new Set([...document.querySelectorAll('#filter-src-prefix .chip.active')].map(c => c.dataset.prefix));
+  const tgtP = new Set([...document.querySelectorAll('#filter-tgt-prefix .chip.active')].map(c => c.dataset.tgtPrefix));
+  const repos = new Set([...document.querySelectorAll('#filter-repo .chip.active')].map(c => c.dataset.repo));
+  const edges = new Set([...document.querySelectorAll('#filter-edge .chip.active')].map(c => c.dataset.edge));
+  return { srcP, tgtP, repos, edges };
+}
+
+function filteredLinks() {
+  const f = getActiveFilters();
+  return allLinks.filter(l => {
+    const sn = nodeById[l.source];
+    const tn = nodeById[l.target];
+    if (!sn || !tn) return false;
+    return f.srcP.has(sn.prefix) && f.tgtP.has(tn.prefix) && f.repos.has(sn.repo) && f.edges.has(l.type);
+  });
+}
+
+function visibleNodeIds(links) {
+  const ids = new Set();
+  links.forEach(l => { ids.add(l.source); ids.add(l.target); });
+  return ids;
+}
+
+// ============ D3 FORCE SIMULATION ============
+const svg = d3.select('#graph');
+const wrap = svg.node().parentElement;
+let width = wrap.clientWidth;
+let height = wrap.clientHeight;
+svg.attr('viewBox', `0 0 ${width} ${height}`);
+
+// Groups
+const g = svg.append('g').attr('class', 'everything');
+const linkG = g.append('g').attr('class', 'links');
+const nodeG = g.append('g').attr('class', 'nodes');
+
+// Zoom
+const zoom = d3.zoom()
+  .scaleExtent([0.1, 8])
+  .on('zoom', (event) => g.attr('transform', event.transform));
+svg.call(zoom);
+
+function resetZoom() {
+  svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity);
+}
+
+// Simulation
+let simulation = d3.forceSimulation()
+  .force('charge', d3.forceManyBody().strength(-300))
+  .force('center', d3.forceCenter(width / 2, height / 2))
+  .force('collision', d3.forceCollide().radius(d => nodeRadius(d) + 2));
+
+let linkSel, nodeSel;
+let highlightedPath = new Set(); // edge keys in path
+let pathNodes = new Set();       // node ids in path
+
+function nodeRadius(d) {
+  return 4 + Math.sqrt(d.totalDeg) * 2;
+}
+
+function linkKey(s, t) { return `${s}|${t}`; }
+
+function render() {
+  const links = filteredLinks();
+  const visIds = visibleNodeIds(links);
+  const nodes = allNodes.filter(n => visIds.has(n.id));
+
+  document.getElementById('stat-shown').textContent = links.length;
+
+  // Links
+  linkSel = linkG.selectAll('line').data(links, d => `${d.source}|${d.target}|${d.type}`);
+  linkSel.exit().remove();
+  linkSel = linkSel.enter().append('line')
+    .attr('stroke-width', d => d.type === 'aligned' ? 2 : 1)
+    .attr('stroke', d => EDGE_COLORS[d.type])
+    .attr('stroke-dasharray', d => d.type === 'aligned' ? '5 3' : null)
+    .attr('opacity', 0.5)
+    .merge(linkSel);
+
+  // Nodes
+  nodeSel = nodeG.selectAll('g.node').data(nodes, d => d.id);
+  nodeSel.exit().remove();
+  const nodeEnter = nodeSel.enter().append('g')
+    .attr('class', 'node')
+    .call(d3.drag()
+      .on('start', dragstarted)
+      .on('drag', dragged)
+      .on('end', dragended));
+  nodeEnter.append('circle')
+    .attr('r', nodeRadius)
+    .attr('fill', d => PREFIX_COLORS[d.prefix])
+    .attr('stroke', '#0b1220')
+    .attr('stroke-width', 1.5);
+  nodeEnter.append('text')
+    .text(d => d.id.replace(/^(STD|RULE|ZAI|TOOL)-/, ''))
+    .attr('font-size', 9)
+    .attr('fill', '#fff')
+    .attr('text-anchor', 'middle')
+    .attr('dy', d => -nodeRadius(d) - 4)
+    .attr('pointer-events', 'none')
+    .attr('opacity', 0.85);
+  nodeEnter.on('click', (event, d) => {
+    event.stopPropagation();
+    selectNode(d);
+  });
+  nodeSel = nodeEnter.merge(nodeSel);
+
+  // Update simulation
+  simulation.nodes(nodes);
+  simulation.force('link', d3.forceLink(links).id(d => d.id).distance(60).strength(0.1));
+  simulation.alpha(0.7).restart();
+}
+
+simulation.on('tick', () => {
+  if (linkSel) linkSel
+    .attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+    .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+  if (nodeSel) nodeSel.attr('transform', d => `translate(${d.x},${d.y})`);
+});
+
+function dragstarted(event, d) {
+  if (!event.active) simulation.alphaTarget(0.3).restart();
+  d.fx = d.x; d.fy = d.y;
+}
+function dragged(event, d) {
+  d.fx = event.x; d.fy = event.y;
+}
+function dragended(event, d) {
+  if (!event.active) simulation.alphaTarget(0);
+  d.fx = null; d.fy = null;
+}
+
+// ============ SELECTION / DETAIL PANEL ============
+function selectNode(d) {
+  document.getElementById('id-empty').style.display = 'none';
+  document.getElementById('id-card').style.display = 'block';
+
+  document.getElementById('id-id').textContent = d.id;
+  document.getElementById('id-title').textContent = d.title;
+  document.getElementById('id-prefix').textContent = d.prefix;
+  document.getElementById('id-repo').textContent = d.repo;
+  document.getElementById('id-file').textContent = d.file;
+  document.getElementById('id-indeg').textContent = d.inDeg;
+  document.getElementById('id-outdeg').textContent = d.outDeg;
+  document.getElementById('id-totaldeg').textContent = d.totalDeg;
+
+  // Outgoing edges
+  const outE = allLinks.filter(l => l.source === d.id || l.source === d.id);
+  const outEdges = allLinks.filter(l => l.source === d.id);
+  const inEdges = allLinks.filter(l => l.target === d.id);
+  document.getElementById('id-out-count').textContent = outEdges.length;
+  document.getElementById('id-in-count').textContent = inEdges.length;
+
+  const outList = document.getElementById('id-out-list');
+  outList.innerHTML = outEdges.length === 0
+    ? '<div style="color:var(--text-mute);font-size:11px;">none</div>'
+    : outEdges.map(e => {
+        const tn = nodeById[e.target];
+        if (!tn) return '';
+        return `<div class="edge-row ${e.type}" data-target="${e.target}">
+          <span style="color:${PREFIX_COLORS[d.prefix]};">${d.id}</span>
+          <span class="arrow">→</span>
+          <span style="color:${PREFIX_COLORS[tn.prefix]};">${e.target}</span>
+          <span style="color:var(--text-mute);"> [${e.type}]</span>
+        </div>`;
+      }).join('');
+  outList.querySelectorAll('.edge-row').forEach(r => {
+    r.addEventListener('click', () => {
+      const tgt = r.dataset.target;
+      const n = nodeById[tgt];
+      if (n) selectNode(n);
+    });
+  });
+
+  const inList = document.getElementById('id-in-list');
+  inList.innerHTML = inEdges.length === 0
+    ? '<div style="color:var(--text-mute);font-size:11px;">none</div>'
+    : inEdges.map(e => {
+        const sn = nodeById[e.source];
+        if (!sn) return '';
+        return `<div class="edge-row ${e.type}" data-target="${e.source}">
+          <span style="color:${PREFIX_COLORS[sn.prefix]};">${e.source}</span>
+          <span class="arrow">→</span>
+          <span style="color:${PREFIX_COLORS[d.prefix]};">${d.id}</span>
+          <span style="color:var(--text-mute);"> [${e.type}]</span>
+        </div>`;
+      }).join('');
+  inList.querySelectorAll('.edge-row').forEach(r => {
+    r.addEventListener('click', () => {
+      const tgt = r.dataset.target;
+      const n = nodeById[tgt];
+      if (n) selectNode(n);
+    });
+  });
+
+  // Highlight node visually
+  if (nodeSel) {
+    nodeSel.select('circle')
+      .attr('stroke', n => n.id === d.id ? '#fff' : '#0b1220')
+      .attr('stroke-width', n => n.id === d.id ? 3 : 1.5);
+  }
+}
+
+// ============ BFS PATH ============
+function bfsPath(startId, endId) {
+  if (!nodeById[startId] || !nodeById[endId]) return null;
+  if (startId === endId) return [startId];
+  // Build undirected adjacency over Related: edges only
+  const adj = {};
+  allLinks.forEach(l => {
+    if (l.type !== 'related') return;
+    if (!adj[l.source]) adj[l.source] = new Set();
+    if (!adj[l.target]) adj[l.target] = new Set();
+    adj[l.source].add(l.target);
+    adj[l.target].add(l.source);
+  });
+  const visited = new Set([startId]);
+  const queue = [[startId]];
+  while (queue.length > 0) {
+    const path = queue.shift();
+    const last = path[path.length - 1];
+    if (last === endId) return path;
+    const neighbors = adj[last] || new Set();
+    for (const n of neighbors) {
+      if (!visited.has(n)) {
+        visited.add(n);
+        queue.push([...path, n]);
+      }
+    }
+  }
+  return null;
+}
+
+function showPath(path) {
+  highlightedPath = new Set();
+  pathNodes = new Set(path);
+  for (let i = 0; i < path.length - 1; i++) {
+    // Try both directions
+    const k1 = linkKey(path[i], path[i+1]);
+    const k2 = linkKey(path[i+1], path[i]);
+    highlightedPath.add(k1);
+    highlightedPath.add(k2);
+  }
+  // Re-render link styles
+  if (linkSel) {
+    linkSel
+      .attr('opacity', d => {
+        const k = linkKey(d.source.id || d.source, d.target.id || d.target);
+        return highlightedPath.has(k) ? 1 : 0.08;
+      })
+      .attr('stroke-width', d => {
+        const k = linkKey(d.source.id || d.source, d.target.id || d.target);
+        return highlightedPath.has(k) ? 4 : (d.type === 'aligned' ? 2 : 1);
+      })
+      .attr('stroke', d => {
+        const k = linkKey(d.source.id || d.source, d.target.id || d.target);
+        return highlightedPath.has(k) ? '#22c55e' : EDGE_COLORS[d.type];
+      });
+  }
+  if (nodeSel) {
+    nodeSel.select('circle')
+      .attr('opacity', d => pathNodes.has(d.id) ? 1 : 0.2)
+      .attr('stroke', d => pathNodes.has(d.id) ? '#22c55e' : '#0b1220')
+      .attr('stroke-width', d => pathNodes.has(d.id) ? 3 : 1.5);
+  }
+  // Show banner
+  const banner = document.getElementById('path-banner');
+  document.getElementById('path-banner-text').innerHTML =
+    `<strong>Path:</strong> ${path.length} nodes, ${path.length - 1} hops. <span style="color:var(--text-mute);">${path.join(' → ')}</span>`;
+  banner.classList.add('visible');
+
+  // Path result panel
+  const result = document.getElementById('path-result');
+  result.style.display = 'block';
+  result.className = 'path-result found';
+  result.innerHTML = `<div style="color:var(--ok);margin-bottom:6px;">✓ Path found (${path.length - 1} hops, ${path.length} nodes):</div>` +
+    path.map((id, i) => {
+      const n = nodeById[id];
+      const color = n ? PREFIX_COLORS[n.prefix] : 'var(--text)';
+      return `<div class="path-step"><span style="color:${color};">${id}</span>${i < path.length - 1 ? '<span class="arrow">→</span>' : ''}</div>`;
+    }).join('');
+}
+
+function clearPath() {
+  highlightedPath = new Set();
+  pathNodes = new Set();
+  document.getElementById('path-banner').classList.remove('visible');
+  const result = document.getElementById('path-result');
+  result.style.display = 'none';
+  result.className = 'path-result';
+  result.innerHTML = '';
+  if (linkSel) {
+    linkSel
+      .attr('opacity', 0.5)
+      .attr('stroke-width', d => d.type === 'aligned' ? 2 : 1)
+      .attr('stroke', d => EDGE_COLORS[d.type]);
+  }
+  if (nodeSel) {
+    nodeSel.select('circle')
+      .attr('opacity', 1)
+      .attr('stroke', '#0b1220')
+      .attr('stroke-width', 1.5);
+  }
+}
+
+document.getElementById('path-find').addEventListener('click', () => {
+  const from = document.getElementById('path-from').value;
+  const to = document.getElementById('path-to').value;
+  if (!from || !to) return;
+  if (from === to) {
+    const result = document.getElementById('path-result');
+    result.style.display = 'block';
+    result.className = 'path-result';
+    result.innerHTML = '<div style="color:var(--warn);">From and To are the same node.</div>';
+    return;
+  }
+  const path = bfsPath(from, to);
+  if (!path) {
+    const result = document.getElementById('path-result');
+    result.style.display = 'block';
+    result.className = 'path-result notfound';
+    result.innerHTML = '<div style="color:var(--err);">✗ No path found between these IDs over Related: edges.</div>';
+    return;
+  }
+  showPath(path);
+});
+
+document.getElementById('path-clear').addEventListener('click', clearPath);
+document.getElementById('path-banner-close').addEventListener('click', clearPath);
+
+// ============ STATS ============
+function renderStats() {
+  // Top by total degree
+  const top = [...allNodes].sort((a, b) => b.totalDeg - a.totalDeg).slice(0, 15);
+  document.getElementById('stats-top-body').innerHTML = top.map((n, i) =>
+    `<tr><td>${i+1}</td><td style="color:${PREFIX_COLORS[n.prefix]};">${n.id}</td><td style="color:var(--text-mute);">${n.repo}</td><td class="deg">${n.inDeg}</td><td class="deg">${n.outDeg}</td><td class="deg">${n.totalDeg}</td></tr>`
+  ).join('');
+
+  // Matrix
+  const matrix = { STD: {STD:0,RULE:0,ZAI:0}, RULE: {STD:0,RULE:0,ZAI:0}, ZAI: {STD:0,RULE:0,ZAI:0} };
+  allLinks.filter(l => l.type === 'related').forEach(l => {
+    const sn = nodeById[l.source];
+    const tn = nodeById[l.target];
+    if (sn && tn && matrix[sn.prefix] && tn.prefix in matrix[sn.prefix]) {
+      matrix[sn.prefix][tn.prefix]++;
+    }
+  });
+  document.getElementById('stats-matrix-body').innerHTML =
+    ['STD', 'RULE', 'ZAI'].map(sp =>
+      `<tr><td style="color:${PREFIX_COLORS[sp]};">${sp}</td>` +
+      ['STD', 'RULE', 'ZAI'].map(tp => `<td>${matrix[sp][tp]}</td>`).join('') +
+      `</tr>`
+    ).join('');
+}
+
+// ============ TABS ============
+document.querySelectorAll('.detail-tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.detail-tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.detail-section').forEach(s => s.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('section-' + t.dataset.tab).classList.add('active');
+  });
+});
+
+// ============ FILTER WIRING ============
+document.querySelectorAll('.chip input').forEach(cb => {
+  cb.addEventListener('change', () => {
+    cb.closest('.chip').classList.toggle('active', cb.checked);
+    clearPath();
+    render();
+  });
+});
+
+// ============ SEARCH ============
+const search = document.getElementById('search');
+search.addEventListener('input', () => {
+  const q = search.value.trim().toUpperCase();
+  if (!q) {
+    if (nodeSel) nodeSel.select('circle').attr('opacity', 1);
+    return;
+  }
+  if (nodeSel) {
+    nodeSel.select('circle').attr('opacity', d =>
+      d.id.toUpperCase().includes(q) || d.title.toUpperCase().includes(q) ? 1 : 0.15
+    );
+  }
+});
+
+// ============ FORCE SLIDERS ============
+document.getElementById('charge-slider').addEventListener('input', (e) => {
+  const v = +e.target.value;
+  document.getElementById('charge-val').textContent = v;
+  simulation.force('charge').strength(v);
+  simulation.alpha(0.5).restart();
+});
+document.getElementById('linkdist-slider').addEventListener('input', (e) => {
+  const v = +e.target.value;
+  document.getElementById('linkdist-val').textContent = v;
+  if (simulation.force('link')) simulation.force('link').distance(v);
+  simulation.alpha(0.5).restart();
+});
+document.getElementById('reheat').addEventListener('click', () => simulation.alpha(1).restart());
+document.getElementById('reset-zoom').addEventListener('click', resetZoom);
+
+// Double-click resets zoom
+svg.on('dblclick.zoom', null);
+svg.on('dblclick', resetZoom);
+
+// ============ POPULATE PATH SELECTS ============
+const sortedIds = allNodes.map(n => n.id).sort();
+['path-from', 'path-to'].forEach(id => {
+  const sel = document.getElementById(id);
+  sel.innerHTML = '<option value="">— select ID —</option>' +
+    sortedIds.map(id => `<option value="${id}">${id}</option>`).join('');
+});
+
+// ============ RESIZE ============
+window.addEventListener('resize', () => {
+  width = wrap.clientWidth;
+  height = wrap.clientHeight;
+  svg.attr('viewBox', `0 0 ${width} ${height}`);
+  simulation.force('center', d3.forceCenter(width / 2, height / 2));
+  simulation.alpha(0.3).restart();
+});
+
+// ============ INITIAL RENDER ============
+renderStats();
+render();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,203 @@
+digraph zai_id_graph {
+  graph [
+    rankdir=LR,
+    splines=true,
+    overlap=false,
+    fontname="Helvetica",
+    label="Z-ai Platform ID Graph\n60 nodes / 111 edges\nGenerated 2026-06-18",
+    labelloc=t,
+    fontsize=14,
+    bgcolor="#fafafa"
+  ];
+  node [fontname="Helvetica", fontsize=10, style="filled,rounded", shape=box, penwidth=1.2];
+  edge [fontname="Helvetica", fontsize=8, color="#666666"];
+  subgraph cluster_L1 {
+    label="L1 — Standards (STD-*)";
+    style="filled,rounded"; fillcolor="#eff6ff"; color="#bfdbfe"; fontsize=12;
+    "STD-AGENT-001" [label="STD-AGENT-001\nSubagent Standard", fillcolor="#dbeafe", color="#1e40af", fontcolor="#1e3a8a"];
+    "STD-AGENT-002" [label="STD-AGENT-002\nOrchestration Standard", fillcolor="#dbeafe", color="#1e40af", fontcolor="#1e3a8a"];
+    "STD-ARCH-001" [label="STD-ARCH-001\nArchitecture & Repo Layout", fillcolor="#dbeafe", color="#1e40af", fontcolor="#1e3a8a"];
+    "STD-ARCH-002" [label="STD-ARCH-002\nImplementation Order", fillcolor="#dbeafe", color="#1e40af", fontcolor="#1e3a8a"];
+    "STD-DESIGN-001" [label="STD-DESIGN-001\nDesign System Standard", fillcolor="#dbeafe", color="#1e40af", fontcolor="#1e3a8a"];
+    "STD-DOC-002" [label="STD-DOC-002\nMarkdown Formatting", fillcolor="#dbeafe", color="#1e40af", fontcolor="#1e3a8a"];
+    "STD-DOC-003" [label="STD-DOC-003\nNo-Unicode Policy", fillcolor="#dbeafe", color="#1e40af", fontcolor="#1e3a8a"];
+    "STD-ENV-001" [label="STD-ENV-001\nReproducibility", fillcolor="#dbeafe", color="#1e40af", fontcolor="#1e3a8a"];
+    "STD-ENV-002" [label="STD-ENV-002\nZ.ai Integration", fillcolor="#dbeafe", color="#1e40af", fontcolor="#1e3a8a"];
+    "STD-ERR-001" [label="STD-ERR-001\nError Handling Core", fillcolor="#dbeafe", color="#1e40af", fontcolor="#1e3a8a"];
+    "STD-ERR-002" [label="STD-ERR-002\nError Recovery", fillcolor="#dbeafe", color="#1e40af", fontcolor="#1e3a8a"];
+    "STD-FE-001" [label="STD-FE-001\nFrontend Development", fillcolor="#dbeafe", color="#1e40af", fontcolor="#1e3a8a"];
+    "STD-GIT-001" [label="STD-GIT-001\nGitHub Core", fillcolor="#dbeafe", color="#1e40af", fontcolor="#1e3a8a"];
+    "STD-GIT-002" [label="STD-GIT-002\nGitHub Sandbox Safety", fillcolor="#dbeafe", color="#1e40af", fontcolor="#1e3a8a"];
+    "STD-META-001" [label="STD-META-001\nStandard ID System", fillcolor="#dbeafe", color="#1e40af", fontcolor="#1e3a8a"];
+    "STD-SEC-001" [label="STD-SEC-001\nSecurity Core", fillcolor="#dbeafe", color="#1e40af", fontcolor="#1e3a8a"];
+    "STD-SEC-002" [label="STD-SEC-002\nSecurity Extended", fillcolor="#dbeafe", color="#1e40af", fontcolor="#1e3a8a"];
+    "STD-SKILL-001" [label="STD-SKILL-001\nSkill Format & Identification", fillcolor="#dbeafe", color="#1e40af", fontcolor="#1e3a8a"];
+    "STD-TEST-001" [label="STD-TEST-001\nTesting", fillcolor="#dbeafe", color="#1e40af", fontcolor="#1e3a8a"];
+  }
+  subgraph cluster_L2 {
+    label="L2 — Guard (RULE-*/PROC-*/TOOL-*)";
+    style="filled,rounded"; fillcolor="#fffbeb"; color="#fde68a"; fontsize=12;
+    "RULE-MONOLITH-001" [label="RULE-MONOLITH-001\nAnswer before act (no unsolicited action)", fillcolor="#fef3c7", color="#92400e", fontcolor="#78350f"];
+    "RULE-MONOLITH-002" [label="RULE-MONOLITH-002\nworklog -- BEFORE and AFTER every action", fillcolor="#fef3c7", color="#92400e", fontcolor="#78350f"];
+    "RULE-MONOLITH-003" [label="RULE-MONOLITH-003\nRead before write", fillcolor="#fef3c7", color="#92400e", fontcolor="#78350f"];
+    "RULE-MONOLITH-004" [label="RULE-MONOLITH-004\nOne logical block -- one commit", fillcolor="#fef3c7", color="#92400e", fontcolor="#78350f"];
+    "RULE-MONOLITH-005" [label="RULE-MONOLITH-005\nNo loops", fillcolor="#fef3c7", color="#92400e", fontcolor="#78350f"];
+    "RULE-MONOLITH-006" [label="RULE-MONOLITH-006\nHonest reporting", fillcolor="#fef3c7", color="#92400e", fontcolor="#78350f"];
+    "RULE-MONOLITH-007" [label="RULE-MONOLITH-007\nWork structure", fillcolor="#fef3c7", color="#92400e", fontcolor="#78350f"];
+    "RULE-MONOLITH-008" [label="RULE-MONOLITH-008\nSandbox verification (no fake setup)", fillcolor="#fef3c7", color="#92400e", fontcolor="#78350f"];
+    "RULE-MONOLITH-009" [label="RULE-MONOLITH-009\nSession Start Protocol (drift prevention)", fillcolor="#fef3c7", color="#92400e", fontcolor="#78350f"];
+    "RULE-MONOLITH-010" [label="RULE-MONOLITH-010\nDocumentation sync (no code without docs)", fillcolor="#fef3c7", color="#92400e", fontcolor="#78350f"];
+    "RULE-MONOLITH-011" [label="RULE-MONOLITH-011\nIntegrity protection (no self-sabotage)", fillcolor="#fef3c7", color="#92400e", fontcolor="#78350f"];
+    "RULE-MONOLITH-012" [label="RULE-MONOLITH-012\nAnti-monolith (no file over 250 lines)", fillcolor="#fef3c7", color="#92400e", fontcolor="#78350f"];
+    "RULE-MONOLITH-013" [label="RULE-MONOLITH-013\nUse ahg bump for version updates", fillcolor="#fef3c7", color="#92400e", fontcolor="#78350f"];
+    "RULE-MONOLITH-014" [label="RULE-MONOLITH-014\nPre-commit mandatory checklist", fillcolor="#fef3c7", color="#92400e", fontcolor="#78350f"];
+    "RULE-MONOLITH-015" [label="RULE-MONOLITH-015\nNo Unicode graphics (UNICODE_POLICY compliance)", fillcolor="#fef3c7", color="#92400e", fontcolor="#78350f"];
+    "RULE-MONOLITH-016" [label="RULE-MONOLITH-016\nAHG submodule is immutable architecture (no removal, no inli", fillcolor="#fef3c7", color="#92400e", fontcolor="#78350f"];
+    "RULE-MONOLITH-017" [label="RULE-MONOLITH-017\nUpstream write protection (no consumer agent may push to AHG", fillcolor="#fef3c7", color="#92400e", fontcolor="#78350f"];
+  }
+  subgraph cluster_L3 {
+    label="L3 — Skills (ZAI-*)";
+    style="filled,rounded"; fillcolor="#f0fdf4"; color="#bbf7d0"; fontsize=12;
+    "ZAI-ARCH-002" [label="ZAI-ARCH-002\nSkill: Anti-Monolith", fillcolor="#dcfce7", color="#166534", fontcolor="#14532d"];
+    "ZAI-DEV-002" [label="ZAI-DEV-002\nSkill: Commit Work", fillcolor="#dcfce7", color="#166534", fontcolor="#14532d"];
+    "ZAI-SESSION-002" [label="ZAI-SESSION-002\nSkill: Context Consolidation", fillcolor="#dcfce7", color="#166534", fontcolor="#14532d"];
+    "ZAI-DEV-003" [label="ZAI-DEV-003\nSkill: Database Schema Designer", fillcolor="#dcfce7", color="#166534", fontcolor="#14532d"];
+    "ZAI-FS-001" [label="ZAI-FS-001\nSkill: Folder Indexer", fillcolor="#dcfce7", color="#166534", fontcolor="#14532d"];
+    "ZAI-STS-004" [label="ZAI-STS-004\nSkill: Frontend Styling Expert", fillcolor="#dcfce7", color="#166534", fontcolor="#14532d"];
+    "ZAI-MEM-003" [label="ZAI-MEM-003\nSkill: Memory Delete", fillcolor="#dcfce7", color="#166534", fontcolor="#14532d"];
+    "ZAI-MEM-004" [label="ZAI-MEM-004\nSkill: Memory Export", fillcolor="#dcfce7", color="#166534", fontcolor="#14532d"];
+    "ZAI-MEM-002" [label="ZAI-MEM-002\nSkill: Memory Query", fillcolor="#dcfce7", color="#166534", fontcolor="#14532d"];
+    "ZAI-MEM-001" [label="ZAI-MEM-001\nSkill: Memory Store", fillcolor="#dcfce7", color="#166534", fontcolor="#14532d"];
+    "ZAI-ARCH-001" [label="ZAI-ARCH-001\nSkill: Mermaid Diagramming", fillcolor="#dcfce7", color="#166534", fontcolor="#14532d"];
+    "ZAI-STS-003" [label="ZAI-STS-003\nSkill: Performance Code Generator", fillcolor="#dcfce7", color="#166534", fontcolor="#14532d"];
+    "ZAI-STS-005" [label="ZAI-STS-005\nSkill: Phi Layout", fillcolor="#dcfce7", color="#166534", fontcolor="#14532d"];
+    "ZAI-DEV-001" [label="ZAI-DEV-001\nSkill: Project Clone", fillcolor="#dcfce7", color="#166534", fontcolor="#14532d"];
+    "ZAI-STS-001" [label="ZAI-STS-001\nSkill: Prompt Engineering", fillcolor="#dcfce7", color="#166534", fontcolor="#14532d"];
+    "ZAI-QA-001" [label="ZAI-QA-001\nSkill: QA Test Planner", fillcolor="#dcfce7", color="#166534", fontcolor="#14532d"];
+    "ZAI-REQ-001" [label="ZAI-REQ-001\nSkill: Requirements Clarity", fillcolor="#dcfce7", color="#166534", fontcolor="#14532d"];
+    "ZAI-SESSION-003" [label="ZAI-SESSION-003\nSession Experience", fillcolor="#dcfce7", color="#166534", fontcolor="#14532d"];
+    "ZAI-SESSION-001" [label="ZAI-SESSION-001\nSession Log", fillcolor="#dcfce7", color="#166534", fontcolor="#14532d"];
+    "ZAI-META-001" [label="ZAI-META-001\nSkill: Skill ID System", fillcolor="#dcfce7", color="#166534", fontcolor="#14532d"];
+    "ZAI-STS-002" [label="ZAI-STS-002\nSkill: Sync Toolkit", fillcolor="#dcfce7", color="#166534", fontcolor="#14532d"];
+    "ZAI-STS-007" [label="ZAI-STS-007\nSkill: Workflow Discipline", fillcolor="#dcfce7", color="#166534", fontcolor="#14532d"];
+    "ZAI-META-002" [label="ZAI-META-002\nSkill: Z.ai Skill Registry", fillcolor="#dcfce7", color="#166534", fontcolor="#14532d"];
+    "ZAI-STS-006" [label="ZAI-STS-006\nZAI UI Composer Skill", fillcolor="#dcfce7", color="#166534", fontcolor="#14532d"];
+  }
+  "STD-AGENT-001" -> "STD-ENV-001" [color="#666666", penwidth=1.0];
+  "STD-AGENT-001" -> "STD-GIT-001" [color="#666666", penwidth=1.0];
+  "STD-AGENT-001" -> "STD-DOC-002" [color="#666666", penwidth=1.0];
+  "STD-AGENT-001" -> "STD-META-001" [color="#666666", penwidth=1.0];
+  "STD-AGENT-002" -> "STD-AGENT-001" [color="#666666", penwidth=1.0];
+  "STD-AGENT-002" -> "STD-ERR-001" [color="#666666", penwidth=1.0];
+  "STD-AGENT-002" -> "STD-META-001" [color="#666666", penwidth=1.0];
+  "STD-ARCH-001" -> "STD-META-001" [color="#666666", penwidth=1.0];
+  "STD-ARCH-002" -> "STD-META-001" [color="#666666", penwidth=1.0];
+  "STD-ARCH-002" -> "STD-ARCH-001" [color="#666666", penwidth=1.0];
+  "STD-DESIGN-001" -> "STD-DOC-002" [color="#666666", penwidth=1.0];
+  "STD-DESIGN-001" -> "STD-DOC-003" [color="#666666", penwidth=1.0];
+  "STD-DESIGN-001" -> "STD-META-001" [color="#666666", penwidth=1.0];
+  "STD-DOC-002" -> "STD-META-001" [color="#666666", penwidth=1.0];
+  "STD-DOC-003" -> "STD-DOC-002" [color="#666666", penwidth=1.0];
+  "STD-ENV-001" -> "STD-ARCH-001" [color="#666666", penwidth=1.0];
+  "STD-ENV-001" -> "STD-DOC-002" [color="#666666", penwidth=1.0];
+  "STD-ENV-001" -> "STD-META-001" [color="#666666", penwidth=1.0];
+  "STD-ENV-002" -> "STD-ENV-001" [color="#666666", penwidth=1.0];
+  "STD-ENV-002" -> "STD-ARCH-002" [color="#666666", penwidth=1.0];
+  "STD-ERR-001" -> "STD-FE-001" [color="#666666", penwidth=1.0];
+  "STD-ERR-001" -> "STD-DOC-002" [color="#666666", penwidth=1.0];
+  "STD-ERR-001" -> "STD-META-001" [color="#666666", penwidth=1.0];
+  "STD-ERR-002" -> "STD-ERR-001" [color="#666666", penwidth=1.0];
+  "STD-ERR-002" -> "STD-META-001" [color="#666666", penwidth=1.0];
+  "STD-FE-001" -> "STD-DESIGN-001" [color="#666666", penwidth=1.0];
+  "STD-FE-001" -> "STD-ENV-001" [color="#666666", penwidth=1.0];
+  "STD-FE-001" -> "STD-DOC-002" [color="#666666", penwidth=1.0];
+  "STD-FE-001" -> "STD-META-001" [color="#666666", penwidth=1.0];
+  "STD-GIT-001" -> "STD-ENV-001" [color="#666666", penwidth=1.0];
+  "STD-GIT-001" -> "STD-DOC-002" [color="#666666", penwidth=1.0];
+  "STD-GIT-001" -> "STD-META-001" [color="#666666", penwidth=1.0];
+  "STD-GIT-002" -> "STD-GIT-001" [color="#666666", penwidth=1.0];
+  "STD-GIT-002" -> "STD-ENV-002" [color="#666666", penwidth=1.0];
+  "STD-GIT-002" -> "STD-META-001" [color="#666666", penwidth=1.0];
+  "STD-SEC-001" -> "STD-ENV-001" [color="#666666", penwidth=1.0];
+  "STD-SEC-001" -> "STD-GIT-001" [color="#666666", penwidth=1.0];
+  "STD-SEC-001" -> "STD-DOC-002" [color="#666666", penwidth=1.0];
+  "STD-SEC-001" -> "STD-META-001" [color="#666666", penwidth=1.0];
+  "STD-SEC-002" -> "STD-SEC-001" [color="#666666", penwidth=1.0];
+  "STD-SEC-002" -> "STD-META-001" [color="#666666", penwidth=1.0];
+  "STD-SKILL-001" -> "STD-META-001" [color="#666666", penwidth=1.0];
+  "STD-SKILL-001" -> "STD-DOC-002" [color="#666666", penwidth=1.0];
+  "STD-SKILL-001" -> "ZAI-META-001" [style=dashed, color="#9333ea", penwidth=1.5, label="align"];
+  "STD-SKILL-001" -> "ZAI-META-002" [style=dashed, color="#9333ea", penwidth=1.5, label="align"];
+  "STD-TEST-001" -> "STD-FE-001" [color="#666666", penwidth=1.0];
+  "STD-TEST-001" -> "STD-ERR-001" [color="#666666", penwidth=1.0];
+  "STD-TEST-001" -> "STD-DOC-002" [color="#666666", penwidth=1.0];
+  "STD-TEST-001" -> "STD-META-001" [color="#666666", penwidth=1.0];
+  "RULE-MONOLITH-001" -> "RULE-MONOLITH-006" [color="#666666", penwidth=1.0];
+  "RULE-MONOLITH-001" -> "RULE-MONOLITH-007" [color="#666666", penwidth=1.0];
+  "RULE-MONOLITH-002" -> "STD-META-001" [color="#666666", penwidth=1.0];
+  "RULE-MONOLITH-003" -> "RULE-MONOLITH-010" [color="#666666", penwidth=1.0];
+  "RULE-MONOLITH-004" -> "RULE-MONOLITH-002" [color="#666666", penwidth=1.0];
+  "RULE-MONOLITH-005" -> "RULE-MONOLITH-006" [color="#666666", penwidth=1.0];
+  "RULE-MONOLITH-006" -> "RULE-MONOLITH-011" [color="#666666", penwidth=1.0];
+  "RULE-MONOLITH-007" -> "RULE-MONOLITH-002" [color="#666666", penwidth=1.0];
+  "RULE-MONOLITH-007" -> "RULE-MONOLITH-004" [color="#666666", penwidth=1.0];
+  "RULE-MONOLITH-007" -> "STD-AGENT-002" [color="#666666", penwidth=1.0];
+  "RULE-MONOLITH-008" -> "STD-ENV-001" [color="#666666", penwidth=1.0];
+  "RULE-MONOLITH-008" -> "STD-ENV-002" [color="#666666", penwidth=1.0];
+  "RULE-MONOLITH-008" -> "STD-GIT-002" [color="#666666", penwidth=1.0];
+  "RULE-MONOLITH-009" -> "RULE-MONOLITH-010" [color="#666666", penwidth=1.0];
+  "RULE-MONOLITH-010" -> "STD-DOC-002" [color="#666666", penwidth=1.0];
+  "RULE-MONOLITH-011" -> "STD-ENV-001" [color="#666666", penwidth=1.0];
+  "RULE-MONOLITH-012" -> "RULE-MONOLITH-004" [color="#666666", penwidth=1.0];
+  "RULE-MONOLITH-012" -> "STD-SKILL-001" [color="#666666", penwidth=1.0];
+  "RULE-MONOLITH-013" -> "RULE-MONOLITH-002" [color="#666666", penwidth=1.0];
+  "RULE-MONOLITH-014" -> "RULE-MONOLITH-002" [color="#666666", penwidth=1.0];
+  "RULE-MONOLITH-014" -> "RULE-MONOLITH-004" [color="#666666", penwidth=1.0];
+  "RULE-MONOLITH-014" -> "STD-SEC-002" [color="#666666", penwidth=1.0];
+  "RULE-MONOLITH-015" -> "STD-DOC-002" [color="#666666", penwidth=1.0];
+  "RULE-MONOLITH-016" -> "RULE-MONOLITH-011" [color="#666666", penwidth=1.0];
+  "RULE-MONOLITH-016" -> "STD-ARCH-001" [color="#666666", penwidth=1.0];
+  "RULE-MONOLITH-017" -> "RULE-MONOLITH-011" [color="#666666", penwidth=1.0];
+  "RULE-MONOLITH-017" -> "RULE-MONOLITH-016" [color="#666666", penwidth=1.0];
+  "RULE-MONOLITH-017" -> "STD-ARCH-001" [color="#666666", penwidth=1.0];
+  "ZAI-ARCH-002" -> "STD-SKILL-001" [color="#666666", penwidth=1.0];
+  "ZAI-ARCH-002" -> "ZAI-ARCH-001" [color="#666666", penwidth=1.0];
+  "ZAI-DEV-002" -> "STD-SKILL-001" [color="#666666", penwidth=1.0];
+  "ZAI-DEV-002" -> "STD-ERR-002" [color="#666666", penwidth=1.0];
+  "ZAI-SESSION-002" -> "STD-SKILL-001" [color="#666666", penwidth=1.0];
+  "ZAI-SESSION-002" -> "ZAI-SESSION-001" [color="#666666", penwidth=1.0];
+  "ZAI-DEV-003" -> "STD-SKILL-001" [color="#666666", penwidth=1.0];
+  "ZAI-FS-001" -> "STD-SKILL-001" [color="#666666", penwidth=1.0];
+  "ZAI-STS-004" -> "STD-SKILL-001" [color="#666666", penwidth=1.0];
+  "ZAI-MEM-003" -> "STD-SKILL-001" [color="#666666", penwidth=1.0];
+  "ZAI-MEM-003" -> "ZAI-MEM-001" [color="#666666", penwidth=1.0];
+  "ZAI-MEM-004" -> "STD-SKILL-001" [color="#666666", penwidth=1.0];
+  "ZAI-MEM-004" -> "ZAI-MEM-001" [color="#666666", penwidth=1.0];
+  "ZAI-MEM-002" -> "STD-SKILL-001" [color="#666666", penwidth=1.0];
+  "ZAI-MEM-002" -> "ZAI-MEM-001" [color="#666666", penwidth=1.0];
+  "ZAI-MEM-001" -> "STD-SKILL-001" [color="#666666", penwidth=1.0];
+  "ZAI-ARCH-001" -> "STD-SKILL-001" [color="#666666", penwidth=1.0];
+  "ZAI-STS-003" -> "STD-SKILL-001" [color="#666666", penwidth=1.0];
+  "ZAI-STS-005" -> "STD-SKILL-001" [color="#666666", penwidth=1.0];
+  "ZAI-DEV-001" -> "STD-SKILL-001" [color="#666666", penwidth=1.0];
+  "ZAI-DEV-001" -> "ZAI-DEV-002" [color="#666666", penwidth=1.0];
+  "ZAI-DEV-001" -> "ZAI-DEV-003" [color="#666666", penwidth=1.0];
+  "ZAI-STS-001" -> "STD-SKILL-001" [color="#666666", penwidth=1.0];
+  "ZAI-QA-001" -> "STD-SKILL-001" [color="#666666", penwidth=1.0];
+  "ZAI-QA-001" -> "STD-TEST-001" [color="#666666", penwidth=1.0];
+  "ZAI-REQ-001" -> "STD-SKILL-001" [color="#666666", penwidth=1.0];
+  "ZAI-SESSION-003" -> "STD-SKILL-001" [color="#666666", penwidth=1.0];
+  "ZAI-SESSION-003" -> "ZAI-SESSION-001" [color="#666666", penwidth=1.0];
+  "ZAI-SESSION-001" -> "STD-SKILL-001" [color="#666666", penwidth=1.0];
+  "ZAI-STS-002" -> "STD-SKILL-001" [color="#666666", penwidth=1.0];
+  "ZAI-STS-002" -> "ZAI-STS-001" [color="#666666", penwidth=1.0];
+  "ZAI-STS-007" -> "STD-SKILL-001" [color="#666666", penwidth=1.0];
+  "ZAI-STS-006" -> "STD-SKILL-001" [color="#666666", penwidth=1.0];
+  "ZAI-STS-006" -> "ZAI-STS-007" [color="#666666", penwidth=1.0];
+  subgraph cluster_orphans {
+    label="Orphan nodes (no edges)";
+    style="dashed,rounded"; color="#d4d4d4"; fontsize=10;
+    rank=sink;
+    "none" [label="(none)", shape=plaintext, fillcolor=none, color=none];
+  }
+}
