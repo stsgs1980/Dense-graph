@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Z.ai Dense-graph — Hierarchy (live)</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+/* ============ DESIGN SYSTEM (unified with P-MAS wireframes) ============ */
+:root {
+  --bg: #000000;
+  --surface:  #0A0A0F;
+  --surface2: #111118;
+  --surface3: #16161E;
+  --border:   #27272A;
+  --border2:  #3F3F46;
+  --text:     #FAFAFA;
+  --text2:    #A1A1AA;
+  --text3:    #52525B;
+  --accent:   #06B6D4;
+  --accent-l: #22D3EE;
+  --accent-d: #0891B2;
+  --ok:    #22C55E;
+  --warn:  #F59E0B;
+  --err:   #EF4444;
+  --pln:   #8B5CF6;
+  --l0:    #F59E0B;  /* platform  */
+  --l1:    #3B82F6;  /* standards */
+  --l2:    #10B981;  /* guard     */
+  --l3:    #A855F7;  /* skills    */
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100vh; overflow: hidden; }
+body {
+  font: 13px/1.5 system-ui, -apple-system, 'Segoe UI', sans-serif;
+  background: var(--bg); color: var(--text);
+  display: flex; flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border2); }
+button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+input { font: inherit; color: inherit; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; outline: none; }
+input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(6,182,212,0.15); }
+
+/* ============ HEADER (56px) ============ */
+.header {
+  height: 56px; min-height: 56px;
+  display: flex; align-items: center; gap: 12px;
+  padding: 0 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: relative; z-index: 20;
+}
+.header::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(6,182,212,0.35), transparent);
+}
+.logo-box {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: rgba(6,182,212,0.1);
+  border: 1px solid rgba(6,182,212,0.25);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 800; color: var(--accent); letter-spacing: -0.5px;
+}
+.header-title { font-size: 14px; font-weight: 700; color: var(--text); }
+.header-sub   { font-size: 10px; color: var(--text3); margin-top: 1px; }
+.tabs {
+  display: flex; gap: 2px;
+  background: var(--bg); border-radius: 8px; padding: 3px;
+  margin-left: 24px;
+}
+.tab {
+  padding: 6px 14px; border-radius: 6px;
+  font-size: 12px; font-weight: 500; color: var(--text2);
+  transition: all 0.15s;
+}
+.tab:hover:not(.disabled) { color: var(--text); }
+.tab.active { background: var(--surface2); color: var(--accent); box-shadow: 0 0 8px rgba(6,182,212,0.15); }
+.tab.disabled { color: var(--text3); cursor: not-allowed; }
+.spacer { flex: 1; }
+.search-box {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 6px; padding: 6px 12px;
+  font-size: 12px; color: var(--text); width: 220px;
+  transition: border-color 0.15s;
+}
+.search-box:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(6,182,212,0.15); }
+.layout-toggle {
+  display: flex; gap: 2px;
+  background: var(--bg); border-radius: 6px; padding: 2px;
+  border: 1px solid var(--border);
+}
+.layout-btn {
+  padding: 5px 12px; border-radius: 4px;
+  font-size: 11px; font-weight: 500; color: var(--text2);
+  transition: all 0.15s;
+}
+.layout-btn:hover { color: var(--text); }
+.layout-btn.active { background: rgba(6,182,212,0.15); color: var(--accent-l); }
+
+/* ============ MAIN GRID ============ */
+.main {
+  flex: 1; min-height: 0;
+  display: grid;
+  grid-template-columns: 240px 1fr 340px;
+}
+
+/* ============ LEFT SIDEBAR (tree) ============ */
+.sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 12px 0;
+}
+.sidebar-section { padding: 0 8px; margin-bottom: 4px; }
+.sidebar-title {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--text3); padding: 6px 8px; font-weight: 600;
+}
+.repo-group {
+  margin-bottom: 2px;
+}
+.repo-row {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 8px; cursor: pointer;
+  border-radius: 4px;
+  font-size: 12px;
+  transition: background 0.1s;
+}
+.repo-row:hover { background: var(--surface2); }
+.repo-row .chevron {
+  font-size: 9px; color: var(--text3);
+  transition: transform 0.15s;
+  width: 12px; text-align: center;
+}
+.repo-row.expanded .chevron { transform: rotate(90deg); }
+.repo-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  flex-shrink: 0;
+}
+.repo-dot.standards { background: var(--l1); }
+.repo-dot.guard     { background: var(--l2); }
+.repo-dot.skills    { background: var(--l3); }
+.repo-dot.platform  { background: var(--l0); }
+.repo-name { flex: 1; color: var(--text); font-weight: 500; }
+.repo-count { font-size: 10px; color: var(--text3); font-variant-numeric: tabular-nums; }
+.id-list {
+  margin-left: 14px;
+  border-left: 1px solid var(--border);
+  padding-left: 6px;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.2s ease-out;
+}
+.id-list.expanded { max-height: 800px; }
+.id-row {
+  padding: 3px 8px;
+  font-size: 11px;
+  color: var(--text2);
+  cursor: pointer;
+  border-radius: 3px;
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  transition: background 0.1s, color 0.1s;
+}
+.id-row:hover { background: var(--surface2); color: var(--text); }
+.id-row.selected { background: rgba(6,182,212,0.15); color: var(--accent-l); }
+.id-row.path-hl  { background: rgba(245,158,11,0.15); color: var(--warn); }
+
+/* ============ CENTER CANVAS ============ */
+.canvas-wrap {
+  position: relative;
+  background: var(--bg);
+  overflow: hidden;
+}
+.canvas-wrap svg { display: block; cursor: grab; }
+.canvas-wrap svg:active { cursor: grabbing; }
+.canvas-empty {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text3); font-size: 12px; pointer-events: none;
+}
+.canvas-toolbar {
+  position: absolute; top: 12px; left: 12px;
+  display: flex; gap: 6px;
+  background: rgba(10,10,15,0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px;
+  z-index: 10;
+}
+.tool-btn {
+  padding: 5px 10px;
+  font-size: 11px; color: var(--text2);
+  border-radius: 4px;
+  transition: all 0.1s;
+}
+.tool-btn:hover { background: var(--surface2); color: var(--text); }
+.tool-btn:active { transform: scale(0.96); }
+.tool-divider { width: 1px; background: var(--border); margin: 2px 0; }
+.canvas-legend {
+  position: absolute; bottom: 12px; left: 12px;
+  background: rgba(10,10,15,0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 10px;
+  z-index: 10;
+}
+.legend-row { display: flex; align-items: center; gap: 6px; margin: 2px 0; }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+.legend-line { width: 14px; height: 2px; }
+
+/* ============ SVG NODES ============ */
+.node circle {
+  stroke: var(--bg);
+  stroke-width: 1.5;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.node text {
+  font: 9px ui-monospace, monospace;
+  fill: var(--text2);
+  pointer-events: none;
+  user-select: none;
+}
+.node.selected circle {
+  stroke: var(--accent-l);
+  stroke-width: 3;
+}
+.node.path-hl circle {
+  stroke: var(--warn);
+  stroke-width: 2.5;
+}
+.link {
+  stroke-opacity: 0.35;
+  transition: stroke-opacity 0.2s;
+}
+.link.related { stroke: #64748B; }
+.link.aligned { stroke: var(--l3); stroke-dasharray: 3 2; }
+.link.path-hl { stroke: var(--warn) !important; stroke-opacity: 1; stroke-width: 2.5; }
+.dim { opacity: 0.12 !important; }
+
+/* ============ RIGHT PANEL (detail + path search) ============ */
+.detail {
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 16px;
+}
+.detail-section { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+.detail-section:last-child { border-bottom: none; }
+.detail-h {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--text3); margin-bottom: 8px; font-weight: 600;
+}
+.detail-id {
+  font: 600 14px ui-monospace, monospace;
+  color: var(--accent-l);
+  margin-bottom: 4px;
+  word-break: break-all;
+}
+.detail-title { font-size: 13px; color: var(--text); margin-bottom: 8px; }
+.detail-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.badge {
+  font-size: 10px; padding: 2px 8px;
+  border-radius: 4px; font-weight: 500;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text2);
+}
+.badge.repo-standards { color: var(--l1); border-color: rgba(59,130,246,0.4); }
+.badge.repo-guard     { color: var(--l2); border-color: rgba(16,185,129,0.4); }
+.badge.repo-skills    { color: var(--l3); border-color: rgba(168,85,247,0.4); }
+.badge.repo-platform  { color: var(--l0); border-color: rgba(245,158,11,0.4); }
+.detail-stats {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+  margin-bottom: 10px;
+}
+.stat {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 6px 8px;
+  text-align: center;
+}
+.stat-val { font: 600 16px ui-monospace, monospace; color: var(--text); }
+.stat-lbl { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; }
+.detail-file {
+  font: 10px ui-monospace, monospace;
+  color: var(--text2);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  padding: 6px 8px;
+  border-radius: 4px;
+  word-break: break-all;
+}
+.edge-list { display: flex; flex-direction: column; gap: 3px; }
+.edge-row {
+  display: flex; align-items: center; gap: 6px;
+  padding: 4px 8px;
+  font: 11px ui-monospace, monospace;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+.edge-row:hover { border-color: var(--accent); background: var(--surface3); }
+.edge-arrow { color: var(--text3); font-size: 10px; }
+.edge-id { color: var(--accent-l); }
+.edge-id:hover { text-decoration: underline; }
+.edge-type {
+  margin-left: auto;
+  font-size: 9px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+}
+.edge-type.related { color: var(--text2); background: var(--surface3); }
+.edge-type.aligned { color: var(--l3); background: rgba(168,85,247,0.1); }
+.empty-state { color: var(--text3); font-size: 11px; font-style: italic; padding: 8px 0; }
+
+/* Path search */
+.path-row { display: flex; gap: 6px; margin-bottom: 8px; }
+.path-row select {
+  flex: 1; font: 11px ui-monospace, monospace;
+  background: var(--surface2); color: var(--text);
+  border: 1px solid var(--border); border-radius: 4px;
+  padding: 5px 6px; outline: none;
+}
+.path-row select:focus { border-color: var(--accent); }
+.btn-primary {
+  background: rgba(6,182,212,0.15); color: var(--accent-l);
+  border: 1px solid rgba(6,182,212,0.4);
+  padding: 5px 12px; border-radius: 4px;
+  font-size: 11px; font-weight: 600;
+  transition: all 0.1s;
+}
+.btn-primary:hover { background: rgba(6,182,212,0.25); }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+.path-result {
+  font: 11px ui-monospace, monospace;
+  padding: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text2);
+  word-break: break-all;
+}
+.path-result.empty { color: var(--text3); font-style: italic; }
+.path-result.err   { color: var(--err); }
+.path-clear { font-size: 10px; color: var(--text3); margin-top: 6px; cursor: pointer; }
+.path-clear:hover { color: var(--err); }
+
+/* ============ KPI STRIP (bottom) ============ */
+.kpi-strip {
+  height: 44px; min-height: 44px;
+  display: flex; align-items: center;
+  padding: 0 16px; gap: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+}
+.kpi {
+  display: flex; align-items: center; gap: 6px;
+  padding: 0 20px;
+  border-right: 1px solid var(--border);
+}
+.kpi:last-child { border-right: none; flex: 1; justify-content: flex-end; }
+.kpi-val { font: 600 14px ui-monospace, monospace; color: var(--accent-l); }
+.kpi-lbl { color: var(--text3); text-transform: uppercase; font-size: 9px; letter-spacing: 0.05em; }
+.kpi-sub { color: var(--text2); font-size: 10px; }
+.kpi-dot { width: 8px; height: 8px; border-radius: 50%; }
+</style>
+</head>
+<body>
+
+<!-- ============ HEADER ============ -->
+<div class="header">
+  <div class="logo-box">Z</div>
+  <div>
+    <div class="header-title">Z.ai Dense-graph</div>
+    <div class="header-sub">Hierarchy view · live data</div>
+  </div>
+  <div class="tabs">
+    <button class="tab disabled">Dashboard</button>
+    <button class="tab active">Hierarchy</button>
+    <button class="tab disabled">Workflows</button>
+    <button class="tab disabled">Tasks</button>
+  </div>
+  <div class="spacer"></div>
+  <input class="search-box" id="search" placeholder="search ID or title…" autocomplete="off">
+  <div class="layout-toggle" id="layout-toggle">
+    <button class="layout-btn active" data-mode="flat">⊕ Flat</button>
+    <button class="layout-btn"        data-mode="clustered">⊞ Clustered</button>
+    <button class="layout-btn"        data-mode="radial">⌖ Radial</button>
+  </div>
+</div>
+
+<!-- ============ MAIN ============ -->
+<div class="main">
+  <!-- LEFT: tree -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-title">Modules</div>
+      <div id="repo-tree"></div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">Edge types</div>
+      <div class="repo-row" style="cursor:default">
+        <span class="legend-line" style="background:#64748B"></span>
+        <span class="repo-name">Related</span>
+        <span class="repo-count" id="cnt-related">0</span>
+      </div>
+      <div class="repo-row" style="cursor:default">
+        <span class="legend-line" style="background:#A855F7;border-top:1px dashed #A855F7"></span>
+        <span class="repo-name">Aligned_with</span>
+        <span class="repo-count" id="cnt-aligned">0</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- CENTER: canvas -->
+  <div class="canvas-wrap" id="canvas-wrap">
+    <div class="canvas-toolbar">
+      <button class="tool-btn" id="reheat">⟳ Reheat</button>
+      <button class="tool-btn" id="reset-zoom">⊕ Reset zoom</button>
+      <div class="tool-divider"></div>
+      <button class="tool-btn" id="filter-related">● Related</button>
+      <button class="tool-btn" id="filter-aligned">● Aligned</button>
+    </div>
+    <svg id="canvas"></svg>
+    <div class="canvas-legend">
+      <div class="legend-row"><span class="legend-dot" style="background:var(--l1)"></span>standards (STD)</div>
+      <div class="legend-row"><span class="legend-dot" style="background:var(--l2)"></span>guard (RULE)</div>
+      <div class="legend-row"><span class="legend-dot" style="background:var(--l3)"></span>skills (ZAI)</div>
+      <div class="legend-row"><span class="legend-dot" style="background:var(--l0)"></span>platform (TOOL)</div>
+    </div>
+  </div>
+
+  <!-- RIGHT: detail panel -->
+  <aside class="detail" id="detail">
+    <!-- populated by JS -->
+  </aside>
+</div>
+
+<!-- ============ KPI STRIP ============ -->
+<div class="kpi-strip" id="kpi-strip"></div>
+
+<script>
+// ============ INLINE DATA (60 IDs, 113 edges) ============
+const IDG = {"nodes":[{"id":"STD-ARCH-001","r":"standards","t":"Architecture & Repo Layout","p":"STD","f":"standards/standards/ARCH-001-architecture-and-repo-layout.md"},{"id":"STD-ENV-001","r":"standards","t":"Reproducibility","p":"STD","f":"standards/standards/ENV-001-reproducibility.md"},{"id":"STD-AGENT-001","r":"standards","t":"Subagent Standard","p":"STD","f":"standards/standards/AGENT-001-subagent.md"},{"id":"STD-ERR-001","r":"standards","t":"Error Handling Core","p":"STD","f":"standards/standards/ERR-001-error-handling.md"},{"id":"STD-ERR-002","r":"standards","t":"Error Recovery","p":"STD","f":"standards/standards/ERR-002-error-recovery.md"},{"id":"STD-GIT-001","r":"standards","t":"GitHub Core","p":"STD","f":"standards/standards/GIT-001-github.md"},{"id":"STD-SEC-002","r":"standards","t":"Security Extended","p":"STD","f":"standards/standards/SEC-002-security-extended.md"},{"id":"STD-TEST-001","r":"standards","t":"Testing","p":"STD","f":"standards/standards/TEST-001-testing.md"},{"id":"STD-META-001","r":"standards","t":"Standard ID System","p":"STD","f":"standards/standards/META-001-standard-id-system.md"},{"id":"STD-DOC-003","r":"standards","t":"No-Unicode Policy","p":"STD","f":"standards/standards/DOC-003-unicode-policy.md"},{"id":"STD-ENV-002","r":"standards","t":"Z.ai Integration","p":"STD","f":"standards/standards/ENV-002-zai-integration.md"},{"id":"STD-ARCH-002","r":"standards","t":"Implementation Order","p":"STD","f":"standards/standards/ARCH-002-implementation-order.md"},{"id":"STD-AGENT-002","r":"standards","t":"Orchestration Standard","p":"STD","f":"standards/standards/AGENT-002-orchestration.md"},{"id":"STD-FE-001","r":"standards","t":"Frontend Development","p":"STD","f":"standards/standards/FE-001-frontend.md"},{"id":"STD-SKILL-001","r":"standards","t":"Skill Format & Identification","p":"STD","f":"standards/standards/SKILL-001-skill-format.md"},{"id":"STD-DESIGN-001","r":"standards","t":"Design System Standard","p":"STD","f":"standards/standards/DESIGN-001-design-system.md"},{"id":"STD-SEC-001","r":"standards","t":"Security Core","p":"STD","f":"standards/standards/SEC-001-security-core.md"},{"id":"STD-DOC-002","r":"standards","t":"Markdown Formatting","p":"STD","f":"standards/standards/DOC-002-markdown-standard.md"},{"id":"STD-GIT-002","r":"standards","t":"GitHub Sandbox Safety","p":"STD","f":"standards/standards/GIT-002-github-sandbox.md"},{"id":"RULE-MONOLITH-015","r":"guard","t":"No Unicode graphics (UNICODE_POLICY compliance)","p":"RULE","f":"guard/rules/RULE-MONOLITH-015.md"},{"id":"RULE-MONOLITH-002","r":"guard","t":"worklog -- BEFORE and AFTER every action","p":"RULE","f":"guard/rules/RULE-MONOLITH-002.md"},{"id":"RULE-MONOLITH-013","r":"guard","t":"Use ahg bump for version updates","p":"RULE","f":"guard/rules/RULE-MONOLITH-013.md"},{"id":"RULE-MONOLITH-003","r":"guard","t":"Read before write","p":"RULE","f":"guard/rules/RULE-MONOLITH-003.md"},{"id":"RULE-MONOLITH-004","r":"guard","t":"One logical block -- one commit","p":"RULE","f":"guard/rules/RULE-MONOLITH-004.md"},{"id":"RULE-MONOLITH-005","r":"guard","t":"No loops","p":"RULE","f":"guard/rules/RULE-MONOLITH-005.md"},{"id":"RULE-MONOLITH-007","r":"guard","t":"Work structure","p":"RULE","f":"guard/rules/RULE-MONOLITH-007.md"},{"id":"RULE-MONOLITH-006","r":"guard","t":"Honest reporting","p":"RULE","f":"guard/rules/RULE-MONOLITH-006.md"},{"id":"RULE-MONOLITH-012","r":"guard","t":"Anti-monolith (file size by category)","p":"RULE","f":"guard/rules/RULE-MONOLITH-012.md"},{"id":"RULE-MONOLITH-016","r":"guard","t":"AHG submodule is immutable architecture (no removal, no inlining)","p":"RULE","f":"guard/rules/RULE-MONOLITH-016.md"},{"id":"RULE-MONOLITH-001","r":"guard","t":"Answer before act (no unsolicited action)","p":"RULE","f":"guard/rules/RULE-MONOLITH-001.md"},{"id":"RULE-MONOLITH-011","r":"guard","t":"Integrity protection (no self-sabotage)","p":"RULE","f":"guard/rules/RULE-MONOLITH-011.md"},{"id":"RULE-MONOLITH-010","r":"guard","t":"Documentation sync (no code without docs)","p":"RULE","f":"guard/rules/RULE-MONOLITH-010.md"},{"id":"RULE-MONOLITH-009","r":"guard","t":"Session Start Protocol (drift prevention)","p":"RULE","f":"guard/rules/RULE-MONOLITH-009.md"},{"id":"RULE-MONOLITH-014","r":"guard","t":"Pre-commit mandatory checklist","p":"RULE","f":"guard/rules/RULE-MONOLITH-014.md"},{"id":"RULE-MONOLITH-017","r":"guard","t":"Upstream write protection (no consumer agent may push to AHG)","p":"RULE","f":"guard/rules/RULE-MONOLITH-017.md"},{"id":"RULE-MONOLITH-008","r":"guard","t":"Sandbox verification (no fake setup)","p":"RULE","f":"guard/rules/RULE-MONOLITH-008.md"},{"id":"ZAI-META-002","r":"skills","t":"Skill: Z.ai Skill Registry","p":"ZAI","f":"skills/skills/zai-skill-registry/SKILL.md"},{"id":"ZAI-MEM-002","r":"skills","t":"Skill: Memory Query","p":"ZAI","f":"skills/skills/memory-query/SKILL.md"},{"id":"ZAI-SESSION-003","r":"skills","t":"Session Experience","p":"ZAI","f":"skills/skills/session-experience/SKILL.md"},{"id":"ZAI-REQ-001","r":"skills","t":"Skill: Requirements Clarity","p":"ZAI","f":"skills/skills/requirements-clarity/SKILL.md"},{"id":"ZAI-ARCH-001","r":"skills","t":"Skill: Mermaid Diagramming","p":"ZAI","f":"skills/skills/mermaid-diagrams/SKILL.md"},{"id":"ZAI-MEM-004","r":"skills","t":"Skill: Memory Export","p":"ZAI","f":"skills/skills/memory-export/SKILL.md"},{"id":"ZAI-FS-001","r":"skills","t":"Skill: Folder Indexer","p":"ZAI","f":"skills/skills/folder-indexer/SKILL.md"},{"id":"ZAI-SESSION-002","r":"skills","t":"Skill: Context Consolidation","p":"ZAI","f":"skills/skills/context-consolidation/SKILL.md"},{"id":"ZAI-MEM-003","r":"skills","t":"Skill: Memory Delete","p":"ZAI","f":"skills/skills/memory-delete/SKILL.md"},{"id":"ZAI-STS-003","r":"skills","t":"Skill: Performance Code Generator","p":"ZAI","f":"skills/skills/performance-code-generator_sts/SKILL.md"},{"id":"ZAI-QA-001","r":"skills","t":"Skill: QA Test Planner","p":"ZAI","f":"skills/skills/qa-test-planner/SKILL.md"},{"id":"ZAI-META-001","r":"skills","t":"Skill: Skill ID System","p":"ZAI","f":"skills/skills/skill-id-system/SKILL.md"},{"id":"ZAI-DEV-003","r":"skills","t":"Skill: Database Schema Designer","p":"ZAI","f":"skills/skills/database-schema-designer/SKILL.md"},{"id":"ZAI-DEV-002","r":"skills","t":"Skill: Commit Work","p":"ZAI","f":"skills/skills/commit-work/SKILL.md"},{"id":"ZAI-STS-007","r":"skills","t":"Skill: Workflow Discipline","p":"ZAI","f":"skills/skills/workflow-discipline_sts/SKILL.md"},{"id":"ZAI-SESSION-001","r":"skills","t":"Session Log","p":"ZAI","f":"skills/skills/session-log/SKILL.md"},{"id":"ZAI-STS-002","r":"skills","t":"Skill: Sync Toolkit","p":"ZAI","f":"skills/skills/sync-toolkit_sts/SKILL.md"},{"id":"ZAI-STS-001","r":"skills","t":"Skill: Prompt Engineering","p":"ZAI","f":"skills/skills/prompt-engineering_sts/SKILL.md"},{"id":"ZAI-DEV-001","r":"skills","t":"Skill: Project Clone","p":"ZAI","f":"skills/skills/project-clone/SKILL.md"},{"id":"ZAI-ARCH-002","r":"skills","t":"Skill: Anti-Monolith","p":"ZAI","f":"skills/skills/anti-monolith/SKILL.md"},{"id":"ZAI-STS-005","r":"skills","t":"Skill: Phi Layout","p":"ZAI","f":"skills/skills/phi-layout_sts/SKILL.md"},{"id":"ZAI-STS-004","r":"skills","t":"Skill: Frontend Styling Expert","p":"ZAI","f":"skills/skills/frontend-styling-expert_sts/SKILL.md"},{"id":"ZAI-STS-006","r":"skills","t":"ZAI UI Composer Skill","p":"ZAI","f":"skills/skills/zai-ui-composer_sts/SKILL.md"},{"id":"ZAI-MEM-001","r":"skills","t":"Skill: Memory Store","p":"ZAI","f":"skills/skills/memory-store/SKILL.md"}],"links":[{"s":"STD-ARCH-001","t":"STD-META-001","k":"related"},{"s":"STD-ENV-001","t":"STD-ARCH-001","k":"related"},{"s":"STD-ENV-001","t":"STD-DOC-002","k":"related"},{"s":"STD-ENV-001","t":"STD-META-001","k":"related"},{"s":"STD-AGENT-001","t":"STD-ENV-001","k":"related"},{"s":"STD-AGENT-001","t":"STD-GIT-001","k":"related"},{"s":"STD-AGENT-001","t":"STD-DOC-002","k":"related"},{"s":"STD-AGENT-001","t":"STD-META-001","k":"related"},{"s":"STD-ERR-001","t":"STD-FE-001","k":"related"},{"s":"STD-ERR-001","t":"STD-DOC-002","k":"related"},{"s":"STD-ERR-001","t":"STD-META-001","k":"related"},{"s":"STD-ERR-002","t":"STD-ERR-001","k":"related"},{"s":"STD-ERR-002","t":"STD-META-001","k":"related"},{"s":"STD-GIT-001","t":"STD-ENV-001","k":"related"},{"s":"STD-GIT-001","t":"STD-DOC-002","k":"related"},{"s":"STD-GIT-001","t":"STD-META-001","k":"related"},{"s":"STD-SEC-002","t":"STD-SEC-001","k":"related"},{"s":"STD-SEC-002","t":"STD-META-001","k":"related"},{"s":"STD-TEST-001","t":"STD-FE-001","k":"related"},{"s":"STD-TEST-001","t":"STD-ERR-001","k":"related"},{"s":"STD-TEST-001","t":"STD-DOC-002","k":"related"},{"s":"STD-TEST-001","t":"STD-META-001","k":"related"},{"s":"STD-ARCH-002","t":"STD-META-001","k":"related"},{"s":"STD-ARCH-002","t":"STD-ARCH-001","k":"related"},{"s":"STD-AGENT-002","t":"STD-AGENT-001","k":"related"},{"s":"STD-AGENT-002","t":"STD-ERR-001","k":"related"},{"s":"STD-AGENT-002","t":"STD-META-001","k":"related"},{"s":"STD-SKILL-001","t":"STD-META-001","k":"related"},{"s":"STD-SKILL-001","t":"STD-DOC-002","k":"related"},{"s":"STD-DESIGN-001","t":"STD-META-001","k":"related"},{"s":"STD-SEC-001","t":"STD-ENV-001","k":"related"},{"s":"STD-SEC-001","t":"STD-GIT-001","k":"related"},{"s":"STD-SEC-001","t":"STD-DOC-002","k":"related"},{"s":"STD-SEC-001","t":"STD-META-001","k":"related"},{"s":"STD-DOC-002","t":"STD-META-001","k":"related"},{"s":"STD-DOC-002","t":"STD-ARCH-002","k":"related"},{"s":"STD-GIT-002","t":"STD-GIT-001","k":"related"},{"s":"STD-GIT-002","t":"STD-ENV-002","k":"related"},{"s":"STD-GIT-002","t":"STD-META-001","k":"related"},{"s":"RULE-MONOLITH-015","t":"STD-DOC-002","k":"related"},{"s":"RULE-MONOLITH-002","t":"STD-META-001","k":"related"},{"s":"RULE-MONOLITH-013","t":"RULE-MONOLITH-002","k":"related"},{"s":"RULE-MONOLITH-003","t":"RULE-MONOLITH-010","k":"related"},{"s":"RULE-MONOLITH-004","t":"RULE-MONOLITH-002","k":"related"},{"s":"RULE-MONOLITH-005","t":"RULE-MONOLITH-006","k":"related"},{"s":"RULE-MONOLITH-007","t":"RULE-MONOLITH-002","k":"related"},{"s":"RULE-MONOLITH-007","t":"RULE-MONOLITH-004","k":"related"},{"s":"RULE-MONOLITH-007","t":"STD-AGENT-002","k":"related"},{"s":"RULE-MONOLITH-006","t":"RULE-MONOLITH-011","k":"related"},{"s":"RULE-MONOLITH-012","t":"RULE-MONOLITH-004","k":"related"},{"s":"RULE-MONOLITH-012","t":"STD-SKILL-001","k":"related"},{"s":"RULE-MONOLITH-012","t":"STD-DOC-002","k":"related"},{"s":"RULE-MONOLITH-012","t":"STD-FE-001","k":"related"},{"s":"RULE-MONOLITH-016","t":"RULE-MONOLITH-011","k":"related"},{"s":"RULE-MONOLITH-016","t":"STD-ARCH-001","k":"related"},{"s":"RULE-MONOLITH-001","t":"RULE-MONOLITH-006","k":"related"},{"s":"RULE-MONOLITH-001","t":"RULE-MONOLITH-007","k":"related"},{"s":"RULE-MONOLITH-011","t":"STD-ENV-001","k":"related"},{"s":"RULE-MONOLITH-010","t":"STD-DOC-002","k":"related"},{"s":"RULE-MONOLITH-009","t":"RULE-MONOLITH-010","k":"related"},{"s":"RULE-MONOLITH-014","t":"RULE-MONOLITH-002","k":"related"},{"s":"RULE-MONOLITH-014","t":"RULE-MONOLITH-004","k":"related"},{"s":"RULE-MONOLITH-014","t":"STD-SEC-002","k":"related"},{"s":"RULE-MONOLITH-017","t":"RULE-MONOLITH-011","k":"related"},{"s":"RULE-MONOLITH-017","t":"RULE-MONOLITH-016","k":"related"},{"s":"RULE-MONOLITH-017","t":"STD-ARCH-001","k":"related"},{"s":"RULE-MONOLITH-008","t":"STD-ENV-001","k":"related"},{"s":"RULE-MONOLITH-008","t":"STD-ENV-002","k":"related"},{"s":"RULE-MONOLITH-008","t":"STD-GIT-002","k":"related"},{"s":"ZAI-MEM-002","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-MEM-002","t":"ZAI-MEM-001","k":"related"},{"s":"ZAI-SESSION-003","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-SESSION-003","t":"ZAI-SESSION-001","k":"related"},{"s":"ZAI-REQ-001","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-ARCH-001","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-MEM-004","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-MEM-004","t":"ZAI-MEM-001","k":"related"},{"s":"ZAI-FS-001","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-SESSION-002","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-SESSION-002","t":"ZAI-SESSION-001","k":"related"},{"s":"ZAI-MEM-003","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-MEM-003","t":"ZAI-MEM-001","k":"related"},{"s":"ZAI-STS-003","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-QA-001","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-QA-001","t":"STD-TEST-001","k":"related"},{"s":"ZAI-DEV-003","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-DEV-002","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-DEV-002","t":"STD-ERR-002","k":"related"},{"s":"ZAI-DEV-002","t":"STD-GIT-001","k":"related"},{"s":"ZAI-DEV-002","t":"RULE-MONOLITH-002","k":"related"},{"s":"ZAI-DEV-002","t":"RULE-MONOLITH-004","k":"related"},{"s":"ZAI-STS-007","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-SESSION-001","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-STS-002","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-STS-002","t":"ZAI-STS-001","k":"related"},{"s":"ZAI-STS-001","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-DEV-001","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-DEV-001","t":"ZAI-DEV-002","k":"related"},{"s":"ZAI-DEV-001","t":"ZAI-DEV-003","k":"related"},{"s":"ZAI-ARCH-002","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-ARCH-002","t":"ZAI-ARCH-001","k":"related"},{"s":"ZAI-STS-005","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-STS-004","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-STS-006","t":"STD-SKILL-001","k":"related"},{"s":"ZAI-STS-006","t":"ZAI-STS-007","k":"related"},{"s":"ZAI-MEM-001","t":"STD-SKILL-001","k":"related"},{"s":"STD-META-001","t":"ZAI-ARCH-002","k":"aligned"},{"s":"STD-META-001","t":"STD-FE-001","k":"aligned"},{"s":"STD-META-001","t":"STD-DESIGN-001","k":"aligned"},{"s":"STD-SKILL-001","t":"ZAI-META-001","k":"aligned"},{"s":"STD-SKILL-001","t":"ZAI-META-002","k":"aligned"},{"s":"ZAI-META-002","t":"STD-SKILL-001","k":"aligned"},{"s":"ZAI-META-001","t":"STD-SKILL-001","k":"aligned"}],"summary":{"ids_total":60,"related_edges":106,"aligned_edges":7,"total_edges":113,"prefixes":{"STD":19,"RULE":17,"ZAI":24},"by_repo":{"standards":19,"guard":17,"skills":24}}};
+
+// ============ COLOR MAP ============
+const REPO_COLOR = { standards: '#3B82F6', guard: '#10B981', skills: '#A855F7', platform: '#F59E0B' };
+const REPO_PREFIX = { standards: 'STD', guard: 'RULE', skills: 'ZAI', platform: 'TOOL' };
+const PREFIX_REPO = { STD: 'standards', RULE: 'guard', ZAI: 'skills', TOOL: 'platform' };
+
+// ============ BUILD NODES & LINKS ============
+const allNodes = IDG.nodes.map(n => ({
+  id: n.id, repo: n.r, title: n.t, prefix: n.p, file: n.f,
+  inDeg: 0, outDeg: 0, totalDeg: 0,
+}));
+const allLinks = IDG.links.map(l => ({
+  source: l.s, target: l.t, type: l.k,
+}));
+const nodeById = {};
+allNodes.forEach(n => nodeById[n.id] = n);
+allLinks.forEach(l => {
+  if (nodeById[l.source]) nodeById[l.source].outDeg++;
+  if (nodeById[l.target]) nodeById[l.target].inDeg++;
+});
+allNodes.forEach(n => n.totalDeg = n.inDeg + n.outDeg);
+
+// ============ STATE ============
+let selectedId = null;
+let pathIds = new Set();
+let pathLinks = new Set();
+let layoutMode = 'flat';
+let showRelated = true;
+let showAligned = true;
+let searchQuery = '';
+
+// ============ LAYOUT CENTERS (for clustered) ============
+function getClusterCenters(w, h) {
+  return {
+    standards: { x: w * 0.28, y: h * 0.30 },
+    guard:     { x: w * 0.72, y: h * 0.30 },
+    skills:    { x: w * 0.28, y: h * 0.72 },
+    platform:  { x: w * 0.72, y: h * 0.72 },
+  };
+}
+
+// ============ SVG SETUP ============
+const wrap = document.getElementById('canvas-wrap');
+const svg = d3.select('#canvas');
+let width = wrap.clientWidth;
+let height = wrap.clientHeight;
+svg.attr('viewBox', `0 0 ${width} ${height}`);
+
+const g = svg.append('g'); // zoom container
+const linkG = g.append('g').attr('class', 'links');
+const nodeG = g.append('g').attr('class', 'nodes');
+
+// Zoom
+const zoom = d3.zoom()
+  .scaleExtent([0.2, 5])
+  .on('zoom', (e) => g.attr('transform', e.transform));
+svg.call(zoom);
+
+function resetZoom() {
+  svg.transition().duration(400).call(zoom.transform, d3.zoomIdentity);
+}
+
+// ============ FORCE SIMULATION ============
+let simulation = d3.forceSimulation()
+  .force('charge', d3.forceManyBody().strength(-90))
+  .force('link', d3.forceLink().id(d => d.id).distance(60).strength(0.4))
+  .force('center', d3.forceCenter(width / 2, height / 2))
+  .force('collide', d3.forceCollide().radius(d => 8 + Math.sqrt(d.totalDeg + 1) * 2))
+  .on('tick', ticked);
+
+function ticked() {
+  linkG.selectAll('line')
+    .attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+    .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+  nodeG.selectAll('g.node')
+    .attr('transform', d => `translate(${d.x},${d.y})`);
+}
+
+// ============ LAYOUT MODES ============
+function applyLayout(mode) {
+  layoutMode = mode;
+  // release any fixed positions
+  allNodes.forEach(n => { n.fx = null; n.fy = null; });
+
+  if (mode === 'flat') {
+    simulation
+      .force('charge', d3.forceManyBody().strength(-90))
+      .force('link', d3.forceLink().id(d => d.id).distance(60).strength(0.4))
+      .force('center', d3.forceCenter(width / 2, height / 2))
+      .force('cluster', null)
+      .force('radial', null)
+      .force('collide', d3.forceCollide().radius(d => 8 + Math.sqrt(d.totalDeg + 1) * 2));
+  } else if (mode === 'clustered') {
+    const centers = getClusterCenters(width, height);
+    // stash cluster center on each node
+    allNodes.forEach(n => { n._cx = centers[n.repo].x; n._cy = centers[n.repo].y; });
+    const clusterForce = (alpha) => {
+      allNodes.forEach(n => {
+        n.vx += (n._cx - n.x) * 0.04 * alpha;
+        n.vy += (n._cy - n.y) * 0.04 * alpha;
+      });
+    };
+    simulation
+      .force('charge', d3.forceManyBody().strength(-50))
+      .force('link', d3.forceLink().id(d => d.id).distance(45).strength(0.3))
+      .force('center', null)
+      .force('cluster', clusterForce)
+      .force('radial', null)
+      .force('collide', d3.forceCollide().radius(d => 8 + Math.sqrt(d.totalDeg + 1) * 2));
+  } else if (mode === 'radial') {
+    // Concentric by in-degree (top hub → center)
+    const cx = width / 2, cy = height / 2;
+    const tier = (n) => {
+      if (n.inDeg >= 8) return 0;
+      if (n.inDeg >= 3) return 1;
+      if (n.inDeg >= 1) return 2;
+      return 3;
+    };
+    const radii = [70, 170, 290, 410];
+    const byTier = [[], [], [], []];
+    allNodes.forEach(n => byTier[tier(n)].push(n));
+    byTier.forEach((arr, t) => {
+      const r = radii[t];
+      const n = arr.length;
+      arr.forEach((node, i) => {
+        const angle = (i / Math.max(1, n)) * 2 * Math.PI - Math.PI / 2;
+        node.fx = cx + r * Math.cos(angle);
+        node.fy = cy + r * Math.sin(angle);
+      });
+    });
+    simulation
+      .force('charge', d3.forceManyBody().strength(-30))
+      .force('link', d3.forceLink().id(d => d.id).distance(40).strength(0.15))
+      .force('center', null)
+      .force('cluster', null)
+      .force('radial', null)
+      .force('collide', d3.forceCollide().radius(d => 8 + Math.sqrt(d.totalDeg + 1) * 2));
+  }
+  simulation.alpha(1).restart();
+}
+
+// ============ RENDER ============
+function filteredLinks() {
+  return allLinks.filter(l => {
+    if (l.type === 'related' && !showRelated) return false;
+    if (l.type === 'aligned' && !showAligned) return false;
+    return true;
+  });
+}
+
+function radiusFor(n) {
+  return 4 + Math.sqrt(n.totalDeg + 1) * 1.6;
+}
+
+function render() {
+  // LINKS
+  const links = filteredLinks();
+  const linkSel = linkG.selectAll('line').data(links, d => `${d.source}|${d.target}|${d.type}`);
+  linkSel.exit().remove();
+  const linkEnter = linkSel.enter().append('line')
+    .attr('class', d => `link ${d.type}`);
+  linkEnter.merge(linkSel)
+    .attr('class', d => {
+      let cls = `link ${d.type}`;
+      if (pathLinks.has(`${d.source.id || d.source}|${d.target.id || d.target}`)) cls += ' path-hl';
+      return cls;
+    });
+
+  // NODES
+  const visibleIds = new Set();
+  links.forEach(l => {
+    visibleIds.add(typeof l.source === 'string' ? l.source : l.source.id);
+    visibleIds.add(typeof l.target === 'string' ? l.target : l.target.id);
+  });
+  // also keep nodes even if isolated when no filter reduces them
+  const visibleNodes = (showRelated || showAligned) ? allNodes.filter(n => visibleIds.has(n.id)) : allNodes;
+
+  const nodeSel = nodeG.selectAll('g.node').data(visibleNodes, d => d.id);
+  nodeSel.exit().remove();
+  const nodeEnter = nodeSel.enter().append('g')
+    .attr('class', 'node')
+    .call(d3.drag()
+      .on('start', (e, d) => { if (!e.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+      .on('drag',  (e, d) => { d.fx = e.x; d.fy = e.y; })
+      .on('end',   (e, d) => { if (layoutMode !== 'radial') { d.fx = null; d.fy = null; } simulation.alphaTarget(0); }))
+    .on('click', (e, d) => { e.stopPropagation(); selectNode(d.id); });
+
+  nodeEnter.append('circle');
+  nodeEnter.append('text').attr('text-anchor', 'middle').attr('dy', -8);
+
+  const allNodeSel = nodeEnter.merge(nodeSel);
+  allNodeSel
+    .attr('class', d => {
+      let cls = 'node';
+      if (d.id === selectedId) cls += ' selected';
+      if (pathIds.has(d.id)) cls += ' path-hl';
+      return cls;
+    })
+    .each(function(d) {
+      const sel = d3.select(this);
+      sel.select('circle')
+        .attr('r', radiusFor(d))
+        .attr('fill', REPO_COLOR[d.repo] || '#888');
+      sel.select('text')
+        .text(d.id.length > 14 ? d.id.slice(0, 12) + '…' : d.id);
+    });
+
+  // DIM non-matching on search
+  if (searchQuery) {
+    const q = searchQuery.toUpperCase();
+    allNodeSel.attr('class', function(d) {
+      let cls = 'node';
+      if (d.id === selectedId) cls += ' selected';
+      if (pathIds.has(d.id)) cls += ' path-hl';
+      const match = d.id.toUpperCase().includes(q) || d.title.toUpperCase().includes(q);
+      if (!match) cls += ' dim';
+      return cls;
+    });
+    linkG.selectAll('line').attr('class', function(d) {
+      const s = typeof d.source === 'string' ? d.source : d.source.id;
+      const t = typeof d.target === 'string' ? d.target : d.target.id;
+      const sm = s.toUpperCase().includes(q);
+      const tm = t.toUpperCase().includes(q);
+      let cls = `link ${d.type}`;
+      if (pathLinks.has(`${s}|${t}`)) cls += ' path-hl';
+      if (!sm && !tm) cls += ' dim';
+      return cls;
+    });
+  }
+
+  // Update simulation
+  simulation.nodes(allNodes);
+  simulation.force('link').links(links);
+  simulation.alpha(0.5).restart();
+}
+
+// ============ SELECT NODE ============
+function selectNode(id) {
+  selectedId = id;
+  pathIds.clear();
+  pathLinks.clear();
+  renderDetail();
+  render();
+  // also expand + highlight in sidebar
+  document.querySelectorAll('.id-row').forEach(r => {
+    r.classList.toggle('selected', r.dataset.id === id);
+    r.classList.remove('path-hl');
+  });
+}
+
+// ============ BFS SHORTEST PATH ============
+function bfs(startId, endId) {
+  if (!startId || !endId || !nodeById[startId] || !nodeById[endId]) return null;
+  if (startId === endId) return [startId];
+  // build adjacency from filtered links
+  const adj = {};
+  filteredLinks().forEach(l => {
+    const s = typeof l.source === 'string' ? l.source : l.source.id;
+    const t = typeof l.target === 'string' ? l.target : l.target.id;
+    if (!adj[s]) adj[s] = [];
+    if (!adj[t]) adj[t] = [];
+    adj[s].push(t);
+    adj[t].push(s); // treat as undirected for path search
+  });
+  const visited = new Set([startId]);
+  const queue = [[startId]];
+  while (queue.length) {
+    const path = queue.shift();
+    const last = path[path.length - 1];
+    if (last === endId) return path;
+    (adj[last] || []).forEach(next => {
+      if (!visited.has(next)) {
+        visited.add(next);
+        queue.push([...path, next]);
+      }
+    });
+  }
+  return null;
+}
+
+function runPathSearch() {
+  const from = document.getElementById('path-from').value;
+  const to = document.getElementById('path-to').value;
+  const result = document.getElementById('path-result');
+  if (!from || !to) {
+    result.className = 'path-result empty';
+    result.textContent = 'select both IDs';
+    return;
+  }
+  const path = bfs(from, to);
+  pathIds.clear();
+  pathLinks.clear();
+  if (!path) {
+    result.className = 'path-result err';
+    result.textContent = `no path between ${from} and ${to}`;
+  } else {
+    path.forEach(id => pathIds.add(id));
+    for (let i = 0; i < path.length - 1; i++) {
+      pathLinks.add(`${path[i]}|${path[i+1]}`);
+      pathLinks.add(`${path[i+1]}|${path[i]}`); // undirected
+    }
+    result.className = 'path-result';
+    result.textContent = path.length === 1
+      ? `${path[0]} (same node)`
+      : `${path.join(' → ')}  (${path.length - 1} hop${path.length > 2 ? 's' : ''})`;
+  }
+  render();
+  // sidebar path-hl
+  document.querySelectorAll('.id-row').forEach(r => {
+    r.classList.toggle('path-hl', pathIds.has(r.dataset.id));
+    r.classList.toggle('selected', r.dataset.id === selectedId);
+  });
+}
+
+function clearPath() {
+  pathIds.clear();
+  pathLinks.clear();
+  const result = document.getElementById('path-result');
+  result.className = 'path-result empty';
+  result.textContent = '—';
+  document.getElementById('path-from').value = '';
+  document.getElementById('path-to').value = '';
+  document.querySelectorAll('.id-row').forEach(r => r.classList.remove('path-hl'));
+  render();
+}
+
+// ============ DETAIL PANEL ============
+function renderDetail() {
+  const panel = document.getElementById('detail');
+  if (!selectedId) {
+    panel.innerHTML = `
+      <div class="detail-section">
+        <div class="detail-h">Selected</div>
+        <div class="empty-state">click any node or ID in the sidebar to inspect</div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-h">Path search (BFS)</div>
+        <div class="path-row">
+          <select id="path-from"><option value="">— from —</option></select>
+          <select id="path-to"><option value="">— to —</option></select>
+        </div>
+        <button class="btn-primary" id="path-go" disabled>Find shortest path</button>
+        <div class="path-result empty" id="path-result">—</div>
+        <div class="path-clear" id="path-clear" style="display:none">clear path</div>
+      </div>
+    `;
+    populatePathSelects();
+    return;
+  }
+  const n = nodeById[selectedId];
+  const inEdges = allLinks.filter(l => l.target === selectedId || (l.target && l.target.id === selectedId));
+  const outEdges = allLinks.filter(l => l.source === selectedId || (l.source && l.source.id === selectedId));
+
+  panel.innerHTML = `
+    <div class="detail-section">
+      <div class="detail-h">Selected</div>
+      <div class="detail-id">${n.id}</div>
+      <div class="detail-title">${n.title}</div>
+      <div class="detail-meta">
+        <span class="badge repo-${n.repo}">${n.repo}</span>
+        <span class="badge">${n.prefix}</span>
+      </div>
+      <div class="detail-stats">
+        <div class="stat"><div class="stat-val">${n.inDeg}</div><div class="stat-lbl">in</div></div>
+        <div class="stat"><div class="stat-val">${n.outDeg}</div><div class="stat-lbl">out</div></div>
+        <div class="stat"><div class="stat-val">${n.totalDeg}</div><div class="stat-lbl">total</div></div>
+      </div>
+      <div class="detail-file">${n.file}</div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-h">In-edges (${inEdges.length})</div>
+      ${inEdges.length ? `<div class="edge-list">${inEdges.map(l => {
+        const src = typeof l.source === 'string' ? l.source : l.source.id;
+        return `<div class="edge-row" data-id="${src}">
+          <span class="edge-id">${src}</span>
+          <span class="edge-arrow">→</span>
+          <span style="color:var(--text3)">${n.id}</span>
+          <span class="edge-type ${l.type}">${l.type}</span>
+        </div>`;
+      }).join('')}</div>` : `<div class="empty-state">no incoming edges</div>`}
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-h">Out-edges (${outEdges.length})</div>
+      ${outEdges.length ? `<div class="edge-list">${outEdges.map(l => {
+        const tgt = typeof l.target === 'string' ? l.target : l.target.id;
+        return `<div class="edge-row" data-id="${tgt}">
+          <span style="color:var(--text3)">${n.id}</span>
+          <span class="edge-arrow">→</span>
+          <span class="edge-id">${tgt}</span>
+          <span class="edge-type ${l.type}">${l.type}</span>
+        </div>`;
+      }).join('')}</div>` : `<div class="empty-state">no outgoing edges</div>`}
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-h">Path search (BFS)</div>
+      <div class="path-row">
+        <select id="path-from"><option value="">— from —</option></select>
+        <select id="path-to"><option value="">— to —</option></select>
+      </div>
+      <button class="btn-primary" id="path-go">Find shortest path</button>
+      <div class="path-result empty" id="path-result">—</div>
+      <div class="path-clear" id="path-clear">clear path</div>
+    </div>
+  `;
+
+  // hook edge-row clicks
+  panel.querySelectorAll('.edge-row').forEach(row => {
+    row.addEventListener('click', () => selectNode(row.dataset.id));
+  });
+  // hook path search
+  document.getElementById('path-go').addEventListener('click', runPathSearch);
+  document.getElementById('path-clear').addEventListener('click', clearPath);
+  populatePathSelects();
+  // preselect current in path-to
+  document.getElementById('path-to').value = selectedId;
+}
+
+function populatePathSelects() {
+  const sorted = allNodes.map(n => n.id).sort();
+  ['path-from', 'path-to'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">— select —</option>' +
+      sorted.map(id => `<option value="${id}">${id}</option>`).join('');
+    sel.value = cur;
+  });
+}
+
+// ============ SIDEBAR TREE ============
+function renderSidebar() {
+  const tree = document.getElementById('repo-tree');
+  const repos = ['standards', 'guard', 'skills', 'platform'];
+  tree.innerHTML = repos.map(repo => {
+    const prefix = REPO_PREFIX[repo];
+    const nodes = allNodes.filter(n => n.repo === repo).sort((a,b) => a.id.localeCompare(b.id));
+    return `
+      <div class="repo-group">
+        <div class="repo-row" data-repo="${repo}">
+          <span class="chevron">▶</span>
+          <span class="repo-dot ${repo}"></span>
+          <span class="repo-name">${repo}</span>
+          <span class="repo-count">${nodes.length}</span>
+        </div>
+        <div class="id-list" data-repo-list="${repo}">
+          ${nodes.map(n => `<div class="id-row" data-id="${n.id}" title="${n.title}">${n.id}</div>`).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  tree.querySelectorAll('.repo-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const repo = row.dataset.repo;
+      const list = tree.querySelector(`[data-repo-list="${repo}"]`);
+      row.classList.toggle('expanded');
+      list.classList.toggle('expanded');
+    });
+  });
+  tree.querySelectorAll('.id-row').forEach(r => {
+    r.addEventListener('click', () => selectNode(r.dataset.id));
+  });
+}
+
+// ============ KPI STRIP ============
+function renderKPI() {
+  const strip = document.getElementById('kpi-strip');
+  const summary = IDG.summary;
+  const top = allNodes.slice().sort((a,b) => b.inDeg - a.inDeg)[0];
+  const iso = allNodes.filter(n => n.totalDeg === 0).length;
+  strip.innerHTML = `
+    <div class="kpi"><span class="kpi-dot" style="background:var(--accent)"></span>
+      <span class="kpi-val">${summary.ids_total}</span><span class="kpi-lbl">IDs</span></div>
+    <div class="kpi"><span class="kpi-val">${summary.total_edges}</span><span class="kpi-lbl">edges</span>
+      <span class="kpi-sub">${summary.related_edges} rel · ${summary.aligned_edges} align</span></div>
+    <div class="kpi"><span class="kpi-val">4</span><span class="kpi-lbl">repos</span>
+      <span class="kpi-sub">std:${summary.by_repo.standards} · grd:${summary.by_repo.guard} · skl:${summary.by_repo.skills} · plt:0</span></div>
+    <div class="kpi"><span class="kpi-val">${iso}</span><span class="kpi-lbl">isolated</span></div>
+    <div class="kpi"><span class="kpi-lbl">top hub:</span>
+      <span class="kpi-sub" style="color:var(--warn)">${top.id} (${top.inDeg} in)</span></div>
+  `;
+  document.getElementById('cnt-related').textContent = summary.related_edges;
+  document.getElementById('cnt-aligned').textContent = summary.aligned_edges;
+}
+
+// ============ TOOLBAR WIRING ============
+document.getElementById('reheat').addEventListener('click', () => simulation.alpha(1).restart());
+document.getElementById('reset-zoom').addEventListener('click', resetZoom);
+document.getElementById('filter-related').addEventListener('click', (e) => {
+  showRelated = !showRelated;
+  e.target.style.opacity = showRelated ? 1 : 0.4;
+  render();
+});
+document.getElementById('filter-aligned').addEventListener('click', (e) => {
+  showAligned = !showAligned;
+  e.target.style.opacity = showAligned ? 1 : 0.4;
+  render();
+});
+
+document.querySelectorAll('.layout-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    document.querySelectorAll('.layout-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    applyLayout(btn.dataset.mode);
+  });
+});
+
+document.getElementById('search').addEventListener('input', (e) => {
+  searchQuery = e.target.value.trim();
+  render();
+});
+
+svg.on('dblclick.zoom', null);
+svg.on('dblclick', resetZoom);
+
+window.addEventListener('resize', () => {
+  width = wrap.clientWidth;
+  height = wrap.clientHeight;
+  svg.attr('viewBox', `0 0 ${width} ${height}`);
+  if (layoutMode === 'clustered') {
+    const centers = getClusterCenters(width, height);
+    allNodes.forEach(n => { n._cx = centers[n.repo].x; n._cy = centers[n.repo].y; });
+  }
+  if (layoutMode === 'radial') applyLayout('radial');
+  if (layoutMode !== 'radial') simulation.force('center', d3.forceCenter(width / 2, height / 2));
+  simulation.alpha(0.3).restart();
+});
+
+// ============ INITIAL RENDER ============
+renderSidebar();
+renderKPI();
+renderDetail();
+applyLayout('flat');
+render();
+
+</script>
+</body>
+</html>
