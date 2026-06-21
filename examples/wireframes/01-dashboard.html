@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>P-MAS v2 Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ===== RESET & BASE ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #000000;
+      color: #fafafa;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    .mono { font-family: 'JetBrains Mono', 'SF Mono', monospace; }
+
+    /* ===== LAYOUT ===== */
+    .page-wrap {
+      max-width: 1440px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 0 24px;
+      flex: 1;
+    }
+
+    /* ===== HEADER BAR ===== */
+    .header {
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #27272a;
+      padding: 0 24px;
+      max-width: 1440px;
+      margin: 0 auto;
+      width: 100%;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(0, 0, 0, 0.92);
+      backdrop-filter: blur(12px);
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo {
+      font-size: 20px;
+      font-weight: 700;
+      color: #06B6D4;
+      letter-spacing: 2px;
+    }
+    .logo-sub {
+      font-size: 11px;
+      color: #52525b;
+      letter-spacing: 0.5px;
+      margin-left: 4px;
+    }
+    .header-center {
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+    .tab {
+      padding: 8px 20px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #a1a1aa;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: color 0.2s, border-color 0.25s;
+      user-select: none;
+      white-space: nowrap;
+    }
+    .tab:hover { color: #fafafa; }
+    .tab.active {
+      color: #06B6D4;
+      border-bottom-color: #06B6D4;
+    }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .search-box {
+      display: flex;
+      align-items: center;
+      background: #0A0A0F;
+      border: 1px solid #27272a;
+      border-radius: 6px;
+      padding: 6px 12px;
+      gap: 8px;
+      transition: border-color 0.2s;
+    }
+    .search-box:focus-within { border-color: #06B6D4; }
+    .search-box svg { color: #52525b; flex-shrink: 0; }
+    .search-box input {
+      background: none;
+      border: none;
+      outline: none;
+      color: #fafafa;
+      font-size: 13px;
+      width: 140px;
+      font-family: inherit;
+    }
+    .search-box input::placeholder { color: #52525b; }
+    .icon-btn {
+      width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 6px;
+      cursor: pointer;
+      color: #a1a1aa;
+      transition: background 0.2s, color 0.2s;
+      border: none;
+      background: none;
+    }
+    .icon-btn:hover { background: #111118; color: #fafafa; }
+    .avatar {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #06B6D4, #0891B2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 600;
+      cursor: pointer;
+      transition: box-shadow 0.2s;
+    }
+    .avatar:hover { box-shadow: 0 0 0 2px rgba(6,182,212,0.4); }
+    .ws-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 6px rgba(34,197,94,0.6);
+      position: relative;
+    }
+    .ws-dot::after {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 50%;
+      background: rgba(34,197,94,0.3);
+      animation: pulse-ring 2s ease-out infinite;
+    }
+    @keyframes pulse-ring {
+      0% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(2.2); opacity: 0; }
+    }
+
+    /* ===== SECTION TITLES ===== */
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #a1a1aa;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      margin-bottom: 16px;
+    }
+
+    /* ===== KPI STRIP ===== */
+    .kpi-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-top: 24px;
+    }
+    .kpi-card {
+      background: #0A0A0F;
+      border: 1px solid #27272a;
+      border-radius: 10px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.25s, transform 0.2s;
+      cursor: default;
+    }
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: transparent;
+      transition: background 0.25s;
+    }
+    .kpi-card:hover {
+      border-color: #27272a;
+      transform: translateY(-1px);
+    }
+    .kpi-card:hover::before {
+      background: #06B6D4;
+    }
+    .kpi-label {
+      font-size: 12px;
+      color: #52525b;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 8px;
+    }
+    .kpi-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: #fafafa;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .kpi-sub {
+      font-size: 12px;
+      color: #a1a1aa;
+    }
+    .kpi-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .sparkline-wrap {
+      flex: 1;
+      height: 28px;
+    }
+    .trend {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .trend.up { color: #22c55e; }
+    .trend.down { color: #22c55e; }
+    .trend-badge {
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(34,197,94,0.1);
+      color: #22c55e;
+    }
+
+    /* ===== TWO COLUMN LAYOUT ===== */
+    .two-col {
+      display: grid;
+      grid-template-columns: 60% 40%;
+      gap: 16px;
+      margin-top: 24px;
+    }
+    .two-col-equal {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 24px;
+    }
+    .card {
+      background: #0A0A0F;
+      border: 1px solid #27272a;
+      border-radius: 10px;
+      padding: 20px;
+      transition: border-color 0.2s;
+    }
+    .card:hover { border-color: #333; }
+
+    /* ===== DONUT CHART ===== */
+    .donut-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .donut-wrap {
+      position: relative;
+      width: 200px;
+      height: 200px;
+      margin: 0 auto 20px;
+    }
+    .donut-center-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+    .donut-center-text .num {
+      font-size: 28px;
+      font-weight: 700;
+      color: #fafafa;
+    }
+    .donut-center-text .lbl {
+      font-size: 11px;
+      color: #52525b;
+    }
+    .donut-legend {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 24px;
+      width: 100%;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #a1a1aa;
+    }
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+    .legend-count {
+      font-weight: 600;
+      color: #fafafa;
+      margin-left: auto;
+    }
+    .legend-pct {
+      color: #52525b;
+      font-size: 11px;
+      width: 36px;
+      text-align: right;
+    }
+
+    /* ===== TOP PERFORMERS ===== */
+    .performer-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .performer-item {
+      display: grid;
+      grid-template-columns: 24px 1fr auto;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid #1a1a22;
+      transition: background 0.15s;
+    }
+    .performer-item:last-child { border-bottom: none; }
+    .performer-item:hover { background: rgba(6,182,212,0.03); }
+    .performer-rank {
+      font-size: 12px;
+      font-weight: 700;
+      color: #52525b;
+      text-align: center;
+    }
+    .performer-info { min-width: 0; }
+    .performer-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #fafafa;
+    }
+    .performer-group {
+      font-size: 11px;
+      color: #52525b;
+      margin-top: 2px;
+    }
+    .performer-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .score-bar-track {
+      width: 80px;
+      height: 6px;
+      background: #1a1a22;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .score-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      background: #06B6D4;
+      transition: width 0.6s ease;
+    }
+    .performer-score {
+      font-size: 13px;
+      font-weight: 600;
+      color: #06B6D4;
+      min-width: 24px;
+      text-align: right;
+    }
+    .performer-tasks {
+      font-size: 11px;
+      color: #52525b;
+      min-width: 50px;
+      text-align: right;
+    }
+    .performer-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ===== NETWORK ACTIVITY CHART ===== */
+    .chart-container {
+      margin-top: 24px;
+    }
+    .chart-legend {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 12px;
+    }
+    .chart-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #a1a1aa;
+    }
+    .chart-legend-dot {
+      width: 10px;
+      height: 3px;
+      border-radius: 2px;
+    }
+    .chart-svg-wrap {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    /* ===== SYSTEM HEALTH ===== */
+    .health-items {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .health-item {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .health-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .health-label {
+      font-size: 13px;
+      color: #a1a1aa;
+    }
+    .health-value {
+      font-size: 13px;
+      font-weight: 600;
+      color: #fafafa;
+    }
+    .progress-track {
+      width: 100%;
+      height: 6px;
+      background: #1a1a22;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.8s ease;
+    }
+    .health-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .status-ok {
+      color: #22c55e;
+      font-size: 12px;
+    }
+    .health-dot-green {
+      width: 6px; height: 6px; border-radius: 50%; background: #22c55e;
+    }
+    .health-dot-yellow {
+      width: 6px; height: 6px; border-radius: 50%; background: #eab308;
+    }
+    .error-time {
+      font-size: 12px;
+      color: #52525b;
+    }
+
+    /* ===== ACTIVITY TIMELINE ===== */
+    .timeline-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .timeline-item {
+      display: flex;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid #1a1a22;
+      cursor: pointer;
+      transition: background 0.15s;
+      position: relative;
+    }
+    .timeline-item:last-child { border-bottom: none; }
+    .timeline-item:hover { background: rgba(6,182,212,0.03); }
+    .timeline-time {
+      font-size: 12px;
+      color: #52525b;
+      font-family: 'JetBrains Mono', monospace;
+      white-space: nowrap;
+      min-width: 44px;
+      padding-top: 2px;
+    }
+    .timeline-content {
+      flex: 1;
+      min-width: 0;
+    }
+    .timeline-text {
+      font-size: 13px;
+      color: #a1a1aa;
+      line-height: 1.5;
+    }
+    .timeline-agent {
+      color: #06B6D4;
+      font-weight: 600;
+    }
+    .timeline-details {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease, opacity 0.3s ease, margin 0.3s ease;
+      opacity: 0;
+      margin-top: 0;
+    }
+    .timeline-item.expanded .timeline-details {
+      max-height: 100px;
+      opacity: 1;
+      margin-top: 8px;
+    }
+    .timeline-detail-text {
+      font-size: 12px;
+      color: #52525b;
+      line-height: 1.6;
+      padding: 8px 12px;
+      background: #111118;
+      border-radius: 6px;
+      border-left: 2px solid #06B6D4;
+    }
+    .timeline-expand-icon {
+      font-size: 10px;
+      color: #52525b;
+      transition: transform 0.2s;
+      padding-top: 3px;
+    }
+    .timeline-item.expanded .timeline-expand-icon {
+      transform: rotate(90deg);
+    }
+    .timeline-dot {
+      width: 6px; height: 6px; border-radius: 50%; background: #06B6D4;
+      margin-top: 6px;
+      flex-shrink: 0;
+    }
+
+    /* ===== HEATMAP ===== */
+    .heatmap-grid {
+      display: grid;
+      grid-template-columns: 32px repeat(8, 1fr);
+      grid-template-rows: 24px repeat(8, 1fr);
+      gap: 2px;
+      width: 100%;
+      max-width: 380px;
+    }
+    .heatmap-label {
+      font-size: 9px;
+      color: #52525b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .heatmap-label-row {
+      justify-content: flex-end;
+      padding-right: 4px;
+    }
+    .heatmap-cell {
+      border-radius: 3px;
+      min-height: 32px;
+      transition: transform 0.15s, box-shadow 0.15s;
+      cursor: default;
+      position: relative;
+    }
+    .heatmap-cell:hover {
+      transform: scale(1.15);
+      box-shadow: 0 0 8px rgba(6,182,212,0.3);
+      z-index: 2;
+    }
+
+    /* ===== FORMULA TABLE ===== */
+    .formula-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .formula-table th {
+      font-size: 11px;
+      color: #52525b;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      text-align: left;
+      padding: 8px 12px;
+      border-bottom: 1px solid #27272a;
+      font-weight: 600;
+    }
+    .formula-table td {
+      font-size: 13px;
+      color: #a1a1aa;
+      padding: 10px 12px;
+      border-bottom: 1px solid #1a1a22;
+    }
+    .formula-table tr:hover td {
+      background: rgba(6,182,212,0.03);
+    }
+    .formula-name {
+      font-weight: 600;
+      color: #fafafa;
+    }
+    .formula-agents {
+      color: #06B6D4;
+      font-weight: 500;
+    }
+    .formula-category {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: #111118;
+      color: #a1a1aa;
+      border: 1px solid #27272a;
+    }
+
+    /* ===== FOOTER ===== */
+    .footer {
+      border-top: 1px solid #27272a;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 1440px;
+      margin: 24px auto 0;
+      width: 100%;
+      font-size: 12px;
+      color: #52525b;
+      margin-top: auto;
+    }
+    .footer-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .footer-version {
+      color: #06B6D4;
+      font-weight: 600;
+    }
+    .footer-center {
+      color: #52525b;
+    }
+    .footer-ws {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .footer-dot {
+      width: 6px; height: 6px; border-radius: 50%; background: #22c55e;
+    }
+
+    /* ===== DONUT HOVER SEGMENT ===== */
+    .donut-segment {
+      transition: opacity 0.2s, filter 0.2s;
+      cursor: pointer;
+    }
+    .donut-segment:hover {
+      filter: brightness(1.3);
+    }
+    .donut-segment.dimmed {
+      opacity: 0.3;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 1024px) {
+      .two-col, .two-col-equal {
+        grid-template-columns: 1fr;
+      }
+      .kpi-strip {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    @media (max-width: 640px) {
+      .kpi-strip {
+        grid-template-columns: 1fr;
+      }
+      .header-center { display: none; }
+    }
+
+    /* ===== UTILITY ===== */
+    .text-cyan { color: #06B6D4; }
+    .text-muted { color: #a1a1aa; }
+    .text-dim { color: #52525b; }
+    .mt-24 { margin-top: 24px; }
+    .mb-16 { margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+
+  <!-- ===== 1. HEADER BAR ===== -->
+  <header class="header">
+    <div class="header-left">
+      <span class="logo">P-MAS</span>
+      <span class="logo-sub">Multi-Agent System</span>
+    </div>
+    <nav class="header-center" id="navTabs">
+      <div class="tab active" data-tab="dashboard">Dashboard</div>
+      <div class="tab" data-tab="hierarchy">Hierarchy</div>
+      <div class="tab" data-tab="workflows">Workflows</div>
+      <div class="tab" data-tab="prompt-studio">Prompt Studio</div>
+    </nav>
+    <div class="header-right">
+      <div class="search-box">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="Search agents..." aria-label="Search agents">
+      </div>
+      <button class="icon-btn" aria-label="Settings">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+      <div class="avatar" title="User">U</div>
+      <div class="ws-dot" title="WebSocket: Connected"></div>
+    </div>
+  </header>
+
+  <div class="page-wrap">
+
+    <!-- ===== 2. KPI STRIP ===== -->
+    <section class="kpi-strip" aria-label="Key Performance Indicators">
+      <!-- Active Agents -->
+      <div class="kpi-card">
+        <div class="kpi-label">Active Agents</div>
+        <div class="kpi-value">21<span style="font-size:16px;color:#52525b;font-weight:400">/26</span></div>
+        <div class="kpi-meta">
+          <div class="sparkline-wrap">
+            <svg width="100%" height="28" viewBox="0 0 100 28" preserveAspectRatio="none">
+              <polyline fill="none" stroke="#06B6D4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                points="0,22 10,18 20,20 30,14 40,16 50,10 60,12 70,8 80,6 90,8 100,4"/>
+              <polyline fill="url(#sparkGrad1)" stroke="none"
+                points="0,28 0,22 10,18 20,20 30,14 40,16 50,10 60,12 70,8 80,6 90,8 100,4 100,28"/>
+              <defs>
+                <linearGradient id="sparkGrad1" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#06B6D4" stop-opacity="0.2"/>
+                  <stop offset="100%" stop-color="#06B6D4" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tasks Running -->
+      <div class="kpi-card">
+        <div class="kpi-label">Tasks Running</div>
+        <div class="kpi-value">8</div>
+        <div class="kpi-meta">
+          <span class="trend up">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+            +3
+          </span>
+          <span class="kpi-sub">vs last hour</span>
+        </div>
+      </div>
+
+      <!-- Avg Response -->
+      <div class="kpi-card">
+        <div class="kpi-label">Avg Response</div>
+        <div class="kpi-value mono">1.2<span style="font-size:16px;color:#52525b;font-weight:400">s</span></div>
+        <div class="kpi-meta">
+          <span class="trend down">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            -0.3s
+          </span>
+          <span class="kpi-sub">improving</span>
+        </div>
+      </div>
+
+      <!-- System Uptime -->
+      <div class="kpi-card">
+        <div class="kpi-label">System Uptime</div>
+        <div class="kpi-value">99.7<span style="font-size:16px;color:#52525b;font-weight:400">%</span></div>
+        <div class="kpi-meta">
+          <span class="trend-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Healthy
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 3. STATUS DISTRIBUTION + TOP PERFORMERS ===== -->
+    <section class="two-col">
+      <!-- LEFT: Donut Chart -->
+      <div class="card">
+        <div class="section-title">Status Distribution</div>
+        <div class="donut-section">
+          <div class="donut-wrap">
+            <svg viewBox="0 0 200 200" width="200" height="200" id="donutChart">
+              <!-- Background circle -->
+              <circle cx="100" cy="100" r="70" fill="none" stroke="#1a1a22" stroke-width="24"/>
+              <!-- Active: 21/26 = 80.77% -->
+              <circle class="donut-segment" cx="100" cy="100" r="70" fill="none"
+                stroke="#06B6D4" stroke-width="24"
+                stroke-dasharray="355.39 439.82"
+                stroke-dashoffset="0"
+                transform="rotate(-90 100 100)"
+                data-status="active"/>
+              <!-- Idle: 3/26 = 11.54% -->
+              <circle class="donut-segment" cx="100" cy="100" r="70" fill="none"
+                stroke="#eab308" stroke-width="24"
+                stroke-dasharray="50.79 439.82"
+                stroke-dashoffset="-355.39"
+                transform="rotate(-90 100 100)"
+                data-status="idle"/>
+              <!-- Paused: 1/26 = 3.85% -->
+              <circle class="donut-segment" cx="100" cy="100" r="70" fill="none"
+                stroke="#f97316" stroke-width="24"
+                stroke-dasharray="16.93 439.82"
+                stroke-dashoffset="-406.18"
+                transform="rotate(-90 100 100)"
+                data-status="paused"/>
+              <!-- Standby: 1/26 = 3.85% -->
+              <circle class="donut-segment" cx="100" cy="100" r="70" fill="none"
+                stroke="#52525b" stroke-width="24"
+                stroke-dasharray="16.93 439.82"
+                stroke-dashoffset="-423.11"
+                transform="rotate(-90 100 100)"
+                data-status="standby"/>
+            </svg>
+            <div class="donut-center-text">
+              <div class="num">26</div>
+              <div class="lbl">Total</div>
+            </div>
+          </div>
+          <div class="donut-legend">
+            <div class="legend-item" data-status="active">
+              <span class="legend-dot" style="background:#06B6D4"></span>
+              Active
+              <span class="legend-count">21</span>
+              <span class="legend-pct">80.8%</span>
+            </div>
+            <div class="legend-item" data-status="idle">
+              <span class="legend-dot" style="background:#eab308"></span>
+              Idle
+              <span class="legend-count">3</span>
+              <span class="legend-pct">11.5%</span>
+            </div>
+            <div class="legend-item" data-status="paused">
+              <span class="legend-dot" style="background:#f97316"></span>
+              Paused
+              <span class="legend-count">1</span>
+              <span class="legend-pct">3.8%</span>
+            </div>
+            <div class="legend-item" data-status="standby">
+              <span class="legend-dot" style="background:#52525b"></span>
+              Standby
+              <span class="legend-count">1</span>
+              <span class="legend-pct">3.8%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Top Performers -->
+      <div class="card">
+        <div class="section-title">Top Performers</div>
+        <div class="performer-list">
+          <!-- 1. Architect -->
+          <div class="performer-item">
+            <span class="performer-rank">1</span>
+            <div class="performer-info" style="display:flex;align-items:center;gap:10px;">
+              <span class="performer-dot" style="background:#67E8F9"></span>
+              <div>
+                <div class="performer-name">Architect</div>
+                <div class="performer-group">Strategy</div>
+              </div>
+            </div>
+            <div class="performer-right">
+              <div class="score-bar-track"><div class="score-bar-fill" style="width:94%"></div></div>
+              <span class="performer-score">94</span>
+              <span class="performer-tasks">12 tasks</span>
+            </div>
+          </div>
+          <!-- 2. Inspector -->
+          <div class="performer-item">
+            <span class="performer-rank">2</span>
+            <div class="performer-info" style="display:flex;align-items:center;gap:10px;">
+              <span class="performer-dot" style="background:#06B6D4"></span>
+              <div>
+                <div class="performer-name">Inspector</div>
+                <div class="performer-group">Control</div>
+              </div>
+            </div>
+            <div class="performer-right">
+              <div class="score-bar-track"><div class="score-bar-fill" style="width:91%"></div></div>
+              <span class="performer-score">91</span>
+              <span class="performer-tasks">10 tasks</span>
+            </div>
+          </div>
+          <!-- 3. Coordinator -->
+          <div class="performer-item">
+            <span class="performer-rank">3</span>
+            <div class="performer-info" style="display:flex;align-items:center;gap:10px;">
+              <span class="performer-dot" style="background:#22D3EE"></span>
+              <div>
+                <div class="performer-name">Coordinator</div>
+                <div class="performer-group">Tactics</div>
+              </div>
+            </div>
+            <div class="performer-right">
+              <div class="score-bar-track"><div class="score-bar-fill" style="width:88%"></div></div>
+              <span class="performer-score">88</span>
+              <span class="performer-tasks">9 tasks</span>
+            </div>
+          </div>
+          <!-- 4. Coder -->
+          <div class="performer-item">
+            <span class="performer-rank">4</span>
+            <div class="performer-info" style="display:flex;align-items:center;gap:10px;">
+              <span class="performer-dot" style="background:#0891B2"></span>
+              <div>
+                <div class="performer-name">Coder</div>
+                <div class="performer-group">Execution</div>
+              </div>
+            </div>
+            <div class="performer-right">
+              <div class="score-bar-track"><div class="score-bar-fill" style="width:85%"></div></div>
+              <span class="performer-score">85</span>
+              <span class="performer-tasks">11 tasks</span>
+            </div>
+          </div>
+          <!-- 5. Archivist -->
+          <div class="performer-item">
+            <span class="performer-rank">5</span>
+            <div class="performer-info" style="display:flex;align-items:center;gap:10px;">
+              <span class="performer-dot" style="background:#0E7490"></span>
+              <div>
+                <div class="performer-name">Archivist</div>
+                <div class="performer-group">Memory</div>
+              </div>
+            </div>
+            <div class="performer-right">
+              <div class="score-bar-track"><div class="score-bar-fill" style="width:82%"></div></div>
+              <span class="performer-score">82</span>
+              <span class="performer-tasks">7 tasks</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 4. NETWORK ACTIVITY ===== -->
+    <section class="chart-container card mt-24">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div class="section-title" style="margin-bottom:0">Network Activity</div>
+        <div style="font-size:12px;color:#52525b;">Last 24 hours</div>
+      </div>
+      <div class="chart-legend">
+        <div class="chart-legend-item">
+          <span class="chart-legend-dot" style="background:#06B6D4"></span>
+          API Calls
+        </div>
+        <div class="chart-legend-item">
+          <span class="chart-legend-dot" style="background:#22D3EE"></span>
+          WS Events
+        </div>
+      </div>
+      <div class="chart-svg-wrap">
+        <svg viewBox="0 0 900 260" width="100%" preserveAspectRatio="xMidYMid meet" style="min-width:600px;">
+          <defs>
+            <linearGradient id="areaGradCyan" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#06B6D4" stop-opacity="0.25"/>
+              <stop offset="100%" stop-color="#06B6D4" stop-opacity="0"/>
+            </linearGradient>
+            <linearGradient id="areaGradSecondary" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#22D3EE" stop-opacity="0.15"/>
+              <stop offset="100%" stop-color="#22D3EE" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <!-- Y-axis labels -->
+          <text x="30" y="30" fill="#52525b" font-size="10" text-anchor="end" font-family="'JetBrains Mono', monospace">200</text>
+          <text x="30" y="82" fill="#52525b" font-size="10" text-anchor="end" font-family="'JetBrains Mono', monospace">150</text>
+          <text x="30" y="134" fill="#52525b" font-size="10" text-anchor="end" font-family="'JetBrains Mono', monospace">100</text>
+          <text x="30" y="186" fill="#52525b" font-size="10" text-anchor="end" font-family="'JetBrains Mono', monospace">50</text>
+          <text x="30" y="238" fill="#52525b" font-size="10" text-anchor="end" font-family="'JetBrains Mono', monospace">0</text>
+          <!-- Grid lines -->
+          <line x1="40" y1="26" x2="880" y2="26" stroke="#1a1a22" stroke-width="1"/>
+          <line x1="40" y1="78" x2="880" y2="78" stroke="#1a1a22" stroke-width="1"/>
+          <line x1="40" y1="130" x2="880" y2="130" stroke="#1a1a22" stroke-width="1"/>
+          <line x1="40" y1="182" x2="880" y2="182" stroke="#1a1a22" stroke-width="1"/>
+          <line x1="40" y1="234" x2="880" y2="234" stroke="#27272a" stroke-width="1"/>
+          <!-- X-axis labels -->
+          <text x="60" y="254" fill="#52525b" font-size="10" text-anchor="middle" font-family="'JetBrains Mono', monospace">00:00</text>
+          <text x="200" y="254" fill="#52525b" font-size="10" text-anchor="middle" font-family="'JetBrains Mono', monospace">04:00</text>
+          <text x="340" y="254" fill="#52525b" font-size="10" text-anchor="middle" font-family="'JetBrains Mono', monospace">08:00</text>
+          <text x="480" y="254" fill="#52525b" font-size="10" text-anchor="middle" font-family="'JetBrains Mono', monospace">12:00</text>
+          <text x="620" y="254" fill="#52525b" font-size="10" text-anchor="middle" font-family="'JetBrains Mono', monospace">16:00</text>
+          <text x="760" y="254" fill="#52525b" font-size="10" text-anchor="middle" font-family="'JetBrains Mono', monospace">20:00</text>
+          <text x="860" y="254" fill="#52525b" font-size="10" text-anchor="middle" font-family="'JetBrains Mono', monospace">24:00</text>
+          <!-- API Calls area -->
+          <path d="M60,200 L130,190 L200,175 L270,155 L340,120 L410,100 L480,80 L550,65 L620,90 L690,110 L760,85 L830,70 L860,75 L860,234 L60,234 Z"
+            fill="url(#areaGradCyan)"/>
+          <polyline fill="none" stroke="#06B6D4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            points="60,200 130,190 200,175 270,155 340,120 410,100 480,80 550,65 620,90 690,110 760,85 830,70 860,75"/>
+          <!-- WS Events area -->
+          <path d="M60,218 L130,210 L200,200 L270,185 L340,165 L410,148 L480,135 L550,120 L620,145 L690,158 L760,140 L830,128 L860,132 L860,234 L60,234 Z"
+            fill="url(#areaGradSecondary)"/>
+          <polyline fill="none" stroke="#22D3EE" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4 3"
+            points="60,218 130,210 200,200 270,185 340,165 410,148 480,135 550,120 620,145 690,158 760,140 830,128 860,132"/>
+          <!-- Data dots for API Calls -->
+          <circle cx="480" cy="80" r="3" fill="#06B6D4" opacity="0.7"/>
+          <circle cx="830" cy="70" r="3" fill="#06B6D4" opacity="0.7"/>
+        </svg>
+      </div>
+    </section>
+
+    <!-- ===== 5. SYSTEM HEALTH + ACTIVITY TIMELINE ===== -->
+    <section class="two-col-equal mt-24">
+      <!-- LEFT: System Health -->
+      <div class="card">
+        <div class="section-title">System Health</div>
+        <div class="health-items">
+          <!-- CPU -->
+          <div class="health-item">
+            <div class="health-label-row">
+              <span class="health-label">CPU Usage</span>
+              <span class="health-value mono">34%</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" style="width:34%;background:#06B6D4"></div>
+            </div>
+          </div>
+          <!-- Memory -->
+          <div class="health-item">
+            <div class="health-label-row">
+              <span class="health-label">Memory</span>
+              <span class="health-value mono">2.1 / 8 GB</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" style="width:26.25%;background:#06B6D4"></div>
+            </div>
+          </div>
+          <!-- DB -->
+          <div class="health-item">
+            <div class="health-label-row">
+              <span class="health-label">Database</span>
+              <span class="health-status">
+                <span class="health-dot-green"></span>
+                <span class="health-value mono">45ms avg</span>
+              </span>
+            </div>
+          </div>
+          <!-- WS -->
+          <div class="health-item">
+            <div class="health-label-row">
+              <span class="health-label">WebSocket</span>
+              <span class="health-status">
+                <span class="health-dot-green"></span>
+                <span class="health-value" style="color:#22c55e">Connected</span>
+              </span>
+            </div>
+          </div>
+          <!-- Last Error -->
+          <div class="health-item">
+            <div class="health-label-row">
+              <span class="health-label">Last Error</span>
+              <span class="error-time mono">2h ago</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Activity Timeline -->
+      <div class="card">
+        <div class="section-title">Activity Timeline</div>
+        <div class="timeline-list" id="timelineList">
+          <div class="timeline-item" data-details="Coordinator used ReAct formula to analyze task complexity, then delegated code generation to Coder agent in the Execution group. Task #1847 started.">
+            <span class="timeline-dot"></span>
+            <span class="timeline-time">14:32</span>
+            <div class="timeline-content">
+              <div class="timeline-text"><span class="timeline-agent">Coordinator</span> delegated task to <span class="timeline-agent">Coder</span></div>
+              <div class="timeline-details">
+                <div class="timeline-detail-text">Coordinator used ReAct formula to analyze task complexity, then delegated code generation to Coder agent in the Execution group. Task #1847 started.</div>
+              </div>
+            </div>
+            <span class="timeline-expand-icon">&#9654;</span>
+          </div>
+          <div class="timeline-item" data-details="Inspector completed a full validation cycle on the latest deployment artifacts. All 14 checks passed. No anomalies detected in the Control group pipeline.">
+            <span class="timeline-dot"></span>
+            <span class="timeline-time">14:28</span>
+            <div class="timeline-content">
+              <div class="timeline-text"><span class="timeline-agent">Inspector</span> completed validation cycle</div>
+              <div class="timeline-details">
+                <div class="timeline-detail-text">Inspector completed a full validation cycle on the latest deployment artifacts. All 14 checks passed. No anomalies detected in the Control group pipeline.</div>
+              </div>
+            </div>
+            <span class="timeline-expand-icon">&#9654;</span>
+          </div>
+          <div class="timeline-item" data-details="Architect revised the multi-agent strategy plan, adjusting resource allocation for the Execution group and adding a new CoT-based reasoning pathway for the Tactics group.">
+            <span class="timeline-dot"></span>
+            <span class="timeline-time">14:25</span>
+            <div class="timeline-content">
+              <div class="timeline-text"><span class="timeline-agent">Architect</span> revised strategy plan</div>
+              <div class="timeline-details">
+                <div class="timeline-detail-text">Architect revised the multi-agent strategy plan, adjusting resource allocation for the Execution group and adding a new CoT-based reasoning pathway for the Tactics group.</div>
+              </div>
+            </div>
+            <span class="timeline-expand-icon">&#9654;</span>
+          </div>
+          <div class="timeline-item" data-details="Guard agent blocked an unauthorized access attempt from an external source targeting the Communication group. Source IP has been logged and flagged for review.">
+            <span class="timeline-dot"></span>
+            <span class="timeline-time">14:20</span>
+            <div class="timeline-content">
+              <div class="timeline-text"><span class="timeline-agent">Guard</span> blocked unauthorized access</div>
+              <div class="timeline-details">
+                <div class="timeline-detail-text">Guard agent blocked an unauthorized access attempt from an external source targeting the Communication group. Source IP has been logged and flagged for review.</div>
+              </div>
+            </div>
+            <span class="timeline-expand-icon">&#9654;</span>
+          </div>
+          <div class="timeline-item" data-details="Observer detected an anomaly in the Execution group: Executor-B response time increased 40% above baseline. Diagnostician has been notified for investigation.">
+            <span class="timeline-dot"></span>
+            <span class="timeline-time">14:15</span>
+            <div class="timeline-content">
+              <div class="timeline-text"><span class="timeline-agent">Observer</span> detected anomaly in Execution group</div>
+              <div class="timeline-details">
+                <div class="timeline-detail-text">Observer detected an anomaly in the Execution group: Executor-B response time increased 40% above baseline. Diagnostician has been notified for investigation.</div>
+              </div>
+            </div>
+            <span class="timeline-expand-icon">&#9654;</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 6. CONNECTION HEATMAP + FORMULA GRID ===== -->
+    <section class="two-col-equal mt-24">
+      <!-- LEFT: Connection Heatmap -->
+      <div class="card">
+        <div class="section-title">Connection Heatmap</div>
+        <p style="font-size:11px;color:#52525b;margin-bottom:16px;">Inter-group connection density (darker = more connections)</p>
+        <div class="heatmap-grid" id="heatmapGrid">
+          <!-- Generated by JS -->
+        </div>
+      </div>
+
+      <!-- RIGHT: Formula-Agent Mapping -->
+      <div class="card">
+        <div class="section-title">Formula-Agent Mapping</div>
+        <table class="formula-table">
+          <thead>
+            <tr>
+              <th>Formula</th>
+              <th>Agents</th>
+              <th>Category</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="formula-name mono">CoT</td>
+              <td class="formula-agents">3 agents</td>
+              <td><span class="formula-category">Foundational</span></td>
+            </tr>
+            <tr>
+              <td class="formula-name mono">ReAct</td>
+              <td class="formula-agents">4 agents</td>
+              <td><span class="formula-category">Planning</span></td>
+            </tr>
+            <tr>
+              <td class="formula-name mono">SelfConsistency</td>
+              <td class="formula-agents">2 agents</td>
+              <td><span class="formula-category">Verification</span></td>
+            </tr>
+            <tr>
+              <td class="formula-name mono">MoA</td>
+              <td class="formula-agents">1 agent</td>
+              <td><span class="formula-category">Advanced</span></td>
+            </tr>
+            <tr>
+              <td class="formula-name mono">ToT</td>
+              <td class="formula-agents">2 agents</td>
+              <td><span class="formula-category">Foundational</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <div style="height:24px"></div>
+  </div>
+
+  <!-- ===== 7. FOOTER ===== -->
+  <footer class="footer">
+    <div class="footer-left">
+      <span class="footer-version">P-MAS v2.0</span>
+      <span class="footer-center">26 Agents &middot; 8 Groups &middot; 20 Formulas</span>
+    </div>
+    <div class="footer-ws">
+      WS: Connected <span class="footer-dot"></span>
+    </div>
+    <span>&copy; 2025</span>
+  </footer>
+
+  <!-- ===== JAVASCRIPT ===== -->
+  <script>
+    // ===== TAB SWITCHING =====
+    const tabs = document.querySelectorAll('#navTabs .tab');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+      });
+    });
+
+    // ===== DONUT CHART HOVER =====
+    const donutSegments = document.querySelectorAll('.donut-segment');
+    const legendItems = document.querySelectorAll('.donut-legend .legend-item');
+
+    function highlightSegment(status) {
+      donutSegments.forEach(seg => {
+        if (seg.dataset.status === status) {
+          seg.style.filter = 'brightness(1.4) drop-shadow(0 0 6px rgba(6,182,212,0.3))';
+        } else {
+          seg.style.opacity = '0.3';
+          seg.style.filter = '';
+        }
+      });
+      legendItems.forEach(item => {
+        if (item.dataset.status === status) {
+          item.style.color = '#fafafa';
+        } else {
+          item.style.opacity = '0.4';
+        }
+      });
+    }
+
+    function resetSegments() {
+      donutSegments.forEach(seg => {
+        seg.style.opacity = '1';
+        seg.style.filter = '';
+      });
+      legendItems.forEach(item => {
+        item.style.color = '';
+        item.style.opacity = '1';
+      });
+    }
+
+    donutSegments.forEach(seg => {
+      seg.addEventListener('mouseenter', () => highlightSegment(seg.dataset.status));
+      seg.addEventListener('mouseleave', resetSegments);
+    });
+    legendItems.forEach(item => {
+      item.addEventListener('mouseenter', () => highlightSegment(item.dataset.status));
+      item.addEventListener('mouseleave', resetSegments);
+    });
+
+    // ===== TIMELINE EXPAND =====
+    const timelineItems = document.querySelectorAll('.timeline-item');
+    timelineItems.forEach(item => {
+      item.addEventListener('click', () => {
+        const wasExpanded = item.classList.contains('expanded');
+        // Close all
+        timelineItems.forEach(i => i.classList.remove('expanded'));
+        // Toggle clicked
+        if (!wasExpanded) {
+          item.classList.add('expanded');
+        }
+      });
+    });
+
+    // ===== HEATMAP GENERATION =====
+    const groups = ['STR', 'TAC', 'CTR', 'EXE', 'MEM', 'MON', 'COM', 'LRN'];
+    const groupFull = ['Strategy', 'Tactics', 'Control', 'Execution', 'Memory', 'Monitoring', 'Communication', 'Learning'];
+    const groupColors = ['#67E8F9', '#22D3EE', '#06B6D4', '#0891B2', '#0E7490', '#155E75', '#164E63', '#1E3A5F'];
+
+    // Connection density matrix (0-10, diagonal = self)
+    const density = [
+      // STR TAC CTR EXE MEM MON COM LRN
+      [ -1,  9,  5,  4,  3,  4,  5,  6], // STR
+      [  9, -1,  6,  7,  3,  3,  6,  4], // TAC
+      [  5,  6, -1,  9,  4,  5,  4,  3], // CTR
+      [  4,  7,  9, -1,  5,  6,  5,  4], // EXE
+      [  3,  3,  4,  5, -1,  4,  3,  5], // MEM
+      [  4,  3,  5,  6,  4, -1,  4,  3], // MON
+      [  5,  6,  4,  5,  3,  4, -1,  4], // COM
+      [  6,  4,  3,  4,  5,  3,  4, -1], // LRN
+    ];
+
+    function heatColor(val) {
+      if (val < 0) return '#1a1a22'; // self/diagonal
+      const intensity = val / 10;
+      const r = Math.round(6 + (6 - 6) * intensity);
+      const g = Math.round(10 + (182 - 10) * intensity);
+      const b = Math.round(15 + (212 - 15) * intensity);
+      const a = 0.15 + intensity * 0.75;
+      return `rgba(${r},${g},${b},${a})`;
+    }
+
+    const heatmapGrid = document.getElementById('heatmapGrid');
+
+    // Top-left corner (empty)
+    const corner = document.createElement('div');
+    heatmapGrid.appendChild(corner);
+
+    // Top header row
+    groups.forEach((g, i) => {
+      const cell = document.createElement('div');
+      cell.className = 'heatmap-label';
+      cell.textContent = g;
+      cell.title = groupFull[i];
+      cell.style.color = groupColors[i];
+      heatmapGrid.appendChild(cell);
+    });
+
+    // Data rows
+    density.forEach((row, ri) => {
+      // Row label
+      const label = document.createElement('div');
+      label.className = 'heatmap-label heatmap-label-row';
+      label.textContent = groups[ri];
+      label.title = groupFull[ri];
+      label.style.color = groupColors[ri];
+      heatmapGrid.appendChild(label);
+
+      // Data cells
+      row.forEach((val, ci) => {
+        const cell = document.createElement('div');
+        cell.className = 'heatmap-cell';
+        cell.style.background = heatColor(val);
+        if (val < 0) {
+          cell.title = `${groupFull[ri]} (self)`;
+          cell.style.background = '#1a1a22';
+          cell.style.border = '1px solid #27272a';
+        } else {
+          cell.title = `${groupFull[ri]} <-> ${groupFull[ci]}: ${val}/10`;
+        }
+        heatmapGrid.appendChild(cell);
+      });
+    });
+
+    // ===== KPI CARD HOVER ANIMATION (subtle glow) =====
+    document.querySelectorAll('.kpi-card').forEach(card => {
+      card.addEventListener('mouseenter', () => {
+        card.style.boxShadow = '0 0 20px rgba(6,182,212,0.08)';
+      });
+      card.addEventListener('mouseleave', () => {
+        card.style.boxShadow = '';
+      });
+    });
+
+    // ===== SEARCH BOX FOCUS EXPAND =====
+    const searchInput = document.querySelector('.search-box input');
+    const searchBox = document.querySelector('.search-box');
+    searchInput.addEventListener('focus', () => {
+      searchInput.style.width = '200px';
+    });
+    searchInput.addEventListener('blur', () => {
+      searchInput.style.width = '140px';
+    });
+  </script>
+</body>
+</html>

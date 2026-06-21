@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>P-MAS v2 — Formula Dependency Explorer</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#000;--surface:#0A0A0F;--surface2:#111118;--accent:#06B6D4;
+  --foundational:#10b981;--verification:#f59e0b;--planning:#8b5cf6;--advanced:#ef4444;
+  --text:#fafafa;--text2:#a1a1aa;--text3:#52525b;--border:#27272a;
+  --font:system-ui,sans-serif;
+}
+html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--text);overflow:hidden}
+button{font-family:var(--font);cursor:pointer;border:none;background:none;color:var(--text)}
+input,select{font-family:var(--font)}
+
+/* ── HEADER ── */
+.header{height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:var(--surface);border-bottom:1px solid var(--border);position:relative;z-index:100}
+.header-left{display:flex;align-items:center;gap:12px}
+.logo{font-size:18px;font-weight:700;color:var(--accent);letter-spacing:1px}
+.logo-sub{font-size:14px;font-weight:400;color:var(--text2);margin-left:4px}
+.header-center{display:flex;gap:2px;background:var(--bg);border-radius:8px;padding:3px}
+.tab-btn{padding:6px 16px;border-radius:6px;font-size:13px;font-weight:500;color:var(--text2);transition:all .2s}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{background:var(--surface2);color:var(--accent);box-shadow:0 0 8px rgba(6,182,212,.15)}
+.header-right{display:flex;align-items:center;gap:10px}
+.search-box{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 12px;color:var(--text);font-size:13px;width:180px;outline:none;transition:border-color .2s}
+.search-box:focus{border-color:var(--accent)}
+.search-box::placeholder{color:var(--text3)}
+.filter-select{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text2);font-size:12px;outline:none;cursor:pointer}
+.filter-select option{background:var(--surface)}
+.info-btn{width:32px;height:32px;border-radius:6px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--text2);transition:all .2s}
+.info-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ── MAIN LAYOUT ── */
+.main{display:flex;flex-direction:column;height:calc(100vh - 56px)}
+
+/* ── FILTER BAR ── */
+.filter-bar{display:flex;align-items:center;gap:12px;padding:10px 20px;background:var(--surface);border-bottom:1px solid var(--border);flex-wrap:wrap;min-height:48px}
+.filter-group{display:flex;align-items:center;gap:6px}
+.filter-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-right:4px}
+.cat-pill{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:500;border:1px solid transparent;cursor:pointer;transition:all .2s;user-select:none}
+.cat-pill .dot{width:8px;height:8px;border-radius:50%}
+.cat-pill.foundational{border-color:rgba(16,185,129,.3);color:var(--foundational)}.cat-pill.foundational .dot{background:var(--foundational)}
+.cat-pill.verification{border-color:rgba(245,158,11,.3);color:var(--verification)}.cat-pill.verification .dot{background:var(--verification)}
+.cat-pill.planning{border-color:rgba(139,92,246,.3);color:var(--planning)}.cat-pill.planning .dot{background:var(--planning)}
+.cat-pill.advanced{border-color:rgba(239,68,68,.3);color:var(--advanced)}.cat-pill.advanced .dot{background:var(--advanced)}
+.cat-pill.inactive{opacity:.35}
+.agent-pill{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:500;border:1px solid var(--border);color:var(--text2);cursor:pointer;transition:all .2s;user-select:none}
+.agent-pill:hover{border-color:var(--accent);color:var(--accent)}
+.agent-pill.active{background:rgba(6,182,212,.1);border-color:var(--accent);color:var(--accent)}
+.depth-ctrl{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2)}
+.depth-ctrl input[type=range]{width:80px;accent-color:var(--accent)}
+.depth-val{width:14px;text-align:center;font-weight:600;color:var(--accent)}
+.layout-group{display:flex;gap:2px;background:var(--bg);border-radius:6px;padding:2px;margin-left:auto}
+.layout-btn{padding:4px 10px;border-radius:4px;font-size:11px;color:var(--text3);transition:all .2s}
+.layout-btn:hover{color:var(--text2)}
+.layout-btn.active{background:var(--surface2);color:var(--accent)}
+.sep{width:1px;height:24px;background:var(--border);margin:0 4px}
+
+/* ── CONTENT AREAS ── */
+.content-area{flex:1;position:relative;overflow:hidden}
+.tab-content{display:none;position:absolute;inset:0}
+.tab-content.active{display:flex}
+
+/* ── GRAPH TAB ── */
+.graph-wrap{flex:1;display:flex;overflow:hidden}
+.graph-canvas{flex:1;position:relative;overflow:hidden;background:var(--bg)}
+.graph-canvas svg{width:100%;height:100%}
+.detail-panel{width:320px;background:var(--surface);border-left:1px solid var(--border);overflow-y:auto;padding:0;flex-shrink:0;transform:translateX(0);transition:transform .3s}
+.detail-panel.hidden{transform:translateX(320px);width:0;padding:0;border:none;overflow:hidden}
+.detail-header{padding:16px 18px 12px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:5}
+.detail-close{position:absolute;top:12px;right:12px;width:28px;height:28px;border-radius:6px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--text3);transition:all .2s}
+.detail-close:hover{border-color:var(--accent);color:var(--accent)}
+.formula-name{font-size:22px;font-weight:700;color:var(--text)}
+.formula-full{font-size:13px;color:var(--text2);margin-top:2px}
+.cat-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;margin-top:6px}
+.cat-badge.foundational{background:rgba(16,185,129,.12);color:var(--foundational)}
+.cat-badge.verification{background:rgba(245,158,11,.12);color:var(--verification)}
+.cat-badge.planning{background:rgba(139,92,246,.12);color:var(--planning)}
+.cat-badge.advanced{background:rgba(239,68,68,.12);color:var(--advanced)}
+.detail-section{padding:14px 18px;border-bottom:1px solid var(--border)}
+.detail-section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:8px}
+.detail-desc{font-size:13px;line-height:1.6;color:var(--text2)}
+.step-list{list-style:none}
+.step-list li{font-size:13px;color:var(--text2);padding:4px 0;display:flex;gap:8px;align-items:flex-start}
+.step-num{width:20px;height:20px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--accent);flex-shrink:0;margin-top:1px}
+.agent-list{display:flex;flex-direction:column;gap:6px}
+.agent-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;background:var(--surface2);font-size:12px}
+.agent-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.agent-item .name{color:var(--text);font-weight:500}
+.agent-item .group{color:var(--text3);font-size:11px}
+.agent-item .role{margin-left:auto;font-size:10px;padding:1px 6px;border-radius:3px;background:rgba(6,182,212,.08);color:var(--accent)}
+.compat-list{display:flex;flex-direction:column;gap:4px}
+.compat-item{font-size:12px;display:flex;align-items:center;gap:6px}
+.compat-icon{font-size:14px}
+.compat-item.good{color:var(--foundational)}
+.compat-item.bad{color:var(--advanced)}
+.metrics-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.metric-card{background:var(--surface2);border-radius:6px;padding:8px 10px;text-align:center}
+.metric-val{font-size:18px;font-weight:700;color:var(--accent)}
+.metric-label{font-size:10px;color:var(--text3);margin-top:2px}
+.detail-actions{padding:14px 18px;display:flex;gap:8px}
+.btn-primary{flex:1;padding:8px;border-radius:6px;background:var(--accent);color:#000;font-size:12px;font-weight:600;transition:opacity .2s}
+.btn-primary:hover{opacity:.85}
+.btn-secondary{flex:1;padding:8px;border-radius:6px;border:1px solid var(--border);color:var(--text2);font-size:12px;font-weight:500;transition:all .2s}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ── GRAPH LEGEND ── */
+.graph-legend{position:absolute;bottom:16px;left:16px;background:rgba(10,10,15,.9);border:1px solid var(--border);border-radius:8px;padding:10px 14px;z-index:10;backdrop-filter:blur(8px)}
+.legend-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:6px}
+.legend-items{display:flex;flex-direction:column;gap:4px}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2)}
+.legend-dot{width:10px;height:10px;border-radius:50%}
+.legend-line{width:18px;height:2px;border-radius:1px}
+
+/* ── MATRIX TAB ── */
+.matrix-wrap{flex:1;overflow:auto;padding:16px;background:var(--bg)}
+.matrix-controls{display:flex;align-items:center;gap:12px;margin-bottom:12px;padding:0 4px}
+.matrix-stat{font-size:12px;color:var(--text2)}
+.matrix-stat strong{color:var(--accent)}
+.matrix-table-wrap{overflow:auto;max-height:calc(100vh - 180px)}
+.matrix-table{border-collapse:separate;border-spacing:0;font-size:11px}
+.matrix-table th,.matrix-table td{padding:0;border:1px solid var(--border);text-align:center;position:relative}
+.matrix-table thead th{position:sticky;top:0;z-index:5;background:var(--surface)}
+.matrix-table th.row-head{position:sticky;left:0;z-index:4;background:var(--surface);min-width:60px;padding:4px 6px;text-align:left;font-weight:600;white-space:nowrap}
+.matrix-table thead th:first-child{z-index:6;left:0}
+.matrix-table th.col-head{writing-mode:vertical-lr;text-orientation:mixed;padding:6px 3px;font-weight:500;min-width:24px;height:100px;white-space:nowrap}
+.matrix-table td.cell{width:24px;height:24px;min-width:24px;cursor:pointer;transition:all .15s}
+.matrix-table td.cell.filled{opacity:.7}
+.matrix-table td.cell.filled:hover{opacity:1;transform:scale(1.3);z-index:2;box-shadow:0 0 8px rgba(6,182,212,.3)}
+.matrix-table td.cell.highlight{outline:2px solid var(--accent);outline-offset:-2px;z-index:1}
+.matrix-row-label{display:flex;align-items:center;gap:4px;padding:4px 6px;font-weight:600;color:var(--text)}
+.matrix-row-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.matrix-tooltip{position:fixed;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:11px;color:var(--text);pointer-events:none;z-index:1000;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.5);display:none}
+.matrix-density{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text3)}
+
+/* ── CATALOG TAB ── */
+.catalog-wrap{flex:1;overflow-y:auto;padding:16px 20px;background:var(--bg)}
+.catalog-controls{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.catalog-controls label{font-size:12px;color:var(--text3)}
+.catalog-sort{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 10px;color:var(--text2);font-size:12px;outline:none;cursor:pointer}
+.catalog-sort option{background:var(--surface)}
+.catalog-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.formula-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;transition:all .25s}
+.formula-card:hover{border-color:rgba(6,182,212,.3);transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.4)}
+.formula-card.expanded{grid-column:span 2;grid-row:span 2}
+.card-stripe{height:4px;width:100%}
+.card-body{padding:14px 16px}
+.card-abbrev{font-size:20px;font-weight:700;color:var(--text)}
+.card-fullname{font-size:12px;color:var(--text2);margin-top:2px}
+.card-desc{font-size:12px;color:var(--text3);margin-top:6px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card-footer{display:flex;align-items:center;gap:8px;margin-top:10px}
+.card-badge{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600}
+.card-agent-count{font-size:11px;color:var(--text3);margin-left:auto;display:flex;align-items:center;gap:3px}
+.card-expanded-content{padding:0 16px 14px;display:none}
+.formula-card.expanded .card-expanded-content{display:block}
+.formula-card.expanded .card-desc{-webkit-line-clamp:unset}
+.expanded-steps{margin-top:8px}
+.expanded-steps .step-list li{font-size:12px}
+.expanded-metrics{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px}
+.expanded-metric{background:var(--surface2);border-radius:4px;padding:6px;text-align:center}
+.expanded-metric .val{font-size:14px;font-weight:700;color:var(--accent)}
+.expanded-metric .label{font-size:9px;color:var(--text3)}
+.expanded-actions{display:flex;gap:8px;margin-top:10px}
+.card-buttons{display:flex;gap:6px;margin-top:8px}
+.card-btn{padding:4px 10px;border-radius:4px;font-size:11px;font-weight:500;transition:all .2s}
+.card-btn.primary{background:rgba(6,182,212,.1);color:var(--accent);border:1px solid rgba(6,182,212,.2)}
+.card-btn.primary:hover{background:rgba(6,182,212,.2)}
+.card-btn.secondary{border:1px solid var(--border);color:var(--text3)}
+.card-btn.secondary:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ── SVG Graph Styles ── */
+.node-formula{cursor:pointer;transition:opacity .2s}
+.node-agent{cursor:pointer;transition:opacity .2s}
+.edge-line{transition:opacity .2s,stroke-width .2s}
+.node-label{font-family:var(--font);font-weight:600;fill:var(--text);pointer-events:none;user-select:none}
+.node-agent-label{font-family:var(--font);font-weight:500;fill:var(--text2);pointer-events:none;user-select:none;font-size:9px}
+.glow-circle{opacity:0;transition:opacity .3s}
+.selected .glow-circle{opacity:.3}
+.dimmed{opacity:.12!important}
+.highlighted{opacity:1!important}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#3f3f46}
+
+/* ── Animations ── */
+@keyframes pulseGlow{0%,100%{opacity:.2}50%{opacity:.5}}
+.selected .glow-circle{animation:pulseGlow 2s ease-in-out infinite}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.tab-content.active{animation:fadeIn .2s ease}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-left">
+    <span class="logo">P-MAS</span>
+    <span class="logo-sub">Formula Explorer</span>
+  </div>
+  <div class="header-center">
+    <button class="tab-btn active" data-tab="graph">Dependency Graph</button>
+    <button class="tab-btn" data-tab="matrix">Matrix</button>
+    <button class="tab-btn" data-tab="catalog">Catalog</button>
+  </div>
+  <div class="header-right">
+    <input type="text" class="search-box" placeholder="Search formulas..." id="searchBox">
+    <select class="filter-select" id="categoryFilter">
+      <option value="all">All Categories</option>
+      <option value="foundational">Foundational</option>
+      <option value="verification">Verification</option>
+      <option value="planning">Planning</option>
+      <option value="advanced">Advanced</option>
+    </select>
+    <button class="info-btn" title="Info">ⓘ</button>
+  </div>
+</header>
+
+<div class="main">
+
+<!-- FILTER BAR -->
+<div class="filter-bar" id="filterBar">
+  <div class="filter-group">
+    <span class="filter-label">Category</span>
+    <button class="cat-pill foundational" data-cat="foundational" onclick="toggleCategory(this)"><span class="dot"></span>Foundational</button>
+    <button class="cat-pill verification" data-cat="verification" onclick="toggleCategory(this)"><span class="dot"></span>Verification</button>
+    <button class="cat-pill planning" data-cat="planning" onclick="toggleCategory(this)"><span class="dot"></span>Planning</button>
+    <button class="cat-pill advanced" data-cat="advanced" onclick="toggleCategory(this)"><span class="dot"></span>Advanced</button>
+  </div>
+  <div class="sep"></div>
+  <div class="filter-group">
+    <span class="filter-label">Agent Group</span>
+    <button class="agent-pill" data-group="strategy" onclick="toggleAgentGroup(this)">Strategy</button>
+    <button class="agent-pill" data-group="tactics" onclick="toggleAgentGroup(this)">Tactics</button>
+    <button class="agent-pill" data-group="control" onclick="toggleAgentGroup(this)">Control</button>
+    <button class="agent-pill" data-group="execution" onclick="toggleAgentGroup(this)">Execution</button>
+    <button class="agent-pill" data-group="memory" onclick="toggleAgentGroup(this)">Memory</button>
+    <button class="agent-pill" data-group="monitoring" onclick="toggleAgentGroup(this)">Monitoring</button>
+    <button class="agent-pill" data-group="communication" onclick="toggleAgentGroup(this)">Communication</button>
+    <button class="agent-pill" data-group="learning" onclick="toggleAgentGroup(this)">Learning</button>
+  </div>
+  <div class="sep"></div>
+  <div class="filter-group">
+    <span class="filter-label">Depth</span>
+    <div class="depth-ctrl">
+      <input type="range" min="1" max="3" value="2" id="depthSlider" oninput="updateDepth(this.value)">
+      <span class="depth-val" id="depthVal">2</span>
+    </div>
+  </div>
+  <div class="layout-group" id="layoutGroup">
+    <button class="layout-btn active" data-layout="force" onclick="setLayout(this)">Force</button>
+    <button class="layout-btn" data-layout="hierarchical" onclick="setLayout(this)">Hierarchical</button>
+    <button class="layout-btn" data-layout="circular" onclick="setLayout(this)">Circular</button>
+  </div>
+</div>
+
+<!-- ═══════ GRAPH TAB ═══════ -->
+<div class="content-area">
+  <div class="tab-content active" id="tab-graph">
+    <div class="graph-wrap">
+      <div class="graph-canvas" id="graphCanvas">
+        <svg id="graphSvg" xmlns="http://www.w3.org/2000/svg"></svg>
+        <div class="graph-legend" id="graphLegend">
+          <div class="legend-title">Legend</div>
+          <div class="legend-items">
+            <div class="legend-item"><span class="legend-dot" style="background:#10b981"></span>Foundational</div>
+            <div class="legend-item"><span class="legend-dot" style="background:#f59e0b"></span>Verification</div>
+            <div class="legend-item"><span class="legend-dot" style="background:#8b5cf6"></span>Planning</div>
+            <div class="legend-item"><span class="legend-dot" style="background:#ef4444"></span>Advanced</div>
+            <div class="legend-item"><span class="legend-line" style="background:#27272a"></span>Agent link</div>
+            <div class="legend-item"><span class="legend-dot" style="background:#06B6D4;width:8px;height:8px"></span>Agent node</div>
+          </div>
+        </div>
+      </div>
+      <div class="detail-panel" id="detailPanel">
+        <div class="detail-header">
+          <button class="detail-close" onclick="closeDetail()">✕</button>
+          <div class="formula-name" id="detailName">ReAct</div>
+          <div class="formula-full" id="detailFull">Reasoning + Acting</div>
+          <span class="cat-badge planning" id="detailBadge">Planning</span>
+        </div>
+        <div class="detail-section">
+          <div class="detail-section-title">Description</div>
+          <div class="detail-desc" id="detailDesc">Interleaves reasoning traces with task-specific actions, allowing the agent to reason about what to do and then act on it.</div>
+        </div>
+        <div class="detail-section">
+          <div class="detail-section-title">Key Steps</div>
+          <ol class="step-list" id="detailSteps">
+            <li><span class="step-num">1</span>Observe current state</li>
+            <li><span class="step-num">2</span>Reason about next action</li>
+            <li><span class="step-num">3</span>Act on the environment</li>
+            <li><span class="step-num">4</span>Evaluate result</li>
+          </ol>
+        </div>
+        <div class="detail-section">
+          <div class="detail-section-title">Agents Using This Formula (<span id="detailAgentCount">4</span>)</div>
+          <div class="agent-list" id="detailAgents">
+            <div class="agent-item"><span class="agent-dot" style="background:#06B6D4"></span><span class="name">Coordinator</span><span class="group">Tactics</span><span class="role">primary</span></div>
+            <div class="agent-item"><span class="agent-dot" style="background:#06B6D4"></span><span class="name">Inspector</span><span class="group">Control</span><span class="role">secondary</span></div>
+            <div class="agent-item"><span class="agent-dot" style="background:#06B6D4"></span><span class="name">Executor-A</span><span class="group">Execution</span><span class="role">secondary</span></div>
+            <div class="agent-item"><span class="agent-dot" style="background:#06B6D4"></span><span class="name">Debugger</span><span class="group">Execution</span><span class="role">secondary</span></div>
+          </div>
+        </div>
+        <div class="detail-section">
+          <div class="detail-section-title">Compatible Formulas</div>
+          <div class="compat-list" id="detailCompat">
+            <div class="compat-item good"><span class="compat-icon">✓</span>Works well with: Reflexion, SelfConsistency</div>
+            <div class="compat-item bad"><span class="compat-icon">✗</span>Conflicts with: ReWOO (different planning paradigm)</div>
+          </div>
+        </div>
+        <div class="detail-section">
+          <div class="detail-section-title">Performance Metrics</div>
+          <div class="metrics-grid" id="detailMetrics">
+            <div class="metric-card"><div class="metric-val">87%</div><div class="metric-label">Avg Accuracy</div></div>
+            <div class="metric-card"><div class="metric-val">1.8s</div><div class="metric-label">Avg Latency</div></div>
+            <div class="metric-card"><div class="metric-val">92%</div><div class="metric-label">Success Rate</div></div>
+          </div>
+        </div>
+        <div class="detail-actions">
+          <button class="btn-primary">Assign to Agent</button>
+          <button class="btn-secondary">Compare</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ MATRIX TAB ═══════ -->
+  <div class="tab-content" id="tab-matrix">
+    <div class="matrix-wrap">
+      <div class="matrix-controls">
+        <span class="matrix-stat">Formulas: <strong>20</strong></span>
+        <span class="matrix-stat">Agents: <strong>26</strong></span>
+        <span class="matrix-stat">Links: <strong id="matrixLinkCount">52</strong></span>
+        <span style="margin-left:auto;font-size:11px;color:var(--text3)">Hover cells for details</span>
+      </div>
+      <div class="matrix-table-wrap" id="matrixContainer"></div>
+    </div>
+  </div>
+
+  <!-- ═══════ CATALOG TAB ═══════ -->
+  <div class="tab-content" id="tab-catalog">
+    <div class="catalog-wrap">
+      <div class="catalog-controls">
+        <label>Sort by:</label>
+        <select class="catalog-sort" id="catalogSort" onchange="sortCatalog(this.value)">
+          <option value="name">Name</option>
+          <option value="category">Category</option>
+          <option value="agents">Agent Count</option>
+          <option value="performance">Performance</option>
+        </select>
+        <span style="margin-left:auto;font-size:12px;color:var(--text3)">20 formulas</span>
+      </div>
+      <div class="catalog-grid" id="catalogGrid"></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- TOOLTIP -->
+<div class="matrix-tooltip" id="matrixTooltip"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+//  DATA
+// ═══════════════════════════════════════════════════════════════════
+
+const FORMULAS = [
+  {id:'cot',abbr:'CoT',name:'Chain of Thought',cat:'foundational',desc:'Step-by-step reasoning that breaks down complex problems into sequential logical steps.',steps:['Break problem into sub-problems','Apply reasoning to each step','Chain steps together','Arrive at final answer'],agents:['archivist','rag-specialist','context-manager','observer','alert-operator','diagnostician'],primaryAgents:['archivist','observer'],compatible:{good:['SoT','AoT'],bad:['ToT (different reasoning path)']},perf:{accuracy:82,latency:1.2,success:88}},
+  {id:'tot',abbr:'ToT',name:'Tree of Thought',cat:'foundational',desc:'Branching exploration that evaluates multiple reasoning paths in a tree structure.',steps:['Generate multiple thought branches','Evaluate each branch','Select most promising paths','Explore deeper on selected paths'],agents:['architect','analyst','visionary'],primaryAgents:['architect'],compatible:{good:['GoT','CoVe'],bad:['CoT (linear vs branching)']},perf:{accuracy:85,latency:2.4,success:84}},
+  {id:'got',abbr:'GoT',name:'Graph of Thought',cat:'foundational',desc:'Interconnected reasoning that merges and refines thought paths in a graph structure.',steps:['Create initial thought nodes','Form connections between thoughts','Merge compatible paths','Refine the graph structure'],agents:['architect','analyst','visionary','inspector','diagnostician'],primaryAgents:['analyst'],compatible:{good:['ToT','AoT'],bad:['CoT (no merging)']},perf:{accuracy:88,latency:2.8,success:82}},
+  {id:'aot',abbr:'AoT',name:'Algorithm of Thought',cat:'foundational',desc:'Algorithmic reasoning that applies structured algorithmic procedures to problems.',steps:['Identify algorithm type','Set up algorithmic structure','Execute algorithm steps','Verify algorithmic output'],agents:['archivist','rag-specialist'],primaryAgents:['rag-specialist'],compatible:{good:['CoT','SoT'],bad:['ToT (unstructured branching)']},perf:{accuracy:84,latency:1.5,success:90}},
+  {id:'sot',abbr:'SoT',name:'Skeleton of Thought',cat:'foundational',desc:'Outline-first approach that creates a reasoning skeleton before filling in details.',steps:['Generate high-level outline','Identify key sections','Fill in details per section','Review and refine skeleton'],agents:['archivist','rag-specialist','context-manager'],primaryAgents:['context-manager'],compatible:{good:['CoT','AoT'],bad:['GoT (conflicting structure)']},perf:{accuracy:80,latency:1.0,success:86}},
+
+  {id:'cove',abbr:'CoVe',name:'Chain of Verification',cat:'verification',desc:'Verify each step in the reasoning chain to catch and correct errors early.',steps:['Generate initial answer','Decompose into verification questions','Answer verification questions','Revise based on verifications'],agents:['architect','analyst','visionary','inspector','evaluator','guard'],primaryAgents:['inspector','evaluator'],compatible:{good:['Reflexion','SelfConsistency'],bad:['SoT (different error model)']},perf:{accuracy:91,latency:2.1,success:89}},
+  {id:'reflexion',abbr:'Reflexion',name:'Self-Reflective Improvement',cat:'verification',desc:'Self-reflective improvement that learns from past mistakes through verbal reinforcement.',steps:['Attempt task','Evaluate result','Reflect on failures','Generate improved attempt'],agents:['inspector','evaluator','guard'],primaryAgents:['guard'],compatible:{good:['CoVe','SelfRefine'],bad:['CoT (no self-correction)']},perf:{accuracy:89,latency:2.5,success:86}},
+  {id:'selfconsistency',abbr:'SelfConsistency',name:'Self-Consistency',cat:'verification',desc:'Generate multiple answers and select the most consistent one through voting.',steps:['Generate multiple solutions','Extract final answers','Tally answer frequencies','Select most consistent answer'],agents:['coordinator','planner','inspector','evaluator'],primaryAgents:['coordinator'],compatible:{good:['CoVe','ReAct'],bad:['Reflexion (different approach)']},perf:{accuracy:90,latency:3.2,success:85}},
+  {id:'selfrefine',abbr:'SelfRefine',name:'Self-Refinement',cat:'verification',desc:'Iterative self-improvement that repeatedly refines output based on self-feedback.',steps:['Generate initial output','Provide self-feedback','Refine based on feedback','Repeat until satisfied'],agents:['executor-a','executor-b','debugger','tester','coder'],primaryAgents:['debugger'],compatible:{good:['Reflexion','PoT'],bad:['SelfConsistency (different mechanism)']},perf:{accuracy:88,latency:2.8,success:87}},
+
+  {id:'rewoo',abbr:'ReWOO',name:'Plan Without Observation',cat:'planning',desc:'Plan the full workflow without observation, then execute and verify each step.',steps:['Plan all steps in advance','Execute planned steps','Verify each step result','Aggregate final result'],agents:['coordinator','planner','communicator'],primaryAgents:['planner'],compatible:{good:['PlanAndSolve','PromptChaining'],bad:['ReAct (interleaved vs upfront)']},perf:{accuracy:84,latency:1.6,success:88}},
+  {id:'react',abbr:'ReAct',name:'Reasoning + Acting',cat:'planning',desc:'Interleaves reasoning traces with task-specific actions, allowing the agent to reason about what to do and then act on it.',steps:['Observe current state','Reason about next action','Act on the environment','Evaluate result'],agents:['coordinator','inspector','executor-a','debugger'],primaryAgents:['coordinator'],compatible:{good:['Reflexion','SelfConsistency'],bad:['ReWOO (different planning paradigm)']},perf:{accuracy:87,latency:1.8,success:92}},
+  {id:'promptchaining',abbr:'PromptChaining',name:'Sequential Sub-Prompts',cat:'planning',desc:'Sequential sub-prompts where each prompt builds on the previous output.',steps:['Decompose into sub-tasks','Chain prompts sequentially','Pass outputs between steps','Combine final results'],agents:['gateway','protocolist','dispatcher'],primaryAgents:['protocolist'],compatible:{good:['PlanAndSolve','StepBack'],bad:['ReAct (sequential vs interleaved)']},perf:{accuracy:83,latency:2.0,success:86}},
+  {id:'planandsolve',abbr:'PlanAndSolve',name:'Plan First, Then Execute',cat:'planning',desc:'Separate the planning phase from execution for more structured problem solving.',steps:['Analyze the problem','Create detailed plan','Execute plan steps','Review and adjust'],agents:['gateway','protocolist','dispatcher'],primaryAgents:['gateway'],compatible:{good:['ReWOO','StepBack'],bad:['ReAct (plan vs interleaved)']},perf:{accuracy:86,latency:1.9,success:89}},
+  {id:'stepback',abbr:'StepBack',name:'Abstract Before Solving',cat:'planning',desc:'Abstract the problem to a higher level before solving, then apply solution concretely.',steps:['Identify concrete problem','Abstract to general principle','Solve at abstract level','Apply to concrete case'],agents:['gateway','protocolist','dispatcher'],primaryAgents:['dispatcher'],compatible:{good:['PlanAndSolve','LeastToMost'],bad:['CoT (abstract vs sequential)']},perf:{accuracy:85,latency:1.7,success:87}},
+  {id:'leasttomost',abbr:'LeastToMost',name:'Incremental Complexity',cat:'planning',desc:'Solve problems by reducing them to simpler sub-problems of increasing complexity.',steps:['Decompose into sub-problems','Sort by complexity','Solve easiest first','Build up to hardest'],agents:['trainer','adapter','scorer'],primaryAgents:['adapter'],compatible:{good:['StepBack','DSPy'],bad:['ToT (incremental vs parallel)']},perf:{accuracy:83,latency:2.2,success:84}},
+
+  {id:'moa',abbr:'MoA',name:'Mixture of Agents',cat:'advanced',desc:'Multiple agents vote on solutions, combining diverse perspectives for better results.',steps:['Distribute task to agents','Collect agent responses','Aggregate through voting','Select consensus answer'],agents:['executor-a','executor-b','tester','coder'],primaryAgents:['executor-a'],compatible:{good:['SelfConsistency','LATS'],bad:['CoT (single-path vs multi-agent)']},perf:{accuracy:92,latency:3.5,success:90}},
+  {id:'lats',abbr:'LATS',name:'Language Agent Tree Search',cat:'advanced',desc:'Language agent tree search combining LLM reasoning with tree search algorithms.',steps:['Define search space','Expand promising nodes','Evaluate with LLM','Backtrack and select best'],agents:['observer','alert-operator','diagnostician'],primaryAgents:['diagnostician'],compatible:{good:['MoA','GoT'],bad:['CoT (search vs linear)']},perf:{accuracy:90,latency:3.0,success:85}},
+  {id:'pot',abbr:'PoT',name:'Program of Thought',cat:'advanced',desc:'Code as reasoning — expresses reasoning through executable code programs.',steps:['Translate problem to code','Write program logic','Execute and verify','Interpret results'],agents:['executor-a','executor-b','debugger','coder'],primaryAgents:['coder'],compatible:{good:['SelfRefine','DSPy'],bad:['CoT (code vs natural language)']},perf:{accuracy:91,latency:2.0,success:93}},
+  {id:'dspy',abbr:'DSPy',name:'Declarative Self-Improvement',cat:'advanced',desc:'Declarative self-improvement framework for optimizing LM pipelines programmatically.',steps:['Define modular pipeline','Set optimization metrics','Run automated optimization','Evaluate improved pipeline'],agents:['trainer','adapter','scorer'],primaryAgents:['trainer'],compatible:{good:['MetaCoT','LeastToMost'],bad:['ReAct (declarative vs interactive)']},perf:{accuracy:89,latency:2.6,success:88}},
+  {id:'metacot',abbr:'MetaCoT',name:'Meta-Level Chain of Thought',cat:'advanced',desc:'Meta-level chain of thought that reasons about the reasoning process itself.',steps:['Observe reasoning process','Identify meta-patterns','Adjust reasoning strategy','Apply improved strategy'],agents:['trainer','adapter','scorer'],primaryAgents:['scorer'],compatible:{good:['DSPy','Reflexion'],bad:['SoT (meta vs outline)']},perf:{accuracy:88,latency:2.8,success:86}},
+];
+
+const AGENT_GROUPS = {
+  strategy:{label:'Strategy',color:'#06B6D4',agents:['architect','analyst','visionary']},
+  tactics:{label:'Tactics',color:'#22d3ee',agents:['coordinator','planner','communicator']},
+  control:{label:'Control',color:'#67e8f9',agents:['inspector','evaluator','guard']},
+  execution:{label:'Execution',color:'#a5f3fc',agents:['executor-a','executor-b','debugger','tester','coder']},
+  memory:{label:'Memory',color:'#0ea5e9',agents:['archivist','rag-specialist','context-manager']},
+  monitoring:{label:'Monitoring',color:'#38bdf8',agents:['observer','alert-operator','diagnostician']},
+  communication:{label:'Communication',color:'#7dd3fc',agents:['gateway','protocolist','dispatcher']},
+  learning:{label:'Learning',color:'#bae6fd',agents:['trainer','adapter','scorer']},
+};
+
+const ALL_AGENTS = [];
+Object.entries(AGENT_GROUPS).forEach(([gid,g])=>{
+  g.agents.forEach(a=>ALL_AGENTS.push({id:a,group:gid,groupLabel:g.label,color:g.color}));
+});
+
+const CAT_COLORS = {foundational:'#10b981',verification:'#f59e0b',planning:'#8b5cf6',advanced:'#ef4444'};
+
+// ═══════════════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════════════
+let activeCategories = new Set(['foundational','verification','planning','advanced']);
+let activeAgentGroups = new Set();
+let selectedFormula = 'react';
+let currentLayout = 'force';
+let currentTab = 'graph';
+let searchQuery = '';
+let graphNodes = [];
+let graphEdges = [];
+
+// ═══════════════════════════════════════════════════════════════════
+//  TAB SWITCHING
+// ═══════════════════════════════════════════════════════════════════
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    currentTab = btn.dataset.tab;
+    document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+    document.getElementById('tab-'+currentTab).classList.add('active');
+    if(currentTab==='matrix' && !document.getElementById('matrixContainer').innerHTML) buildMatrix();
+    if(currentTab==='catalog' && !document.getElementById('catalogGrid').innerHTML) buildCatalog();
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════
+//  FILTERS
+// ═══════════════════════════════════════════════════════════════════
+function toggleCategory(el){
+  const cat = el.dataset.cat;
+  if(activeCategories.has(cat)){activeCategories.delete(cat);el.classList.add('inactive')}
+  else{activeCategories.add(cat);el.classList.remove('inactive')}
+  renderGraph();
+}
+
+function toggleAgentGroup(el){
+  const g = el.dataset.group;
+  if(activeAgentGroups.has(g)){activeAgentGroups.delete(g);el.classList.remove('active')}
+  else{activeAgentGroups.add(g);el.classList.add('active')}
+  renderGraph();
+}
+
+function updateDepth(v){document.getElementById('depthVal').textContent=v}
+
+function setLayout(el){
+  document.querySelectorAll('.layout-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  currentLayout = el.dataset.layout;
+  computePositions();
+  renderGraph();
+}
+
+document.getElementById('searchBox').addEventListener('input',e=>{
+  searchQuery = e.target.value.toLowerCase();
+  renderGraph();
+  if(currentTab==='catalog') sortCatalog(document.getElementById('catalogSort').value);
+});
+
+document.getElementById('categoryFilter').addEventListener('change',e=>{
+  const v = e.target.value;
+  if(v==='all'){activeCategories=new Set(['foundational','verification','planning','advanced']);document.querySelectorAll('.cat-pill').forEach(p=>p.classList.remove('inactive'))}
+  else{activeCategories=new Set([v]);document.querySelectorAll('.cat-pill').forEach(p=>{p.classList.toggle('inactive',p.dataset.cat!==v)})}
+  renderGraph();
+});
+
+// ═══════════════════════════════════════════════════════════════════
+//  GRAPH
+// ═══════════════════════════════════════════════════════════════════
+function computePositions(){
+  const W = document.getElementById('graphCanvas').clientWidth || 900;
+  const H = document.getElementById('graphCanvas').clientHeight || 600;
+  const cx = W/2, cy = H/2;
+  const filteredFormulas = FORMULAS.filter(f=>activeCategories.has(f.cat));
+  const visibleAgents = new Set();
+  filteredFormulas.forEach(f=>f.agents.forEach(a=>{if(!activeAgentGroups.size||activeAgentGroups.has(ALL_AGENTS.find(ag=>ag.id===a)?.group))visibleAgents.add(a)}));
+
+  graphNodes = [];
+  graphEdges = [];
+
+  if(currentLayout==='circular'){
+    const fCount = filteredFormulas.length;
+    const aCount = visibleAgents.size;
+    const fR = Math.min(cx,cy)*0.55;
+    const aR = Math.min(cx,cy)*0.85;
+    filteredFormulas.forEach((f,i)=>{
+      const a = (2*Math.PI*i/fCount)-Math.PI/2;
+      graphNodes.push({id:f.id,type:'formula',x:cx+fR*Math.cos(a),y:cy+fR*Math.sin(a),cat:f.cat,abbr:f.abbr,color:CAT_COLORS[f.cat]});
+    });
+    let ai=0;
+    visibleAgents.forEach(aid=>{
+      const ag = ALL_AGENTS.find(a=>a.id===aid);
+      if(!ag)return;
+      const a = (2*Math.PI*ai/aCount)-Math.PI/2;
+      graphNodes.push({id:aid,type:'agent',x:cx+aR*Math.cos(a),y:cy+aR*Math.sin(a),group:ag.group,color:ag.color,abbr:ag.id.charAt(0).toUpperCase()});
+      ai++;
+    });
+  } else if(currentLayout==='hierarchical'){
+    const cats = ['foundational','verification','planning','advanced'].filter(c=>activeCategories.has(c));
+    const layerH = (H-100)/(cats.length);
+    cats.forEach((cat,li)=>{
+      const catFormulas = filteredFormulas.filter(f=>f.cat===cat);
+      const catW = W/(catFormulas.length+1);
+      catFormulas.forEach((f,fi)=>{
+        graphNodes.push({id:f.id,type:'formula',x:catW*(fi+1),y:60+layerH*li+layerH/2,cat:f.cat,abbr:f.abbr,color:CAT_COLORS[f.cat]});
+      });
+    });
+    // agents in a row at bottom
+    const aList = [...visibleAgents];
+    const aW = W/(aList.length+1);
+    const ay = H-50;
+    aList.forEach((aid,i)=>{
+      const ag = ALL_AGENTS.find(a=>a.id===aid);
+      if(!ag)return;
+      graphNodes.push({id:aid,type:'agent',x:aW*(i+1),y:ay,group:ag.group,color:ag.color,abbr:aid.charAt(0).toUpperCase()});
+    });
+  } else {
+    // Force — use seeded random positions
+    let seed=42;
+    function rng(){seed=(seed*16807)%2147483647;return(seed-1)/2147483646}
+    filteredFormulas.forEach(f=>{
+      graphNodes.push({id:f.id,type:'formula',x:120+rng()*(W-240),y:80+rng()*(H-160),cat:f.cat,abbr:f.abbr,color:CAT_COLORS[f.cat]});
+    });
+    visibleAgents.forEach(aid=>{
+      const ag = ALL_AGENTS.find(a=>a.id===aid);
+      if(!ag)return;
+      graphNodes.push({id:aid,type:'agent',x:80+rng()*(W-160),y:60+rng()*(H-120),group:ag.group,color:ag.color,abbr:aid.charAt(0).toUpperCase()});
+    });
+    // Simple force simulation
+    for(let iter=0;iter<80;iter++){
+      // Repulsion
+      for(let i=0;i<graphNodes.length;i++){
+        for(let j=i+1;j<graphNodes.length;j++){
+          let dx=graphNodes[i].x-graphNodes[j].x, dy=graphNodes[i].y-graphNodes[j].y;
+          let d2=dx*dx+dy*dy; if(d2<1)d2=1;
+          let f=800/d2;
+          let dist=Math.sqrt(d2);
+          graphNodes[i].x+=dx/dist*f; graphNodes[i].y+=dy/dist*f;
+          graphNodes[j].x-=dx/dist*f; graphNodes[j].y-=dy/dist*f;
+        }
+      }
+      // Attraction along edges
+      filteredFormulas.forEach(formula=>{
+        formula.agents.forEach(aid=>{
+          if(!visibleAgents.has(aid))return;
+          const fn=graphNodes.find(n=>n.id===formula.id);
+          const an=graphNodes.find(n=>n.id===aid);
+          if(!fn||!an)return;
+          let dx=an.x-fn.x, dy=an.y-fn.y;
+          let dist=Math.sqrt(dx*dx+dy*dy);
+          let target=120;
+          let f=(dist-target)*0.01;
+          fn.x+=dx/dist*f; fn.y+=dy/dist*f;
+          an.x-=dx/dist*f; an.y-=dy/dist*f;
+        });
+      });
+      // Center gravity
+      graphNodes.forEach(n=>{n.x+=(cx-n.x)*0.005;n.y+=(cy-n.y)*0.005});
+      // Bounds
+      graphNodes.forEach(n=>{n.x=Math.max(60,Math.min(W-60,n.x));n.y=Math.max(60,Math.min(H-60,n.y))});
+    }
+  }
+
+  // Build edges
+  filteredFormulas.forEach(f=>{
+    f.agents.forEach(aid=>{
+      const ag = ALL_AGENTS.find(a=>a.id===aid);
+      if(!ag||(!activeAgentGroups.size&&!visibleAgents.has(aid)))return;
+      if(activeAgentGroups.size&&!activeAgentGroups.has(ag.group))return;
+      const fn=graphNodes.find(n=>n.id===f.id);
+      const an=graphNodes.find(n=>n.id===aid);
+      if(fn&&an) graphEdges.push({from:f.id,to:aid,cat:f.cat,color:CAT_COLORS[f.cat],primary:f.primaryAgents.includes(aid)});
+    });
+  });
+}
+
+function renderGraph(){
+  const svg = document.getElementById('graphSvg');
+  const W = document.getElementById('graphCanvas').clientWidth || 900;
+  const H = document.getElementById('graphCanvas').clientHeight || 600;
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+
+  computePositions();
+
+  // Find connected nodes for selected formula
+  const connectedNodes = new Set();
+  const connectedEdges = new Set();
+  if(selectedFormula){
+    connectedNodes.add(selectedFormula);
+    graphEdges.forEach((e,i)=>{if(e.from===selectedFormula){connectedNodes.add(e.to);connectedEdges.add(i)}});
+  }
+
+  // Search highlight
+  const searchMatches = searchQuery ? FORMULAS.filter(f=>f.abbr.toLowerCase().includes(searchQuery)||f.name.toLowerCase().includes(searchQuery)).map(f=>f.id) : [];
+
+  let html = `<defs>
+    <filter id="glow"><feGaussianBlur stdDeviation="4" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="glowStrong"><feGaussianBlur stdDeviation="8" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>`;
+
+  // Grid lines background
+  html+=`<g opacity="0.06">`;
+  for(let x=0;x<W;x+=50) html+=`<line x1="${x}" y1="0" x2="${x}" y2="${H}" stroke="#fafafa" stroke-width="0.5"/>`;
+  for(let y=0;y<H;y+=50) html+=`<line x1="0" y1="${y}" x2="${W}" y2="${y}" stroke="#fafafa" stroke-width="0.5"/>`;
+  html+=`</g>`;
+
+  // Edges
+  graphEdges.forEach((e,i)=>{
+    const from = graphNodes.find(n=>n.id===e.from);
+    const to = graphNodes.find(n=>n.id===e.to);
+    if(!from||!to)return;
+    const dimmed = selectedFormula && !connectedEdges.has(i);
+    const sel = connectedEdges.has(i);
+    const w = e.primary?2:1;
+    const op = sel?0.7:dimmed?0.04:0.18;
+    const dash = e.primary?'':'stroke-dasharray="4,3"';
+    html+=`<line class="edge-line" data-edge="${i}" x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}" stroke="${e.color}" stroke-width="${w}" opacity="${op}" ${dash}/>`;
+  });
+
+  // Agent nodes
+  graphNodes.filter(n=>n.type==='agent').forEach(n=>{
+    const connected = selectedFormula && connectedNodes.has(n.id);
+    const dimmed = selectedFormula && !connected;
+    const r=14;
+    html+=`<g class="node-agent ${dimmed?'dimmed':''}" data-id="${n.id}" data-type="agent" onmouseenter="hoverNode('${n.id}')" onmouseleave="unhoverNode()" onclick="clickAgentNode('${n.id}')">`;
+    html+=`<circle cx="${n.x}" cy="${n.y}" r="${r}" fill="${n.color}" opacity="${dimmed?0.1:0.3}" stroke="${n.color}" stroke-width="1.5" stroke-opacity="${dimmed?0.15:0.6}"/>`;
+    html+=`<text x="${n.x}" y="${n.y+4}" text-anchor="middle" class="node-agent-label" fill="${dimmed?'#52525b':'#a1a1aa'}">${n.abbr}</text>`;
+    html+=`</g>`;
+  });
+
+  // Formula nodes
+  graphNodes.filter(n=>n.type==='formula').forEach(n=>{
+    const isSelected = n.id===selectedFormula;
+    const connected = selectedFormula && connectedNodes.has(n.id);
+    const dimmed = selectedFormula && !connected;
+    const isSearchMatch = searchMatches.includes(n.id);
+    const r=32;
+    html+=`<g class="node-formula ${isSelected?'selected':''} ${dimmed?'dimmed':''}" data-id="${n.id}" data-type="formula" onmouseenter="hoverNode('${n.id}')" onmouseleave="unhoverNode()" onclick="clickFormulaNode('${n.id}')">`;
+    if(isSelected){
+      html+=`<circle class="glow-circle" cx="${n.x}" cy="${n.y}" r="${r+14}" fill="${n.color}" opacity="0.15"/>`;
+      html+=`<circle cx="${n.x}" cy="${n.y}" r="${r+4}" fill="none" stroke="${n.color}" stroke-width="2" opacity="0.4" filter="url(#glow)"/>`;
+    }
+    html+=`<circle cx="${n.x}" cy="${n.y}" r="${r}" fill="${n.color}" opacity="${dimmed?0.1:isSelected?0.25:0.15}" stroke="${n.color}" stroke-width="${isSelected?2.5:1.5}" stroke-opacity="${dimmed?0.15:isSelected?1:0.6}"/>`;
+    if(isSearchMatch&&!isSelected){
+      html+=`<circle cx="${n.x}" cy="${n.y}" r="${r+3}" fill="none" stroke="#06B6D4" stroke-width="2" opacity="0.6" stroke-dasharray="4,2"/>`;
+    }
+    html+=`<text x="${n.x}" y="${n.y+5}" text-anchor="middle" class="node-label" font-size="${n.abbr.length>4?10:12}" fill="${dimmed?'#52525b':isSelected?'#fafafa':'#a1a1aa'}">${n.abbr}</text>`;
+    html+=`</g>`;
+  });
+
+  svg.innerHTML = html;
+}
+
+function hoverNode(id){
+  const node = graphNodes.find(n=>n.id===id);
+  if(!node)return;
+  const connEdges = new Set();
+  const connNodes = new Set([id]);
+  graphEdges.forEach((e,i)=>{
+    if(e.from===id||e.to===id){connEdges.add(i);connNodes.add(e.from);connNodes.add(e.to)}
+  });
+  document.querySelectorAll('.edge-line').forEach(el=>{
+    const idx = parseInt(el.dataset.edge);
+    el.style.opacity = connEdges.has(idx)?'0.7':'0.03';
+  });
+  document.querySelectorAll('.node-formula, .node-agent').forEach(el=>{
+    const nid = el.dataset.id;
+    if(connNodes.has(nid)){el.classList.remove('dimmed');el.classList.add('highlighted')}
+    else{el.classList.add('dimmed');el.classList.remove('highlighted')}
+  });
+}
+
+function unhoverNode(){
+  if(!selectedFormula){
+    document.querySelectorAll('.edge-line').forEach(el=>{el.style.opacity=''});
+    document.querySelectorAll('.node-formula, .node-agent').forEach(el=>{el.classList.remove('dimmed','highlighted')});
+  } else {
+    renderGraph();
+  }
+}
+
+function clickFormulaNode(id){
+  selectedFormula = id;
+  renderGraph();
+  showDetail(id);
+}
+
+function clickAgentNode(id){
+  // Highlight formulas that use this agent
+  const agent = ALL_AGENTS.find(a=>a.id===id);
+  if(!agent)return;
+  const formulas = FORMULAS.filter(f=>f.agents.includes(id));
+  if(formulas.length>0){
+    selectedFormula = formulas[0].id;
+    renderGraph();
+    showDetail(formulas[0].id);
+  }
+}
+
+function showDetail(id){
+  const f = FORMULAS.find(x=>x.id===id);
+  if(!f)return;
+  const panel = document.getElementById('detailPanel');
+  panel.classList.remove('hidden');
+  document.getElementById('detailName').textContent = f.abbr;
+  document.getElementById('detailFull').textContent = f.name;
+  const badge = document.getElementById('detailBadge');
+  badge.className = 'cat-badge '+f.cat;
+  badge.textContent = f.cat.charAt(0).toUpperCase()+f.cat.slice(1);
+  document.getElementById('detailDesc').textContent = f.desc;
+  document.getElementById('detailSteps').innerHTML = f.steps.map((s,i)=>`<li><span class="step-num">${i+1}</span>${s}</li>`).join('');
+  document.getElementById('detailAgentCount').textContent = f.agents.length;
+  document.getElementById('detailAgents').innerHTML = f.agents.map(aid=>{
+    const ag = ALL_AGENTS.find(a=>a.id===aid);
+    const isPrimary = f.primaryAgents.includes(aid);
+    return `<div class="agent-item"><span class="agent-dot" style="background:${ag?ag.color:'#06B6D4'}"></span><span class="name">${aid}</span><span class="group">${ag?ag.groupLabel:''}</span><span class="role">${isPrimary?'primary':'secondary'}</span></div>`;
+  }).join('');
+  document.getElementById('detailCompat').innerHTML = `
+    <div class="compat-item good"><span class="compat-icon">✓</span>Works well with: ${f.compatible.good.join(', ')}</div>
+    <div class="compat-item bad"><span class="compat-icon">✗</span>Conflicts with: ${f.compatible.bad.join(', ')}</div>`;
+  document.getElementById('detailMetrics').innerHTML = `
+    <div class="metric-card"><div class="metric-val">${f.perf.accuracy}%</div><div class="metric-label">Avg Accuracy</div></div>
+    <div class="metric-card"><div class="metric-val">${f.perf.latency}s</div><div class="metric-label">Avg Latency</div></div>
+    <div class="metric-card"><div class="metric-val">${f.perf.success}%</div><div class="metric-label">Success Rate</div></div>`;
+}
+
+function closeDetail(){
+  document.getElementById('detailPanel').classList.add('hidden');
+  selectedFormula=null;
+  renderGraph();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  MATRIX
+// ═══════════════════════════════════════════════════════════════════
+function buildMatrix(){
+  const container = document.getElementById('matrixContainer');
+  let linkCount=0;
+
+  let html = '<table class="matrix-table"><thead><tr><th class="row-head" style="background:var(--surface)"></th>';
+  ALL_AGENTS.forEach(ag=>{
+    html+=`<th class="col-head"><span style="color:${ag.color}">${ag.id}</span></th>`;
+  });
+  html+='</tr></thead><tbody>';
+
+  FORMULAS.forEach(f=>{
+    const cc = CAT_COLORS[f.cat];
+    html+=`<tr><th class="row-head"><div class="matrix-row-label"><span class="matrix-row-dot" style="background:${cc}"></span>${f.abbr}</div></th>`;
+    ALL_AGENTS.forEach(ag=>{
+      const uses = f.agents.includes(ag.id);
+      const isPrimary = f.primaryAgents.includes(ag.id);
+      if(uses) linkCount++;
+      const bg = uses ? cc : 'transparent';
+      const op = uses ? (isPrimary?0.7:0.35) : 0;
+      const cls = uses?'cell filled':'cell';
+      html+=`<td class="${cls}" data-formula="${f.id}" data-agent="${ag.id}" data-fabbr="${f.abbr}" data-aname="${ag.id}" data-group="${ag.groupLabel}" data-primary="${isPrimary}" style="background:${uses?bg:'transparent'};opacity:${op}" onmouseenter="showMatrixTooltip(event,this)" onmouseleave="hideMatrixTooltip()" onmouseenter also="highlightMatrixRC(this)"></td>`;
+    });
+    html+='</tr>';
+  });
+
+  html+='</tbody></table>';
+  container.innerHTML = html;
+  document.getElementById('matrixLinkCount').textContent = linkCount;
+
+  // RC highlight
+  container.querySelectorAll('.cell.filled').forEach(cell=>{
+    cell.addEventListener('mouseenter',()=>{
+      const row = cell.parentElement;
+      row.querySelectorAll('td,th').forEach(c=>c.classList.add('highlight'));
+      const ci = cell.cellIndex;
+      container.querySelectorAll('tr').forEach(tr=>{const c=tr.children[ci];if(c)c.classList.add('highlight')});
+    });
+    cell.addEventListener('mouseleave',()=>{
+      container.querySelectorAll('.highlight').forEach(c=>c.classList.remove('highlight'));
+    });
+  });
+}
+
+function showMatrixTooltip(e,el){
+  const t = document.getElementById('matrixTooltip');
+  const f = el.dataset.fabbr;
+  const a = el.dataset.aname;
+  const g = el.dataset.group;
+  const p = el.dataset.primary==='true';
+  t.innerHTML = `<strong style="color:${CAT_COLORS[FORMULAS.find(x=>x.abbr===f)?.cat]||'#fff'}">${f}</strong> → <strong>${a}</strong> <span style="color:var(--text3)">(${g}, ${p?'primary':'secondary'})</span>`;
+  t.style.display='block';
+  t.style.left = (e.clientX+12)+'px';
+  t.style.top = (e.clientY-10)+'px';
+}
+
+function hideMatrixTooltip(){
+  document.getElementById('matrixTooltip').style.display='none';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  CATALOG
+// ═══════════════════════════════════════════════════════════════════
+function buildCatalog(){
+  const grid = document.getElementById('catalogGrid');
+  grid.innerHTML = FORMULAS.map(f=>{
+    const cc = CAT_COLORS[f.cat];
+    const catLabel = f.cat.charAt(0).toUpperCase()+f.cat.slice(1);
+    return `<div class="formula-card" data-id="${f.id}" onclick="toggleCard(this)">
+      <div class="card-stripe" style="background:${cc}"></div>
+      <div class="card-body">
+        <div class="card-abbrev" style="color:${cc}">${f.abbr}</div>
+        <div class="card-fullname">${f.name}</div>
+        <div class="card-desc">${f.desc}</div>
+        <div class="card-footer">
+          <span class="card-badge" style="background:${cc}22;color:${cc}">${catLabel}</span>
+          <span class="card-agent-count">👥 ${f.agents.length} agents</span>
+        </div>
+        <div class="card-buttons">
+          <button class="card-btn primary" onclick="event.stopPropagation();showDetail('${f.id}');document.querySelector('[data-tab=graph]').click()">Details</button>
+          <button class="card-btn secondary" onclick="event.stopPropagation()">Assign</button>
+        </div>
+      </div>
+      <div class="card-expanded-content">
+        <div class="expanded-steps"><div class="detail-section-title" style="font-size:10px;margin-bottom:4px">KEY STEPS</div><ol class="step-list">${f.steps.map((s,i)=>`<li><span class="step-num">${i+1}</span>${s}</li>`).join('')}</ol></div>
+        <div class="expanded-metrics">
+          <div class="expanded-metric"><div class="val">${f.perf.accuracy}%</div><div class="label">Accuracy</div></div>
+          <div class="expanded-metric"><div class="val">${f.perf.latency}s</div><div class="label">Latency</div></div>
+          <div class="expanded-metric"><div class="val">${f.perf.success}%</div><div class="label">Success</div></div>
+        </div>
+        <div class="expanded-actions">
+          <button class="btn-primary" style="font-size:11px;padding:6px" onclick="event.stopPropagation();showDetail('${f.id}');document.querySelector('[data-tab=graph]').click()">View in Graph</button>
+          <button class="btn-secondary" style="font-size:11px;padding:6px" onclick="event.stopPropagation()">Assign to Agent</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleCard(el){
+  const wasExpanded = el.classList.contains('expanded');
+  document.querySelectorAll('.formula-card.expanded').forEach(c=>c.classList.remove('expanded'));
+  if(!wasExpanded) el.classList.add('expanded');
+}
+
+function sortCatalog(by){
+  const grid = document.getElementById('catalogGrid');
+  let cards = [...FORMULAS];
+  if(searchQuery) cards = cards.filter(f=>f.abbr.toLowerCase().includes(searchQuery)||f.name.toLowerCase().includes(searchQuery));
+  if(by==='name') cards.sort((a,b)=>a.abbr.localeCompare(b.abbr));
+  else if(by==='category') cards.sort((a,b)=>a.cat.localeCompare(b.cat)||a.abbr.localeCompare(b.abbr));
+  else if(by==='agents') cards.sort((a,b)=>b.agents.length-a.agents.length);
+  else if(by==='performance') cards.sort((a,b)=>b.perf.accuracy-a.perf.accuracy);
+
+  grid.innerHTML = cards.map(f=>{
+    const cc = CAT_COLORS[f.cat];
+    const catLabel = f.cat.charAt(0).toUpperCase()+f.cat.slice(1);
+    return `<div class="formula-card" data-id="${f.id}" onclick="toggleCard(this)">
+      <div class="card-stripe" style="background:${cc}"></div>
+      <div class="card-body">
+        <div class="card-abbrev" style="color:${cc}">${f.abbr}</div>
+        <div class="card-fullname">${f.name}</div>
+        <div class="card-desc">${f.desc}</div>
+        <div class="card-footer">
+          <span class="card-badge" style="background:${cc}22;color:${cc}">${catLabel}</span>
+          <span class="card-agent-count">👥 ${f.agents.length} agents</span>
+        </div>
+        <div class="card-buttons">
+          <button class="card-btn primary" onclick="event.stopPropagation();showDetail('${f.id}');document.querySelector('[data-tab=graph]').click()">Details</button>
+          <button class="card-btn secondary" onclick="event.stopPropagation()">Assign</button>
+        </div>
+      </div>
+      <div class="card-expanded-content">
+        <div class="expanded-steps"><div class="detail-section-title" style="font-size:10px;margin-bottom:4px">KEY STEPS</div><ol class="step-list">${f.steps.map((s,i)=>`<li><span class="step-num">${i+1}</span>${s}</li>`).join('')}</ol></div>
+        <div class="expanded-metrics">
+          <div class="expanded-metric"><div class="val">${f.perf.accuracy}%</div><div class="label">Accuracy</div></div>
+          <div class="expanded-metric"><div class="val">${f.perf.latency}s</div><div class="label">Latency</div></div>
+          <div class="expanded-metric"><div class="val">${f.perf.success}%</div><div class="label">Success</div></div>
+        </div>
+        <div class="expanded-actions">
+          <button class="btn-primary" style="font-size:11px;padding:6px" onclick="event.stopPropagation();showDetail('${f.id}');document.querySelector('[data-tab=graph]').click()">View in Graph</button>
+          <button class="btn-secondary" style="font-size:11px;padding:6px" onclick="event.stopPropagation()">Assign to Agent</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════════════
+function init(){
+  renderGraph();
+  showDetail('react');
+  buildCatalog();
+}
+
+window.addEventListener('resize',()=>{if(currentTab==='graph')renderGraph()});
+window.addEventListener('DOMContentLoaded',init);
+if(document.readyState!=='loading')init();
+</script>
+</body>
+</html>

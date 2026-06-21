@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>P-MAS v2 — Agent Hierarchy</title>
+<style>
+  /* ============ RESET & BASE ============ */
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  html, body { height:100%; overflow:hidden; }
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #000000;
+    color: #fafafa;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+  ::-webkit-scrollbar { width:5px; }
+  ::-webkit-scrollbar-track { background:#0A0A0F; }
+  ::-webkit-scrollbar-thumb { background:#27272a; border-radius:3px; }
+
+  /* ============ LAYOUT ============ */
+  .app { display:flex; flex-direction:column; height:100vh; }
+
+  /* ---- HEADER ---- */
+  .header {
+    height:56px; min-height:56px;
+    display:flex; align-items:center;
+    padding:0 16px; gap:12px;
+    background:#0A0A0F;
+    border-bottom:1px solid #27272a;
+    z-index:20;
+  }
+  .header-left { display:flex; align-items:center; gap:10px; min-width:200px; }
+  .header-left .back-btn {
+    width:32px; height:32px; border-radius:6px; border:1px solid #27272a;
+    background:transparent; color:#a1a1aa; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; font-size:16px;
+    transition: all .15s;
+  }
+  .header-left .back-btn:hover { border-color:#06B6D4; color:#06B6D4; }
+  .header-left h1 { font-size:15px; font-weight:600; white-space:nowrap; }
+  .header-center { flex:1; display:flex; justify-content:center; }
+  .search-box {
+    width:320px; height:34px; border-radius:8px;
+    background:#111118; border:1px solid #27272a;
+    display:flex; align-items:center; padding:0 10px; gap:8px;
+    transition: border-color .15s;
+  }
+  .search-box:focus-within { border-color:#06B6D4; }
+  .search-box svg { color:#52525b; flex-shrink:0; }
+  .search-box input {
+    flex:1; background:transparent; border:none; outline:none;
+    color:#fafafa; font-size:13px;
+  }
+  .search-box input::placeholder { color:#52525b; }
+  .header-right { display:flex; align-items:center; gap:8px; min-width:360px; justify-content:flex-end; }
+  .view-toggle { display:flex; border-radius:6px; overflow:hidden; border:1px solid #27272a; }
+  .view-toggle button {
+    padding:5px 12px; font-size:11px; font-weight:500;
+    background:transparent; color:#a1a1aa; border:none; cursor:pointer;
+    border-right:1px solid #27272a; transition:all .15s;
+    text-transform:uppercase; letter-spacing:.5px;
+  }
+  .view-toggle button:last-child { border-right:none; }
+  .view-toggle button.active { background:#06B6D4; color:#000; font-weight:600; }
+  .view-toggle button:hover:not(.active) { background:#111118; color:#fafafa; }
+  .zoom-ctrl {
+    display:flex; align-items:center; gap:0;
+    border-radius:6px; overflow:hidden; border:1px solid #27272a;
+  }
+  .zoom-ctrl button {
+    width:28px; height:28px; background:transparent; border:none;
+    color:#a1a1aa; cursor:pointer; font-size:14px; transition:all .15s;
+  }
+  .zoom-ctrl button:hover { background:#111118; color:#fafafa; }
+  .zoom-ctrl span {
+    padding:0 8px; font-size:11px; color:#a1a1aa;
+    border-left:1px solid #27272a; border-right:1px solid #27272a;
+    height:28px; display:flex; align-items:center; min-width:44px; justify-content:center;
+  }
+  .hdr-btn {
+    width:28px; height:28px; border-radius:6px; border:1px solid #27272a;
+    background:transparent; color:#a1a1aa; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; font-size:14px;
+    transition:all .15s;
+  }
+  .hdr-btn:hover { border-color:#52525b; color:#fafafa; }
+  .add-agent-btn {
+    height:30px; padding:0 14px; border-radius:6px;
+    background:transparent; border:1px solid #06B6D4;
+    color:#06B6D4; font-size:12px; font-weight:500; cursor:pointer;
+    transition:all .15s; white-space:nowrap;
+  }
+  .add-agent-btn:hover { background:#06B6D420; }
+
+  /* ---- MAIN ---- */
+  .main { flex:1; display:flex; overflow:hidden; }
+
+  /* ---- LEFT SIDEBAR ---- */
+  .sidebar {
+    width:260px; min-width:260px;
+    background:#0A0A0F; border-right:1px solid #27272a;
+    display:flex; flex-direction:column; overflow-y:auto;
+  }
+  .sidebar-section { padding:14px 14px 6px; }
+  .sidebar-section-title {
+    font-size:10px; font-weight:600; text-transform:uppercase;
+    letter-spacing:1.2px; color:#52525b; margin-bottom:10px;
+  }
+  .group-item {
+    display:flex; align-items:center; gap:8px;
+    padding:7px 10px; border-radius:6px; cursor:pointer;
+    border-left:3px solid transparent; margin-bottom:2px;
+    transition:all .15s;
+  }
+  .group-item:hover { background:#111118; }
+  .group-item.active { border-left-color:#06B6D4; background:#111118; }
+  .group-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .group-name { flex:1; font-size:12.5px; color:#fafafa; }
+  .group-count {
+    font-size:10px; color:#a1a1aa; background:#111118;
+    padding:1px 6px; border-radius:8px; min-width:18px; text-align:center;
+  }
+  .group-ratio { font-size:10px; color:#52525b; white-space:nowrap; }
+
+  .sidebar-sep { height:1px; background:#27272a; margin:6px 14px; }
+
+  .stat-row {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:5px 0; font-size:12px;
+  }
+  .stat-label { color:#a1a1aa; }
+  .stat-value { color:#fafafa; font-weight:500; }
+
+  .filter-item {
+    display:flex; align-items:center; gap:8px; padding:4px 0; cursor:pointer;
+  }
+  .filter-cb {
+    width:14px; height:14px; border-radius:3px; border:1.5px solid #27272a;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0; transition:all .15s; font-size:9px; color:#000;
+  }
+  .filter-cb.checked { background:#06B6D4; border-color:#06B6D4; }
+  .filter-name { flex:1; font-size:12px; color:#a1a1aa; }
+  .filter-line { width:28px; height:0; }
+
+  /* ---- CENTER CANVAS ---- */
+  .canvas-wrap {
+    flex:1; position:relative; background:#0A0A0F; overflow:hidden;
+  }
+  .canvas-wrap svg { width:100%; height:100%; }
+  .layer-band {
+    fill: #111118;
+    opacity: 0.25;
+  }
+  .layer-label {
+    font-size:10px; fill:#52525b; font-weight:600;
+    letter-spacing:1px; text-transform:uppercase;
+  }
+  .layer-sublabel {
+    font-size:9px; fill:#3f3f46; font-weight:400;
+  }
+
+  /* Agent nodes */
+  .agent-node { cursor:pointer; transition:filter .15s; }
+  .agent-node:hover .node-bg { filter:brightness(1.3); }
+  .node-bg {
+    fill:#111118; stroke:#27272a; stroke-width:1;
+    rx:5; ry:5; transition:all .15s;
+  }
+  .node-bg.selected { stroke:#06B6D4; stroke-width:2; filter:drop-shadow(0 0 6px #06B6D480); }
+  .node-bg.highlighted { stroke:#06B6D4; stroke-width:1.5; }
+  .node-color-bar { rx:5 0 0 5; }
+  .node-name {
+    font-size:10px; fill:#fafafa; text-anchor:middle; dominant-baseline:central;
+    pointer-events:none;
+  }
+  .node-star {
+    font-size:8px; fill:#facc15; dominant-baseline:central;
+  }
+
+  /* Connections */
+  .edge-line { fill:none; stroke:#27272a; stroke-width:1.2; opacity:0.6; transition:opacity .15s; }
+  .edge-line.hidden { opacity:0; }
+  .edge-line.highlighted { opacity:1; stroke-width:1.8; }
+
+  /* Particles */
+  .particle { fill:#06B6D4; opacity:0.9; }
+
+  /* Tooltip */
+  .tooltip {
+    position:absolute; background:#111118; border:1px solid #27272a;
+    border-radius:6px; padding:6px 10px; font-size:11px;
+    pointer-events:none; z-index:30; display:none;
+    box-shadow:0 4px 12px rgba(0,0,0,.5);
+  }
+  .tooltip .tt-name { color:#fafafa; font-weight:600; }
+  .tooltip .tt-group { color:#a1a1aa; font-size:10px; margin-top:2px; }
+
+  /* MiniMap */
+  .minimap {
+    position:absolute; bottom:12px; right:12px;
+    width:160px; height:110px; background:#0A0A0F;
+    border:1px solid #27272a; border-radius:6px;
+    overflow:hidden; z-index:10;
+  }
+  .minimap svg { width:100%; height:100%; }
+  .minimap-viewport {
+    fill:none; stroke:#06B6D4; stroke-width:1.5; opacity:.6;
+    rx:2; ry:2;
+  }
+
+  /* ---- RIGHT PANEL ---- */
+  .detail-panel {
+    width:340px; min-width:340px;
+    background:#0A0A0F; border-left:1px solid #27272a;
+    display:flex; flex-direction:column; overflow:hidden;
+    transition:width .2s, min-width .2s;
+  }
+  .detail-panel.collapsed { width:48px; min-width:48px; }
+  .panel-toggle {
+    width:100%; height:36px; display:flex; align-items:center;
+    padding:0 12px; background:#111118; border-bottom:1px solid #27272a;
+    cursor:pointer; gap:6px; color:#a1a1aa; font-size:12px;
+  }
+  .panel-toggle:hover { color:#fafafa; }
+  .panel-toggle svg { transition:transform .2s; }
+  .detail-panel.collapsed .panel-toggle svg { transform:rotate(180deg); }
+  .detail-panel.collapsed .panel-body { display:none; }
+  .panel-body { flex:1; overflow-y:auto; padding:0; }
+
+  .dp-header { padding:16px 16px 12px; border-bottom:1px solid #27272a; }
+  .dp-status-dot { width:8px; height:8px; border-radius:50%; background:#22c55e; display:inline-block; margin-right:6px; }
+  .dp-agent-name { font-size:20px; font-weight:700; display:flex; align-items:center; gap:6px; }
+  .dp-subtitle { font-size:12px; color:#a1a1aa; margin-top:4px; }
+  .dp-actions { display:flex; gap:8px; margin-top:10px; }
+  .dp-action-btn {
+    width:30px; height:30px; border-radius:6px; border:1px solid #27272a;
+    background:transparent; color:#a1a1aa; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    font-size:13px; transition:all .15s;
+  }
+  .dp-action-btn:hover { border-color:#52525b; color:#fafafa; }
+  .dp-action-btn.danger:hover { border-color:#ef4444; color:#ef4444; }
+
+  .dp-section { padding:12px 16px; border-bottom:1px solid #27272a; }
+  .dp-section-title {
+    font-size:10px; font-weight:600; text-transform:uppercase;
+    letter-spacing:1px; color:#52525b; margin-bottom:8px;
+  }
+  .dp-row { display:flex; gap:6px; margin-bottom:4px; font-size:12px; }
+  .dp-row-label { color:#a1a1aa; min-width:100px; }
+  .dp-row-value { color:#fafafa; }
+  .dp-status-badge {
+    display:inline-block; padding:1px 8px; border-radius:8px;
+    font-size:10px; font-weight:600;
+  }
+  .badge-active { background:#22c55e20; color:#22c55e; }
+  .badge-idle { background:#eab30820; color:#eab308; }
+  .badge-offline { background:#ef444420; color:#ef4444; }
+
+  .conn-item {
+    display:flex; align-items:center; gap:6px;
+    padding:4px 0; font-size:11.5px;
+  }
+  .conn-arrow { color:#52525b; font-size:12px; }
+  .conn-name { color:#fafafa; }
+  .conn-type {
+    font-size:9px; padding:1px 5px; border-radius:4px;
+    background:#27272a; color:#a1a1aa; text-transform:uppercase;
+    letter-spacing:.3px;
+  }
+  .conn-group { color:#52525b; margin-left:auto; }
+
+  .task-item {
+    padding:6px 0; border-bottom:1px solid #1a1a22;
+    font-size:12px;
+  }
+  .task-item:last-child { border-bottom:none; }
+  .task-name { color:#fafafa; margin-bottom:2px; }
+  .task-status { font-size:10px; }
+  .task-status.in-progress { color:#06B6D4; }
+  .task-status.pending { color:#eab308; }
+  .task-status.completed { color:#22c55e; }
+
+  .view-link {
+    font-size:11px; color:#06B6D4; cursor:pointer;
+    margin-top:8px; display:inline-block;
+  }
+  .view-link:hover { text-decoration:underline; }
+
+  .exec-item {
+    padding:5px 0; border-bottom:1px solid #1a1a22;
+    font-size:11px; display:flex; justify-content:space-between;
+  }
+  .exec-item:last-child { border-bottom:none; }
+  .exec-id { color:#a1a1aa; }
+  .exec-status { font-size:10px; }
+  .exec-time { color:#52525b; font-size:10px; }
+  .exec-duration { color:#a1a1aa; }
+
+  /* ---- KPI STRIP ---- */
+  .kpi-strip {
+    height:36px; min-height:36px;
+    display:flex; align-items:center; justify-content:center; gap:32px;
+    background:#0A0A0F; border-top:1px solid #27272a;
+    padding:0 20px;
+  }
+  .kpi-item { display:flex; align-items:center; gap:6px; font-size:11px; }
+  .kpi-label { color:#52525b; text-transform:uppercase; letter-spacing:.5px; font-size:10px; }
+  .kpi-value { color:#fafafa; font-weight:600; font-size:12px; }
+  .kpi-dot { width:6px; height:6px; border-radius:50%; }
+
+  /* ---- MODAL ---- */
+  .modal-overlay {
+    position:fixed; top:0; left:0; width:100%; height:100%;
+    background:rgba(0,0,0,.6); z-index:100; display:none;
+    align-items:center; justify-content:center;
+  }
+  .modal-overlay.show { display:flex; }
+  .modal {
+    width:420px; background:#111118; border:1px solid #27272a;
+    border-radius:10px; overflow:hidden;
+  }
+  .modal-header {
+    padding:14px 16px; border-bottom:1px solid #27272a;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .modal-header h2 { font-size:15px; font-weight:600; }
+  .modal-close {
+    width:26px; height:26px; border-radius:5px; border:none;
+    background:transparent; color:#a1a1aa; cursor:pointer;
+    font-size:16px; display:flex; align-items:center; justify-content:center;
+  }
+  .modal-close:hover { color:#fafafa; }
+  .modal-body { padding:16px; }
+  .modal-field { margin-bottom:12px; }
+  .modal-field label {
+    display:block; font-size:11px; color:#a1a1aa; margin-bottom:4px;
+    text-transform:uppercase; letter-spacing:.5px;
+  }
+  .modal-field input, .modal-field select {
+    width:100%; height:34px; border-radius:6px;
+    background:#0A0A0F; border:1px solid #27272a;
+    color:#fafafa; padding:0 10px; font-size:13px;
+    outline:none; transition:border-color .15s;
+  }
+  .modal-field input:focus, .modal-field select:focus { border-color:#06B6D4; }
+  .modal-footer {
+    padding:12px 16px; border-top:1px solid #27272a;
+    display:flex; justify-content:flex-end; gap:8px;
+  }
+  .modal-btn {
+    padding:6px 16px; border-radius:6px; font-size:12px;
+    cursor:pointer; font-weight:500; transition:all .15s;
+  }
+  .modal-btn.cancel { background:transparent; border:1px solid #27272a; color:#a1a1aa; }
+  .modal-btn.cancel:hover { border-color:#52525b; color:#fafafa; }
+  .modal-btn.primary { background:#06B6D4; border:1px solid #06B6D4; color:#000; }
+  .modal-btn.primary:hover { background:#0891b2; }
+
+  /* Collapsed panel stub */
+  .collapsed-stub {
+    display:none; flex-direction:column; align-items:center;
+    padding-top:10px; gap:8px;
+  }
+  .detail-panel.collapsed .collapsed-stub { display:flex; }
+  .collapsed-stub .cs-dot { width:6px; height:6px; border-radius:50%; background:#22c55e; }
+  .collapsed-stub .cs-name { writing-mode:vertical-rl; font-size:11px; color:#a1a1aa; letter-spacing:1px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ============ HEADER ============ -->
+  <div class="header">
+    <div class="header-left">
+      <button class="back-btn" title="Back">&#8592;</button>
+      <h1>P-MAS Hierarchy</h1>
+    </div>
+    <div class="header-center">
+      <div class="search-box">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input type="text" placeholder="Search agents..." id="searchInput">
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="view-toggle">
+        <button class="active" data-view="dagre">Dagre</button>
+        <button data-view="radial">Radial</button>
+        <button data-view="grid">Grid</button>
+      </div>
+      <div class="zoom-ctrl">
+        <button id="zoomOut" title="Zoom Out">&#8722;</button>
+        <span id="zoomLevel">100%</span>
+        <button id="zoomIn" title="Zoom In">+</button>
+      </div>
+      <button class="hdr-btn" id="refreshBtn" title="Refresh">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+      </button>
+      <button class="add-agent-btn" id="addAgentBtn">+ Add Agent</button>
+    </div>
+  </div>
+
+  <!-- ============ MAIN ============ -->
+  <div class="main">
+
+    <!-- LEFT SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Role Groups</div>
+        <div id="groupList">
+          <div class="group-item active" data-group="strategy" onclick="selectGroup(this)">
+            <span class="group-dot" style="background:#8b5cf6"></span>
+            <span class="group-name">Strategy</span>
+            <span class="group-count">3</span>
+            <span class="group-ratio">2/3</span>
+          </div>
+          <div class="group-item" data-group="tactics" onclick="selectGroup(this)">
+            <span class="group-dot" style="background:#f97316"></span>
+            <span class="group-name">Tactics</span>
+            <span class="group-count">3</span>
+            <span class="group-ratio">3/3</span>
+          </div>
+          <div class="group-item" data-group="control" onclick="selectGroup(this)">
+            <span class="group-dot" style="background:#ef4444"></span>
+            <span class="group-name">Control</span>
+            <span class="group-count">3</span>
+            <span class="group-ratio">3/3</span>
+          </div>
+          <div class="group-item" data-group="execution" onclick="selectGroup(this)">
+            <span class="group-dot" style="background:#22c55e"></span>
+            <span class="group-name">Execution</span>
+            <span class="group-count">5</span>
+            <span class="group-ratio">4/5</span>
+          </div>
+          <div class="group-item" data-group="memory" onclick="selectGroup(this)">
+            <span class="group-dot" style="background:#06B6D4"></span>
+            <span class="group-name">Memory</span>
+            <span class="group-count">3</span>
+            <span class="group-ratio">3/3</span>
+          </div>
+          <div class="group-item" data-group="monitoring" onclick="selectGroup(this)">
+            <span class="group-dot" style="background:#eab308"></span>
+            <span class="group-name">Monitoring</span>
+            <span class="group-count">3</span>
+            <span class="group-ratio">2/3</span>
+          </div>
+          <div class="group-item" data-group="communication" onclick="selectGroup(this)">
+            <span class="group-dot" style="background:#ec4899"></span>
+            <span class="group-name">Communication</span>
+            <span class="group-count">3</span>
+            <span class="group-ratio">2/3</span>
+          </div>
+          <div class="group-item" data-group="learning" onclick="selectGroup(this)">
+            <span class="group-dot" style="background:#a3e635"></span>
+            <span class="group-name">Learning</span>
+            <span class="group-count">3</span>
+            <span class="group-ratio">2/3</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-sep"></div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Quick Stats</div>
+        <div class="stat-row"><span class="stat-label">Total Agents</span><span class="stat-value">26</span></div>
+        <div class="stat-row"><span class="stat-label">Active</span><span class="stat-value" style="color:#22c55e">21</span></div>
+        <div class="stat-row"><span class="stat-label">Connections</span><span class="stat-value">38</span></div>
+        <div class="stat-row"><span class="stat-label">Formulas</span><span class="stat-value">20</span></div>
+      </div>
+
+      <div class="sidebar-sep"></div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Edge Filter</div>
+        <div id="edgeFilter">
+          <div class="filter-item" onclick="toggleFilter(this,'command')">
+            <span class="filter-cb checked">&#10003;</span>
+            <span class="filter-name">Command</span>
+            <svg width="28" height="6"><line x1="0" y1="3" x2="28" y2="3" stroke="#a1a1aa" stroke-width="1.5"/></svg>
+          </div>
+          <div class="filter-item" onclick="toggleFilter(this,'sync')">
+            <span class="filter-cb checked">&#10003;</span>
+            <span class="filter-name">Sync</span>
+            <svg width="28" height="6"><line x1="0" y1="3" x2="28" y2="3" stroke="#a1a1aa" stroke-width="1.5" stroke-dasharray="3,3"/></svg>
+          </div>
+          <div class="filter-item" onclick="toggleFilter(this,'twin')">
+            <span class="filter-cb checked">&#10003;</span>
+            <span class="filter-name">Twin</span>
+            <svg width="28" height="6"><line x1="0" y1="3" x2="28" y2="3" stroke="#a1a1aa" stroke-width="1.5" stroke-dasharray="6,4"/></svg>
+          </div>
+          <div class="filter-item" onclick="toggleFilter(this,'delegate')">
+            <span class="filter-cb">&nbsp;</span>
+            <span class="filter-name">Delegate</span>
+            <svg width="28" height="6"><line x1="0" y1="3" x2="28" y2="3" stroke="#52525b" stroke-width="1.5" stroke-dasharray="8,3,2,3"/></svg>
+          </div>
+          <div class="filter-item" onclick="toggleFilter(this,'supervise')">
+            <span class="filter-cb">&nbsp;</span>
+            <span class="filter-name">Supervise</span>
+            <svg width="28" height="6"><line x1="0" y1="3" x2="28" y2="3" stroke="#52525b" stroke-width="1" stroke-dasharray="1,3"/></svg>
+          </div>
+          <div class="filter-item" onclick="toggleFilter(this,'broadcast')">
+            <span class="filter-cb">&nbsp;</span>
+            <span class="filter-name">Broadcast</span>
+            <svg width="28" height="6"><line x1="0" y1="3" x2="28" y2="3" stroke="#52525b" stroke-width="1.5" stroke-dasharray="12,6"/></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CENTER CANVAS -->
+    <div class="canvas-wrap" id="canvasWrap">
+      <svg id="hierarchySvg" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div class="tooltip" id="tooltip">
+        <div class="tt-name" id="ttName"></div>
+        <div class="tt-group" id="ttGroup"></div>
+      </div>
+      <div class="minimap" id="minimap">
+        <svg id="minimapSvg" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="detail-panel" id="detailPanel">
+      <div class="panel-toggle" onclick="togglePanel()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        <span id="panelToggleLabel">Detail Panel</span>
+      </div>
+      <div class="collapsed-stub">
+        <span class="cs-dot"></span>
+        <span class="cs-name">ARCHITECT</span>
+      </div>
+      <div class="panel-body" id="panelBody">
+
+        <!-- Header -->
+        <div class="dp-header">
+          <div class="dp-agent-name">
+            <span class="dp-status-dot"></span>
+            <span id="dpName">Architect</span>
+          </div>
+          <div class="dp-subtitle" id="dpSubtitle">Strategy &middot; Lead Agent</div>
+          <div class="dp-actions">
+            <button class="dp-action-btn" title="Edit">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+            <button class="dp-action-btn danger" title="Delete">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Info -->
+        <div class="dp-section">
+          <div class="dp-section-title">Info</div>
+          <div class="dp-row"><span class="dp-row-label">Description</span><span class="dp-row-value" id="dpDesc">Strategic planning and system architecture design</span></div>
+          <div class="dp-row"><span class="dp-row-label">Cognitive Formula</span><span class="dp-row-value" id="dpFormula" style="color:#06B6D4">ToT (Tree of Thought)</span></div>
+          <div class="dp-row"><span class="dp-row-label">Skills</span><span class="dp-row-value" id="dpSkills">planning, architecture, coordination</span></div>
+          <div class="dp-row"><span class="dp-row-label">Status</span><span class="dp-row-value"><span class="dp-status-badge badge-active" id="dpStatus">Active</span></span></div>
+        </div>
+
+        <!-- Connections -->
+        <div class="dp-section">
+          <div class="dp-section-title">Connections</div>
+          <div style="font-size:11px;color:#52525b;margin-bottom:4px;">Outgoing: 3</div>
+          <div class="conn-item">
+            <span class="conn-arrow">&#8594;</span>
+            <span class="conn-name">Analyst</span>
+            <span class="conn-type">Command</span>
+            <span class="conn-group">Strategy</span>
+          </div>
+          <div class="conn-item">
+            <span class="conn-arrow">&#8594;</span>
+            <span class="conn-name">Coordinator</span>
+            <span class="conn-type">Command</span>
+            <span class="conn-group">Tactics</span>
+          </div>
+          <div class="conn-item">
+            <span class="conn-arrow">&#8594;</span>
+            <span class="conn-name">Visionary</span>
+            <span class="conn-type">Sync</span>
+            <span class="conn-group">Strategy</span>
+          </div>
+          <div style="font-size:11px;color:#52525b;margin:8px 0 4px;">Incoming: 1</div>
+          <div class="conn-item">
+            <span class="conn-arrow">&#8592;</span>
+            <span class="conn-name">System Orchestrator</span>
+            <span class="conn-type">Command</span>
+            <span class="conn-group">System</span>
+          </div>
+        </div>
+
+        <!-- Tasks -->
+        <div class="dp-section">
+          <div class="dp-section-title">Active Tasks: 3</div>
+          <div class="task-item">
+            <div class="task-name">Review Q3 strategy alignment</div>
+            <div class="task-status in-progress">In Progress</div>
+          </div>
+          <div class="task-item">
+            <div class="task-name">Design agent communication protocol</div>
+            <div class="task-status pending">Pending</div>
+          </div>
+          <div class="task-item">
+            <div class="task-name">Coordinate deployment plan</div>
+            <div class="task-status completed">Completed</div>
+          </div>
+          <span class="view-link">View All Tasks</span>
+        </div>
+
+        <!-- Execution History -->
+        <div class="dp-section">
+          <div class="dp-section-title">Execution History</div>
+          <div class="exec-item">
+            <div><span class="exec-id">#1247</span> <span class="exec-status" style="color:#22c55e">OK</span></div>
+            <div><span class="exec-time">2 min ago</span> <span class="exec-duration">1.3s</span></div>
+          </div>
+          <div class="exec-item">
+            <div><span class="exec-id">#1246</span> <span class="exec-status" style="color:#22c55e">OK</span></div>
+            <div><span class="exec-time">15 min ago</span> <span class="exec-duration">0.8s</span></div>
+          </div>
+          <div class="exec-item">
+            <div><span class="exec-id">#1245</span> <span class="exec-status" style="color:#eab308">WARN</span></div>
+            <div><span class="exec-time">1h ago</span> <span class="exec-duration">2.1s</span></div>
+          </div>
+          <span class="view-link">View Full History</span>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ KPI STRIP ============ -->
+  <div class="kpi-strip">
+    <div class="kpi-item"><span class="kpi-dot" style="background:#22c55e"></span><span class="kpi-label">Active</span><span class="kpi-value">21</span></div>
+    <div class="kpi-item"><span class="kpi-dot" style="background:#eab308"></span><span class="kpi-label">Idle</span><span class="kpi-value">3</span></div>
+    <div class="kpi-item"><span class="kpi-dot" style="background:#06B6D4"></span><span class="kpi-label">Tasks</span><span class="kpi-value">26</span></div>
+    <div class="kpi-item"><span class="kpi-label">Latency</span><span class="kpi-value">1.2s</span></div>
+    <div class="kpi-item"><span class="kpi-label">Uptime</span><span class="kpi-value">99.7%</span></div>
+  </div>
+</div>
+
+<!-- ============ ADD AGENT MODAL ============ -->
+<div class="modal-overlay" id="addAgentModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Add Agent</h2>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-field">
+        <label>Agent Name</label>
+        <input type="text" placeholder="Enter agent name...">
+      </div>
+      <div class="modal-field">
+        <label>Role Group</label>
+        <select>
+          <option value="">Select group...</option>
+          <option>Strategy</option><option>Tactics</option><option>Control</option>
+          <option>Execution</option><option>Memory</option><option>Monitoring</option>
+          <option>Communication</option><option>Learning</option>
+        </select>
+      </div>
+      <div class="modal-field">
+        <label>Cognitive Formula</label>
+        <select>
+          <option value="">Select formula...</option>
+          <option>ToT (Tree of Thought)</option><option>CoT (Chain of Thought)</option>
+          <option>ReAct</option><option>GoT (Graph of Thought)</option>
+          <option>Reflexion</option><option>Self-Refine</option>
+        </select>
+      </div>
+      <div class="modal-field">
+        <label>Hierarchy Layer</label>
+        <select>
+          <option>L0 - System</option><option>L1 - Strategy</option>
+          <option>L2 - Tactics / Control</option><option>L3 - Execution / Memory</option>
+          <option>L4 - Monitoring / Communication / Learning</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn cancel" onclick="closeModal()">Cancel</button>
+      <button class="modal-btn primary" onclick="closeModal()">Create Agent</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ DATA ============
+const GROUP_COLORS = {
+  system:'#a1a1aa', strategy:'#8b5cf6', tactics:'#f97316', control:'#ef4444',
+  execution:'#22c55e', memory:'#06B6D4', monitoring:'#eab308',
+  communication:'#ec4899', learning:'#a3e635'
+};
+
+const AGENTS = [
+  // L0
+  { id:'sys-orch', name:'System Orchestrator', group:'system', layer:0, lead:true, desc:'Top-level system orchestration and routing', formula:'GoT (Graph of Thought)', skills:'orchestration, routing, supervision', status:'active' },
+  // L1
+  { id:'architect', name:'Architect', group:'strategy', layer:1, lead:true, desc:'Strategic planning and system architecture design', formula:'ToT (Tree of Thought)', skills:'planning, architecture, coordination', status:'active' },
+  { id:'analyst', name:'Analyst', group:'strategy', layer:1, lead:false, desc:'Data analysis and pattern recognition', formula:'CoT (Chain of Thought)', skills:'analysis, data, insights', status:'active' },
+  { id:'visionary', name:'Visionary', group:'strategy', layer:1, lead:false, desc:'Future scenario modeling and vision', formula:'ToT (Tree of Thought)', skills:'forecasting, modeling, vision', status:'idle' },
+  // L2 - Tactics
+  { id:'coordinator', name:'Coordinator', group:'tactics', layer:2, lead:true, desc:'Task coordination and workflow management', formula:'ReAct', skills:'coordination, scheduling, delegation', status:'active' },
+  { id:'planner', name:'Planner', group:'tactics', layer:2, lead:false, desc:'Detailed planning and task decomposition', formula:'CoT (Chain of Thought)', skills:'planning, decomposition, scheduling', status:'active' },
+  { id:'communicator', name:'Communicator', group:'tactics', layer:2, lead:false, desc:'Inter-agent communication management', formula:'ReAct', skills:'messaging, protocol, routing', status:'active' },
+  // L2 - Control
+  { id:'inspector', name:'Inspector', group:'control', layer:2, lead:true, desc:'Quality inspection and compliance checking', formula:'Reflexion', skills:'inspection, compliance, audit', status:'active' },
+  { id:'evaluator', name:'Evaluator', group:'control', layer:2, lead:false, desc:'Performance evaluation and metrics', formula:'Self-Refine', skills:'evaluation, metrics, scoring', status:'active' },
+  { id:'guard', name:'Guard', group:'control', layer:2, lead:false, desc:'Security and access control enforcement', formula:'Reflexion', skills:'security, access-control, policy', status:'active' },
+  // L3 - Execution
+  { id:'executor-a', name:'Executor-A', group:'execution', layer:3, lead:true, desc:'Primary task execution engine', formula:'ReAct', skills:'execution, coding, testing', status:'active' },
+  { id:'executor-b', name:'Executor-B', group:'execution', layer:3, lead:false, desc:'Parallel execution support', formula:'ReAct', skills:'execution, coding, debugging', status:'active' },
+  { id:'debugger', name:'Debugger', group:'execution', layer:3, lead:false, desc:'Error detection and debugging', formula:'CoT (Chain of Thought)', skills:'debugging, tracing, fixing', status:'active' },
+  { id:'tester', name:'Tester', group:'execution', layer:3, lead:false, desc:'Quality assurance and testing', formula:'Self-Refine', skills:'testing, validation, qa', status:'idle' },
+  { id:'coder', name:'Coder', group:'execution', layer:3, lead:false, desc:'Code generation and implementation', formula:'CoT (Chain of Thought)', skills:'coding, implementation, review', status:'active' },
+  // L3 - Memory
+  { id:'archivist', name:'Archivist', group:'memory', layer:3, lead:true, desc:'Knowledge storage and retrieval', formula:'ReAct', skills:'storage, retrieval, indexing', status:'active' },
+  { id:'rag-spec', name:'RAG-Specialist', group:'memory', layer:3, lead:false, desc:'RAG pipeline management', formula:'ReAct', skills:'retrieval, augmentation, generation', status:'active' },
+  { id:'ctx-mgr', name:'Context-Mgr', group:'memory', layer:3, lead:false, desc:'Context window management', formula:'CoT (Chain of Thought)', skills:'context, window, management', status:'active' },
+  // L4 - Monitoring
+  { id:'observer', name:'Observer', group:'monitoring', layer:4, lead:false, desc:'System state observation and logging', formula:'CoT (Chain of Thought)', skills:'observation, logging, metrics', status:'active' },
+  { id:'alert-op', name:'Alert-Operator', group:'monitoring', layer:4, lead:false, desc:'Alert management and escalation', formula:'ReAct', skills:'alerts, escalation, notification', status:'idle' },
+  { id:'diagnostician', name:'Diagnostician', group:'monitoring', layer:4, lead:false, desc:'Problem diagnosis and root cause analysis', formula:'ToT (Tree of Thought)', skills:'diagnosis, rca, analysis', status:'active' },
+  // L4 - Communication
+  { id:'gateway', name:'Gateway', group:'communication', layer:4, lead:false, desc:'External API and service gateway', formula:'ReAct', skills:'api, gateway, routing', status:'active' },
+  { id:'protocolist', name:'Protocolist', group:'communication', layer:4, lead:false, desc:'Protocol compliance and translation', formula:'Self-Refine', skills:'protocol, translation, compliance', status:'idle' },
+  { id:'dispatcher', name:'Dispatcher', group:'communication', layer:4, lead:false, desc:'Message dispatching and load balancing', formula:'ReAct', skills:'dispatching, load-balancing, queue', status:'active' },
+  // L4 - Learning
+  { id:'trainer', name:'Trainer', group:'learning', layer:4, lead:false, desc:'Model fine-tuning and training', formula:'Self-Refine', skills:'training, fine-tuning, optimization', status:'active' },
+  { id:'adapter', name:'Adapter', group:'learning', layer:4, lead:false, desc:'Adaptive behavior and personalization', formula:'Reflexion', skills:'adaptation, personalization, feedback', status:'idle' },
+  { id:'scorer', name:'Scorer', group:'learning', layer:4, lead:false, desc:'Quality scoring and benchmarking', formula:'Self-Refine', skills:'scoring, benchmarking, evaluation', status:'active' }
+];
+
+const EDGES = [
+  // Command: solid
+  { from:'sys-orch', to:'architect', type:'command' },
+  { from:'sys-orch', to:'inspector', type:'command' },
+  { from:'architect', to:'analyst', type:'command' },
+  { from:'architect', to:'coordinator', type:'command' },
+  { from:'coordinator', to:'executor-a', type:'command' },
+  { from:'coordinator', to:'planner', type:'command' },
+  { from:'inspector', to:'evaluator', type:'command' },
+  { from:'inspector', to:'guard', type:'command' },
+  { from:'executor-a', to:'executor-b', type:'command' },
+  { from:'executor-a', to:'debugger', type:'command' },
+  { from:'archivist', to:'rag-spec', type:'command' },
+  { from:'archivist', to:'ctx-mgr', type:'command' },
+  { from:'observer', to:'alert-op', type:'command' },
+  { from:'gateway', to:'dispatcher', type:'command' },
+  { from:'trainer', to:'scorer', type:'command' },
+  // Sync: dotted
+  { from:'architect', to:'visionary', type:'sync' },
+  { from:'coordinator', to:'communicator', type:'sync' },
+  { from:'executor-a', to:'coder', type:'sync' },
+  { from:'debugger', to:'tester', type:'sync' },
+  { from:'observer', to:'diagnostician', type:'sync' },
+  { from:'gateway', to:'protocolist', type:'sync' },
+  { from:'trainer', to:'adapter', type:'sync' },
+  { from:'evaluator', to:'guard', type:'sync' },
+  // Twin: dashed
+  { from:'executor-a', to:'executor-b', type:'twin' },
+  { from:'analyst', to:'evaluator', type:'twin' },
+  { from:'observer', to:'archivist', type:'twin' },
+  // Delegate: dash-dot
+  { from:'planner', to:'executor-a', type:'delegate' },
+  { from:'coordinator', to:'archivist', type:'delegate' },
+  { from:'communicator', to:'gateway', type:'delegate' },
+  // Supervise: fine dotted
+  { from:'inspector', to:'executor-a', type:'supervise' },
+  { from:'inspector', to:'archivist', type:'supervise' },
+  { from:'evaluator', to:'scorer', type:'supervise' },
+  // Broadcast: long dash
+  { from:'sys-orch', to:'observer', type:'broadcast' },
+  { from:'sys-orch', to:'gateway', type:'broadcast' },
+  { from:'sys-orch', to:'trainer', type:'broadcast' },
+  { from:'coordinator', to:'communicator', type:'broadcast' }
+];
+
+const EDGE_STYLES = {
+  command:   { dash:'',           label:'Command',    color:'#8b5cf6' },
+  sync:      { dash:'4,4',        label:'Sync',       color:'#06B6D4' },
+  twin:      { dash:'8,5',        label:'Twin',       color:'#ec4899' },
+  delegate:  { dash:'10,3,2,3',   label:'Delegate',   color:'#f97316' },
+  supervise: { dash:'2,4',        label:'Supervise',  color:'#eab308' },
+  broadcast: { dash:'14,8',       label:'Broadcast',  color:'#22c55e' }
+};
+
+const LAYER_NAMES = ['L0 System','L1 Strategy','L2 Tactics/Control','L3 Execution/Memory','L4 Monitor/Comm/Learn'];
+
+// ============ STATE ============
+let selectedAgent = 'architect';
+let selectedGroup = 'strategy';
+let panelCollapsed = false;
+let zoomLevel = 100;
+let visibleEdges = { command:true, sync:true, twin:true, delegate:false, supervise:false, broadcast:false };
+let agentPositions = {};
+
+// ============ LAYOUT (Dagre-style) ============
+function computeLayout() {
+  const svg = document.getElementById('hierarchySvg');
+  const wrap = document.getElementById('canvasWrap');
+  const W = wrap.clientWidth;
+  const H = wrap.clientHeight;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+  const layerYs = [60, 170, 300, 440, 580];
+  const nodeW = 64, nodeH = 36;
+  const gapX = 18;
+
+  // Group agents by layer
+  const layers = [[], [], [], [], []];
+  AGENTS.forEach(a => layers[a.layer].push(a));
+
+  agentPositions = {};
+
+  layers.forEach((layerAgents, li) => {
+    const totalW = layerAgents.length * nodeW + (layerAgents.length - 1) * gapX;
+    const startX = (W - totalW) / 2;
+    layerAgents.forEach((a, ai) => {
+      agentPositions[a.id] = {
+        x: startX + ai * (nodeW + gapX),
+        y: layerYs[li],
+        w: nodeW,
+        h: a.lead ? nodeH + 4 : nodeH
+      };
+    });
+  });
+
+  return { W, H, layerYs };
+}
+
+// ============ RENDER ============
+function renderHierarchy() {
+  const { W, H, layerYs } = computeLayout();
+  const svg = document.getElementById('hierarchySvg');
+  const ns = 'http://www.w3.org/2000/svg';
+
+  // Clear
+  svg.innerHTML = '';
+
+  // Layer bands
+  layerYs.forEach((y, i) => {
+    const bandH = i < 4 ? (layerYs[i+1] - y) : 100;
+    const rect = document.createElementNS(ns, 'rect');
+    rect.setAttribute('x', 0);
+    rect.setAttribute('y', y - 20);
+    rect.setAttribute('width', W);
+    rect.setAttribute('height', bandH);
+    rect.setAttribute('class', 'layer-band');
+    svg.appendChild(rect);
+
+    // Layer label
+    const lbl = document.createElementNS(ns, 'text');
+    lbl.setAttribute('x', 12);
+    lbl.setAttribute('y', y - 6);
+    lbl.setAttribute('class', 'layer-label');
+    lbl.textContent = LAYER_NAMES[i].split(' ')[0];
+    svg.appendChild(lbl);
+
+    const sub = document.createElementNS(ns, 'text');
+    sub.setAttribute('x', 12);
+    sub.setAttribute('y', y + 6);
+    sub.setAttribute('class', 'layer-sublabel');
+    sub.textContent = LAYER_NAMES[i].split(' ').slice(1).join(' ');
+    svg.appendChild(sub);
+  });
+
+  // Edges
+  const edgeGroup = document.createElementNS(ns, 'g');
+  edgeGroup.setAttribute('id', 'edgesGroup');
+  EDGES.forEach((e, ei) => {
+    if (!visibleEdges[e.type]) return;
+    const from = agentPositions[e.from];
+    const to = agentPositions[e.to];
+    if (!from || !to) return;
+
+    const x1 = from.x + from.w / 2;
+    const y1 = from.y + from.h;
+    const x2 = to.x + to.w / 2;
+    const y2 = to.y;
+
+    const path = document.createElementNS(ns, 'path');
+    const midY = (y1 + y2) / 2;
+    path.setAttribute('d', `M${x1},${y1} C${x1},${midY} ${x2},${midY} ${x2},${y2}`);
+    path.setAttribute('class', 'edge-line');
+    path.setAttribute('data-type', e.type);
+    path.setAttribute('data-from', e.from);
+    path.setAttribute('data-to', e.to);
+
+    const style = EDGE_STYLES[e.type];
+    if (style.dash) path.setAttribute('stroke-dasharray', style.dash);
+    path.setAttribute('stroke', style.color + '80');
+
+    // Highlight if connected to selected agent
+    if (e.from === selectedAgent || e.to === selectedAgent) {
+      path.classList.add('highlighted');
+      path.setAttribute('stroke', style.color);
+    }
+
+    edgeGroup.appendChild(path);
+  });
+  svg.appendChild(edgeGroup);
+
+  // Particle animation on one edge (Architect -> Coordinator)
+  const particleEdge = EDGES.find(e => e.from === 'architect' && e.to === 'coordinator' && e.type === 'command');
+  if (particleEdge && visibleEdges.command) {
+    const from = agentPositions[particleEdge.from];
+    const to = agentPositions[particleEdge.to];
+    if (from && to) {
+      const x1 = from.x + from.w / 2, y1 = from.y + from.h;
+      const x2 = to.x + to.w / 2, y2 = to.y;
+      const midY = (y1 + y2) / 2;
+      const pathD = `M${x1},${y1} C${x1},${midY} ${x2},${midY} ${x2},${y2}`;
+
+      for (let p = 0; p < 3; p++) {
+        const circle = document.createElementNS(ns, 'circle');
+        circle.setAttribute('r', '2.5');
+        circle.setAttribute('class', 'particle');
+        const anim = document.createElementNS(ns, 'animateMotion');
+        anim.setAttribute('dur', '2.5s');
+        anim.setAttribute('repeatCount', 'indefinite');
+        anim.setAttribute('begin', `${p * 0.8}s`);
+        const mpath = document.createElementNS(ns, 'mpath');
+        // Create a hidden path for the animation
+        const hiddenPath = document.createElementNS(ns, 'path');
+        hiddenPath.setAttribute('d', pathD);
+        hiddenPath.setAttribute('id', `particle-path-${p}`);
+        hiddenPath.setAttribute('fill', 'none');
+        hiddenPath.setAttribute('stroke', 'none');
+        svg.appendChild(hiddenPath);
+        mpath.setAttributeNS('http://www.w3.org/1999/xlink', 'href', `#particle-path-${p}`);
+        anim.appendChild(mpath);
+        circle.appendChild(anim);
+        svg.appendChild(circle);
+      }
+    }
+  }
+
+  // Nodes
+  const nodeGroup = document.createElementNS(ns, 'g');
+  nodeGroup.setAttribute('id', 'nodesGroup');
+  AGENTS.forEach(a => {
+    const pos = agentPositions[a.id];
+    if (!pos) return;
+
+    const g = document.createElementNS(ns, 'g');
+    g.setAttribute('class', 'agent-node');
+    g.setAttribute('data-id', a.id);
+    g.setAttribute('data-group', a.group);
+
+    // Background rect
+    const rect = document.createElementNS(ns, 'rect');
+    rect.setAttribute('x', pos.x);
+    rect.setAttribute('y', pos.y);
+    rect.setAttribute('width', pos.w);
+    rect.setAttribute('height', pos.h);
+    rect.setAttribute('class', 'node-bg' + (a.id === selectedAgent ? ' selected' : ''));
+    if (selectedGroup && a.group === selectedGroup && a.id !== selectedAgent) {
+      rect.classList.add('highlighted');
+    }
+    g.appendChild(rect);
+
+    // Color bar (left)
+    const bar = document.createElementNS(ns, 'rect');
+    bar.setAttribute('x', pos.x);
+    bar.setAttribute('y', pos.y);
+    bar.setAttribute('width', 3);
+    bar.setAttribute('height', pos.h);
+    bar.setAttribute('class', 'node-color-bar');
+    bar.setAttribute('fill', GROUP_COLORS[a.group]);
+    bar.setAttribute('rx', '3 0 0 3');
+    g.appendChild(bar);
+
+    // Star for lead
+    if (a.lead) {
+      const star = document.createElementNS(ns, 'text');
+      star.setAttribute('x', pos.x + 9);
+      star.setAttribute('y', pos.y + 10);
+      star.setAttribute('class', 'node-star');
+      star.textContent = '\u2605';
+      g.appendChild(star);
+    }
+
+    // Name
+    const text = document.createElementNS(ns, 'text');
+    text.setAttribute('x', pos.x + pos.w / 2);
+    text.setAttribute('y', pos.y + pos.h / 2 + 1);
+    text.setAttribute('class', 'node-name');
+    // Truncate name if too long
+    text.textContent = a.name.length > 10 ? a.name.substring(0, 9) + '..' : a.name;
+    g.appendChild(text);
+
+    // Click handler
+    g.addEventListener('click', () => selectAgent(a.id));
+    g.addEventListener('mouseenter', (ev) => showTooltip(ev, a));
+    g.addEventListener('mouseleave', hideTooltip);
+
+    nodeGroup.appendChild(g);
+  });
+  svg.appendChild(nodeGroup);
+
+  // Minimap
+  renderMinimap(W, H);
+}
+
+function renderMinimap(W, H) {
+  const msvg = document.getElementById('minimapSvg');
+  const ns = 'http://www.w3.org/2000/svg';
+  msvg.innerHTML = '';
+
+  const mW = 160, mH = 110;
+  const scaleX = mW / W, scaleY = mH / H;
+
+  AGENTS.forEach(a => {
+    const pos = agentPositions[a.id];
+    if (!pos) return;
+    const r = document.createElementNS(ns, 'rect');
+    r.setAttribute('x', pos.x * scaleX);
+    r.setAttribute('y', pos.y * scaleY);
+    r.setAttribute('width', Math.max(pos.w * scaleX, 3));
+    r.setAttribute('height', Math.max(pos.h * scaleY, 2));
+    r.setAttribute('fill', GROUP_COLORS[a.group]);
+    r.setAttribute('rx', '1');
+    r.setAttribute('opacity', a.id === selectedAgent ? '1' : '0.5');
+    msvg.appendChild(r);
+  });
+
+  // Viewport box
+  const vp = document.createElementNS(ns, 'rect');
+  vp.setAttribute('x', '10');
+  vp.setAttribute('y', '5');
+  vp.setAttribute('width', '60');
+  vp.setAttribute('height', '40');
+  vp.setAttribute('class', 'minimap-viewport');
+  msvg.appendChild(vp);
+}
+
+// ============ INTERACTIONS ============
+function selectAgent(id) {
+  selectedAgent = id;
+  const a = AGENTS.find(ag => ag.id === id);
+  if (!a) return;
+
+  // Update detail panel
+  document.getElementById('dpName').textContent = a.name;
+  const groupLabel = a.group.charAt(0).toUpperCase() + a.group.slice(1);
+  document.getElementById('dpSubtitle').innerHTML = `${groupLabel} &middot; ${a.lead ? 'Lead Agent' : 'Agent'}`;
+  document.getElementById('dpDesc').textContent = a.desc;
+  document.getElementById('dpFormula').textContent = a.formula;
+  document.getElementById('dpSkills').textContent = a.skills;
+  const statusEl = document.getElementById('dpStatus');
+  statusEl.textContent = a.status.charAt(0).toUpperCase() + a.status.slice(1);
+  statusEl.className = 'dp-status-badge badge-' + a.status;
+
+  // Update collapsed stub
+  document.querySelector('.cs-name').textContent = a.name.toUpperCase();
+
+  // Re-render to update selection visuals
+  renderHierarchy();
+}
+
+function selectGroup(el) {
+  document.querySelectorAll('.group-item').forEach(g => g.classList.remove('active'));
+  el.classList.add('active');
+  selectedGroup = el.dataset.group;
+  renderHierarchy();
+}
+
+function togglePanel() {
+  const panel = document.getElementById('detailPanel');
+  panelCollapsed = !panelCollapsed;
+  panel.classList.toggle('collapsed', panelCollapsed);
+  document.getElementById('panelToggleLabel').textContent = panelCollapsed ? '' : 'Detail Panel';
+  // Re-layout after panel toggle
+  setTimeout(renderHierarchy, 250);
+}
+
+function toggleFilter(el, type) {
+  const cb = el.querySelector('.filter-cb');
+  visibleEdges[type] = !visibleEdges[type];
+  if (visibleEdges[type]) {
+    cb.classList.add('checked');
+    cb.innerHTML = '&#10003;';
+  } else {
+    cb.classList.remove('checked');
+    cb.innerHTML = '&nbsp;';
+  }
+  renderHierarchy();
+}
+
+function showTooltip(ev, agent) {
+  const tt = document.getElementById('tooltip');
+  document.getElementById('ttName').textContent = agent.name;
+  document.getElementById('ttGroup').textContent = agent.group.charAt(0).toUpperCase() + agent.group.slice(1) + ' \u00B7 ' + (agent.lead ? 'Lead' : 'Agent');
+  tt.style.display = 'block';
+  const wrap = document.getElementById('canvasWrap');
+  const rect = wrap.getBoundingClientRect();
+  tt.style.left = (ev.clientX - rect.left + 12) + 'px';
+  tt.style.top = (ev.clientY - rect.top - 30) + 'px';
+}
+
+function hideTooltip() {
+  document.getElementById('tooltip').style.display = 'none';
+}
+
+// View toggle
+document.querySelectorAll('.view-toggle button').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.view-toggle button').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    // In a real app this would change layout; here we just re-render
+    renderHierarchy();
+  });
+});
+
+// Zoom
+document.getElementById('zoomIn').addEventListener('click', () => {
+  zoomLevel = Math.min(200, zoomLevel + 10);
+  document.getElementById('zoomLevel').textContent = zoomLevel + '%';
+  const svg = document.getElementById('hierarchySvg');
+  const scale = zoomLevel / 100;
+  svg.style.transform = `scale(${scale})`;
+  svg.style.transformOrigin = 'center center';
+});
+
+document.getElementById('zoomOut').addEventListener('click', () => {
+  zoomLevel = Math.max(50, zoomLevel - 10);
+  document.getElementById('zoomLevel').textContent = zoomLevel + '%';
+  const svg = document.getElementById('hierarchySvg');
+  const scale = zoomLevel / 100;
+  svg.style.transform = `scale(${scale})`;
+  svg.style.transformOrigin = 'center center';
+});
+
+// Refresh
+document.getElementById('refreshBtn').addEventListener('click', () => {
+  const btn = document.getElementById('refreshBtn');
+  btn.style.color = '#06B6D4';
+  setTimeout(() => { btn.style.color = ''; }, 500);
+  renderHierarchy();
+});
+
+// Add Agent modal
+document.getElementById('addAgentBtn').addEventListener('click', () => {
+  document.getElementById('addAgentModal').classList.add('show');
+});
+
+function closeModal() {
+  document.getElementById('addAgentModal').classList.remove('show');
+}
+
+document.getElementById('addAgentModal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('addAgentModal')) closeModal();
+});
+
+// Search
+document.getElementById('searchInput').addEventListener('input', function() {
+  const q = this.value.toLowerCase();
+  document.querySelectorAll('.agent-node').forEach(node => {
+    const id = node.dataset.id;
+    const agent = AGENTS.find(a => a.id === id);
+    if (!agent) return;
+    const match = !q || agent.name.toLowerCase().includes(q) || agent.group.toLowerCase().includes(q);
+    node.style.opacity = match ? '1' : '0.15';
+  });
+});
+
+// ============ INIT ============
+window.addEventListener('resize', renderHierarchy);
+window.addEventListener('load', () => {
+  renderHierarchy();
+  // Set initial selection
+  selectAgent('architect');
+});
+</script>
+</body>
+</html>

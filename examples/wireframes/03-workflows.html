@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440">
+<title>P-MAS v2 — Workflows</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#000000;--surface:#0A0A0F;--surface2:#111118;--surface3:#16161e;
+  --cyan:#06B6D4;--cyan-dim:#0891B2;--cyan-glow:rgba(6,182,212,0.25);
+  --text:#fafafa;--text-sub:#a1a1aa;--text-muted:#52525b;
+  --border:#27272a;--border2:#1e1e24;
+  --green:#22c55e;--yellow:#eab308;--red:#ef4444;--purple:#8b5cf6;
+  --font:system-ui,-apple-system,sans-serif;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;overflow:hidden}
+#root{width:1440px;height:900px;margin:0 auto;display:flex;flex-direction:column;position:relative}
+
+/* ===== HEADER ===== */
+.header{height:56px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:relative;flex-shrink:0}
+.header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(6,182,212,0.35),transparent)}
+.header-left{display:flex;align-items:center;gap:12px}
+.logo-box{width:34px;height:34px;border-radius:8px;background:rgba(6,182,212,0.1);border:1px solid rgba(6,182,212,0.25);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:var(--cyan);letter-spacing:-0.5px}
+.header-title{font-size:15px;font-weight:700;color:var(--text)}
+.header-subtitle{font-size:10px;color:var(--text-muted);margin-top:1px}
+.header-center{display:flex;align-items:center;gap:4px}
+.tab-btn{padding:8px 18px;border-radius:8px;font-size:12px;font-weight:600;border:1px solid transparent;background:transparent;color:var(--text-muted);cursor:pointer;transition:all .15s}
+.tab-btn:hover{color:var(--text-sub);background:rgba(255,255,255,0.03)}
+.tab-btn.active{background:rgba(6,182,212,0.08);border-color:rgba(6,182,212,0.2);color:var(--cyan)}
+.header-right{display:flex;align-items:center;gap:8px}
+.search-box{position:relative;width:200px}
+.search-box input{width:100%;padding:7px 12px 7px 32px;border-radius:7px;background:var(--surface2);border:1px solid var(--border);font-size:11px;color:var(--text-sub);outline:none;font-family:var(--font)}
+.search-box input:focus{border-color:rgba(6,182,212,0.3)}
+.search-box .search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:12px}
+.filter-btn{padding:7px 12px;border-radius:7px;background:var(--surface2);border:1px solid var(--border);color:var(--text-muted);font-size:11px;cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:5px}
+.filter-btn:hover{border-color:rgba(6,182,212,0.3)}
+.new-wf-btn{padding:7px 16px;border-radius:7px;background:var(--cyan);border:none;color:#000;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:5px;transition:opacity .15s}
+.new-wf-btn:hover{opacity:.85}
+
+/* ===== MAIN LAYOUT ===== */
+.main-layout{flex:1;display:flex;overflow:hidden}
+
+/* ===== SIDEBAR ===== */
+.sidebar{width:280px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto}
+.sidebar::-webkit-scrollbar{width:4px}
+.sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.sidebar-section{padding:16px}
+.sidebar-section+.sidebar-section{border-top:1px solid var(--border2)}
+.sidebar-label{font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;padding-left:2px}
+.wf-card{padding:10px 12px;border-radius:8px;background:var(--surface2);border:1px solid var(--border2);margin-bottom:6px;cursor:pointer;transition:all .15s;border-left:3px solid transparent;position:relative}
+.wf-card:hover{background:var(--surface3);border-color:var(--border)}
+.wf-card.selected{border-color:rgba(6,182,212,0.3);background:rgba(6,182,212,0.04);border-left-color:var(--cyan)}
+.wf-card.active-wf{border-left-color:var(--cyan)}
+.wf-card.draft-wf{border-left-color:var(--yellow)}
+.wf-card.template-wf{border-left-color:var(--purple)}
+.wf-card-name{font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px}
+.wf-card-meta{display:flex;align-items:center;gap:8px;font-size:10px;color:var(--text-muted)}
+.wf-card-badge{display:inline-flex;align-items:center;gap:3px;padding:1px 7px;border-radius:10px;font-size:9px;font-weight:700}
+.badge-active{background:rgba(6,182,212,0.12);color:var(--cyan)}
+.badge-draft{background:rgba(234,179,8,0.12);color:var(--yellow)}
+.badge-template{background:rgba(139,92,246,0.12);color:var(--purple)}
+
+/* ===== CONTENT AREA ===== */
+.content-area{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
+
+/* Tab Views */
+.tab-view{display:none;flex-direction:column;height:100%}
+.tab-view.active{display:flex}
+
+/* ===== ALL WORKFLOWS TAB ===== */
+.wf-editor{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.pipeline-header{padding:16px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface);flex-shrink:0}
+.pipeline-header-left{display:flex;align-items:center;gap:14px}
+.pipeline-title{font-size:18px;font-weight:700;color:var(--text)}
+.pipeline-meta{display:flex;align-items:center;gap:10px;margin-top:2px}
+.pipeline-meta-item{font-size:10px;color:var(--text-muted);display:flex;align-items:center;gap:4px}
+.pipeline-meta-item .dot{width:6px;height:6px;border-radius:50%}
+.pipeline-header-right{display:flex;align-items:center;gap:6px}
+.ph-btn{padding:7px 14px;border-radius:7px;background:var(--surface2);border:1px solid var(--border);color:var(--text-sub);font-size:11px;cursor:pointer;font-family:var(--font);transition:all .15s}
+.ph-btn:hover{border-color:rgba(255,255,255,0.15)}
+.ph-btn.execute{background:var(--cyan);border-color:var(--cyan);color:#000;font-weight:700}
+.ph-btn.execute:hover{opacity:.85}
+.ph-btn.delete{color:var(--red)}
+.ph-btn.delete:hover{border-color:rgba(239,68,68,0.3)}
+
+/* Pipeline Canvas */
+.pipeline-canvas{flex:1;position:relative;overflow:auto;background:var(--bg);background-image:radial-gradient(circle,rgba(39,39,42,0.4) 1px,transparent 1px);background-size:24px 24px;padding:30px}
+.canvas-inner{min-width:900px;min-height:340px;position:relative}
+
+/* SVG Pipeline */
+.pipeline-svg{width:100%;height:100%}
+.step-node{cursor:pointer;transition:filter .15s}
+.step-node:hover{filter:brightness(1.15)}
+.step-node.selected-node .node-rect{stroke:var(--cyan);stroke-width:2}
+.node-rect{rx:10;ry:10;transition:stroke .15s,stroke-width .15s}
+.node-label{font-size:12px;font-weight:600;fill:var(--text);pointer-events:none}
+.node-agent{font-size:10px;fill:var(--text-sub);pointer-events:none}
+.node-role{font-size:9px;fill:var(--text-muted);pointer-events:none}
+.node-step-num{font-size:9px;font-weight:700;pointer-events:none}
+.diamond-label{font-size:10px;font-weight:600;fill:var(--text);pointer-events:none}
+.arrow-label{font-size:9px;font-weight:600;pointer-events:none}
+.feedback-label{font-size:8px;font-weight:600;fill:var(--yellow);pointer-events:none;font-style:italic}
+
+/* Step Detail Panel */
+.step-detail-panel{border-top:1px solid var(--border);background:var(--surface);flex-shrink:0;overflow:hidden;transition:max-height .3s ease}
+.step-detail-panel.collapsed{max-height:0}
+.step-detail-panel.expanded{max-height:280px}
+.step-detail-header{padding:12px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border2);cursor:pointer}
+.step-detail-header:hover{background:rgba(255,255,255,0.02)}
+.step-detail-title{font-size:13px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px}
+.step-detail-toggle{font-size:11px;color:var(--text-muted)}
+.step-detail-body{padding:16px 24px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.detail-section{background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:12px 14px}
+.detail-section-title{font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.detail-section pre{font-size:11px;color:var(--text-sub);font-family:'SF Mono',Monaco,Consolas,monospace;line-height:1.5;white-space:pre-wrap}
+.detail-section .rule-text{font-size:11px;color:var(--yellow);line-height:1.5}
+.detail-section .meta-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border2)}
+.detail-section .meta-row:last-child{border-bottom:none}
+.detail-section .meta-key{font-size:10px;color:var(--text-muted)}
+.detail-section .meta-val{font-size:10px;font-weight:600;color:var(--text-sub)}
+
+/* ===== EXECUTION MODAL ===== */
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:100}
+.modal-overlay.visible{display:flex}
+.modal{width:680px;max-height:80vh;background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 0 60px rgba(6,182,212,0.08)}
+.modal-header{padding:18px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:15px;font-weight:700;color:var(--text)}
+.modal-close{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text-muted);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+.modal-close:hover{border-color:var(--red);color:var(--red)}
+.modal-body{flex:1;overflow-y:auto;padding:20px 24px}
+.modal-body::-webkit-scrollbar{width:4px}
+.modal-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.modal-footer{padding:14px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+
+/* Execution Timeline */
+.exec-timeline{display:flex;flex-direction:column;gap:0}
+.exec-step{display:flex;gap:14px;padding:12px 0;position:relative}
+.exec-step:not(:last-child)::after{content:'';position:absolute;left:15px;top:42px;bottom:0;width:2px;background:var(--border)}
+.exec-step-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;font-weight:700;position:relative;z-index:1}
+.exec-step.completed .exec-step-icon{background:rgba(34,197,94,0.15);border:2px solid var(--green);color:var(--green)}
+.exec-step.running .exec-step-icon{background:rgba(6,182,212,0.15);border:2px solid var(--cyan);color:var(--cyan)}
+.exec-step.pending .exec-step-icon{background:var(--surface2);border:2px solid var(--border);color:var(--text-muted)}
+.exec-step-content{flex:1;min-width:0}
+.exec-step-name{font-size:13px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px}
+.exec-step-agent{font-size:10px;color:var(--text-muted)}
+.exec-step-status{font-size:11px;margin-top:2px}
+.exec-step.completed .exec-step-status{color:var(--green)}
+.exec-step.running .exec-step-status{color:var(--cyan)}
+.exec-step.pending .exec-step-status{color:var(--text-muted)}
+.exec-step-duration{font-size:10px;color:var(--text-muted);margin-left:auto;white-space:nowrap}
+
+/* Progress Bar */
+.progress-bar-container{margin-top:8px;display:flex;align-items:center;gap:8px}
+.progress-bar-track{flex:1;height:4px;border-radius:2px;background:var(--border);overflow:hidden}
+.progress-bar-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--cyan),#22d3ee);transition:width .3s ease}
+.progress-bar-text{font-size:9px;color:var(--cyan);white-space:nowrap}
+
+/* Log Output */
+.log-section{margin-top:20px}
+.log-title{font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.log-box{background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:12px;font-family:'SF Mono',Monaco,Consolas,monospace;font-size:10px;line-height:1.7;max-height:180px;overflow-y:auto;color:var(--text-sub)}
+.log-box::-webkit-scrollbar{width:3px}
+.log-box::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.log-line{white-space:nowrap}
+.log-time{color:var(--text-muted)}
+.log-agent{color:var(--cyan);font-weight:600}
+.log-info{color:var(--text-sub)}
+
+/* Spinner */
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(6,182,212,0.3);border-top-color:var(--cyan);border-radius:50%;animation:spin 1s linear infinite}
+
+/* Cancel Button */
+.cancel-btn{padding:8px 20px;border-radius:8px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:var(--red);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .15s}
+.cancel-btn:hover{background:rgba(239,68,68,0.2)}
+
+/* ===== CREATE WORKFLOW TAB ===== */
+.create-form{padding:24px;overflow-y:auto;flex:1}
+.create-form::-webkit-scrollbar{width:4px}
+.create-form::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.form-group{margin-bottom:20px}
+.form-label{display:block;font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.form-input{width:100%;padding:10px 14px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12px;font-family:var(--font);outline:none;transition:border .15s}
+.form-input:focus{border-color:rgba(6,182,212,0.4)}
+.form-input::placeholder{color:var(--text-muted)}
+textarea.form-input{min-height:80px;resize:vertical;line-height:1.5}
+.step-builder{margin-top:8px}
+.step-builder-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.step-builder-title{font-size:12px;font-weight:700;color:var(--text)}
+.add-step-btn{padding:6px 14px;border-radius:6px;background:rgba(6,182,212,0.1);border:1px solid rgba(6,182,212,0.25);color:var(--cyan);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font)}
+.add-step-btn:hover{background:rgba(6,182,212,0.18)}
+.step-row{background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:14px;margin-bottom:10px;position:relative}
+.step-row:hover{border-color:var(--border)}
+.step-row-num{position:absolute;top:10px;left:12px;width:20px;height:20px;border-radius:50%;background:rgba(6,182,212,0.1);color:var(--cyan);font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.step-row-inner{margin-left:30px}
+.step-row-fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.step-row-field label{display:block;font-size:9px;color:var(--text-muted);margin-bottom:3px;font-weight:600}
+.step-row-field select,.step-row-field input,.step-row-field textarea{width:100%;padding:7px 10px;border-radius:6px;background:var(--bg);border:1px solid var(--border2);color:var(--text-sub);font-size:11px;font-family:var(--font);outline:none}
+.step-row-field select:focus,.step-row-field input:focus,.step-row-field textarea:focus{border-color:rgba(6,182,212,0.3)}
+.step-row-field textarea{min-height:50px;resize:vertical;font-family:'SF Mono',Monaco,Consolas,monospace;font-size:10px}
+.step-row-actions{display:flex;justify-content:flex-end;gap:6px;margin-top:8px}
+.step-row-actions button{padding:4px 10px;border-radius:5px;font-size:9px;cursor:pointer;font-family:var(--font);border:1px solid var(--border2);background:var(--bg);color:var(--text-muted)}
+.step-row-actions button:hover{border-color:var(--border)}
+.step-row-actions .remove-step{color:var(--red)}
+.step-row-actions .remove-step:hover{border-color:rgba(239,68,68,0.3)}
+.drag-handle{color:var(--text-muted);cursor:grab;font-size:12px;margin-right:6px}
+.form-actions{display:flex;gap:10px;margin-top:24px;padding-top:20px;border-top:1px solid var(--border2)}
+.save-draft-btn{padding:10px 24px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);color:var(--text-sub);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font)}
+.save-draft-btn:hover{border-color:rgba(255,255,255,0.15)}
+.activate-btn{padding:10px 24px;border-radius:8px;background:var(--cyan);border:none;color:#000;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font)}
+.activate-btn:hover{opacity:.85}
+
+/* ===== HISTORY TAB ===== */
+.history-container{padding:24px;flex:1;overflow-y:auto}
+.history-container::-webkit-scrollbar{width:4px}
+.history-container::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.history-table{width:100%;border-collapse:collapse}
+.history-table thead th{font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;text-align:left;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--surface)}
+.history-table tbody tr{cursor:pointer;transition:background .1s}
+.history-table tbody tr:hover{background:rgba(255,255,255,0.02)}
+.history-table td{padding:12px 14px;font-size:11px;color:var(--text-sub);border-bottom:1px solid var(--border2)}
+.history-table td:first-child{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:10px;color:var(--text-muted)}
+.status-cell{display:inline-flex;align-items:center;gap:5px}
+.status-dot-sm{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.dot-green{background:var(--green);box-shadow:0 0 4px var(--green)}
+.dot-yellow{background:var(--yellow);box-shadow:0 0 4px var(--yellow)}
+.dot-red{background:var(--red);box-shadow:0 0 4px var(--red)}
+.dot-gray{background:var(--text-muted)}
+
+/* Expandable Row */
+.expanded-detail{display:none;padding:14px;background:var(--surface2);border-bottom:1px solid var(--border)}
+.expanded-detail.visible{display:table-row}
+.expanded-detail td{padding:14px}
+.expanded-steps{display:flex;flex-direction:column;gap:6px}
+.expanded-step{display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:6px;background:var(--bg);border:1px solid var(--border2)}
+.expanded-step .step-idx{font-size:9px;font-weight:700;color:var(--cyan);width:18px}
+.expanded-step .step-name{font-size:11px;color:var(--text);flex:1}
+.expanded-step .step-result{font-size:10px;color:var(--text-muted)}
+.expanded-step .step-dur{font-size:10px;color:var(--text-muted);font-family:'SF Mono',Monaco,Consolas,monospace}
+
+/* ===== TOOLTIP ===== */
+.tooltip{position:fixed;padding:8px 12px;border-radius:6px;background:var(--surface3);border:1px solid var(--border);font-size:10px;color:var(--text-sub);pointer-events:none;z-index:200;display:none;max-width:220px;line-height:1.4;box-shadow:0 4px 20px rgba(0,0,0,0.5)}
+.tooltip.visible{display:block}
+.tooltip-title{font-weight:700;color:var(--text);margin-bottom:2px}
+
+/* Animations */
+@keyframes pulseGlow{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.animate-in{animation:fadeIn .25s ease}
+</style>
+</head>
+<body>
+<div id="root">
+
+  <!-- ===== HEADER ===== -->
+  <div class="header">
+    <div class="header-left">
+      <div class="logo-box">P</div>
+      <div>
+        <div class="header-title">P-MAS</div>
+        <div class="header-subtitle">Multi-Agent System v2</div>
+      </div>
+    </div>
+    <div class="header-center">
+      <button class="tab-btn active" data-tab="all" onclick="switchTab('all')">All Workflows</button>
+      <button class="tab-btn" data-tab="create" onclick="switchTab('create')">Create New</button>
+      <button class="tab-btn" data-tab="history" onclick="switchTab('history')">History</button>
+    </div>
+    <div class="header-right">
+      <div class="search-box">
+        <span class="search-icon">&#x1F50D;</span>
+        <input type="text" placeholder="Search workflows..." />
+      </div>
+      <button class="filter-btn">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1.5 2h9M3 6h6M4.5 10h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Filter
+      </button>
+      <button class="new-wf-btn" onclick="switchTab('create')">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        New Workflow
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== MAIN LAYOUT ===== -->
+  <div class="main-layout">
+
+    <!-- ===== SIDEBAR ===== -->
+    <div class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Active Workflows</div>
+        <div class="wf-card active-wf selected" data-wf="code-review" onclick="selectWorkflow(this,'code-review')">
+          <div class="wf-card-name">Code Review Pipeline</div>
+          <div class="wf-card-meta">
+            <span>4 steps</span>
+            <span class="wf-card-badge badge-active">Active</span>
+            <span>2h ago</span>
+          </div>
+        </div>
+        <div class="wf-card active-wf" data-wf="bug-triage" onclick="selectWorkflow(this,'bug-triage')">
+          <div class="wf-card-name">Bug Triage Process</div>
+          <div class="wf-card-meta">
+            <span>3 steps</span>
+            <span class="wf-card-badge badge-active">Active</span>
+            <span>5h ago</span>
+          </div>
+        </div>
+        <div class="wf-card draft-wf" data-wf="feature-dev" onclick="selectWorkflow(this,'feature-dev')">
+          <div class="wf-card-name">Feature Development</div>
+          <div class="wf-card-meta">
+            <span>5 steps</span>
+            <span class="wf-card-badge badge-draft">Draft</span>
+          </div>
+        </div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Templates</div>
+        <div class="wf-card template-wf" data-wf="template-review" onclick="selectWorkflow(this,'template-review')">
+          <div class="wf-card-name">Standard Review</div>
+          <div class="wf-card-meta">
+            <span>3 steps</span>
+            <span class="wf-card-badge badge-template">Template</span>
+          </div>
+        </div>
+        <div class="wf-card template-wf" data-wf="template-full" onclick="selectWorkflow(this,'template-full')">
+          <div class="wf-card-name">Full Development Cycle</div>
+          <div class="wf-card-meta">
+            <span>6 steps</span>
+            <span class="wf-card-badge badge-template">Template</span>
+          </div>
+        </div>
+        <div class="wf-card template-wf" data-wf="template-quick" onclick="selectWorkflow(this,'template-quick')">
+          <div class="wf-card-name">Quick Fix</div>
+          <div class="wf-card-meta">
+            <span>2 steps</span>
+            <span class="wf-card-badge badge-template">Template</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== CONTENT AREA ===== -->
+    <div class="content-area">
+
+      <!-- ===== ALL WORKFLOWS TAB ===== -->
+      <div class="tab-view active" id="tab-all">
+        <div class="wf-editor">
+          <!-- Pipeline Header -->
+          <div class="pipeline-header">
+            <div class="pipeline-header-left">
+              <div>
+                <div class="pipeline-title" id="pipeline-title">Code Review Pipeline</div>
+                <div class="pipeline-meta" id="pipeline-meta">
+                  <span class="pipeline-meta-item"><span class="dot" style="background:var(--cyan);box-shadow:0 0 4px var(--cyan)"></span> Active</span>
+                  <span class="pipeline-meta-item">Trigger: Manual + On PR</span>
+                  <span class="pipeline-meta-item">Created: 2025-06-10</span>
+                </div>
+              </div>
+            </div>
+            <div class="pipeline-header-right">
+              <button class="ph-btn">Edit</button>
+              <button class="ph-btn">Duplicate</button>
+              <button class="ph-btn delete">Delete</button>
+              <button class="ph-btn execute" onclick="showExecutionModal()">&#9654; Execute</button>
+            </div>
+          </div>
+
+          <!-- Pipeline Canvas -->
+          <div class="pipeline-canvas">
+            <div class="canvas-inner">
+              <svg class="pipeline-svg" viewBox="0 0 900 340" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <marker id="arrowHead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#52525b"/></marker>
+                  <marker id="arrowHeadCyan" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#06B6D4"/></marker>
+                  <marker id="arrowHeadYellow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#eab308"/></marker>
+                  <filter id="glowCyan"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                  <linearGradient id="nodeGrad1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#111118"/><stop offset="100%" stop-color="#0A0A0F"/></linearGradient>
+                </defs>
+
+                <!-- Step 1: Analyze Code -->
+                <g class="step-node" id="node-1" onclick="selectStep(1)" data-tooltip="Step 1: Analyze Code&#10;Agent: Inspector (Control)&#10;Role: Code analysis & quality check">
+                  <rect class="node-rect" x="30" y="110" width="160" height="80" fill="url(#nodeGrad1)" stroke="#27272a" stroke-width="1.5"/>
+                  <circle cx="50" cy="132" r="6" fill="#06B6D4" opacity="0.8"/>
+                  <text class="node-step-num" x="60" y="136" fill="#06B6D4">1</text>
+                  <text class="node-label" x="110" y="148" text-anchor="middle">Analyze Code</text>
+                  <text class="node-agent" x="110" y="164" text-anchor="middle">Inspector (Control)</text>
+                  <text class="node-role" x="110" y="178" text-anchor="middle">Code analysis &amp; quality</text>
+                  <circle cx="175" cy="120" r="5" fill="#22c55e"><animate attributeName="opacity" values="1;0.4;1" dur="2s" repeatCount="indefinite"/></circle>
+                </g>
+
+                <!-- Arrow 1→2 -->
+                <line x1="190" y1="150" x2="240" y2="150" stroke="#52525b" stroke-width="1.5" marker-end="url(#arrowHead)"/>
+
+                <!-- Step 2: Review Logic -->
+                <g class="step-node" id="node-2" onclick="selectStep(2)" data-tooltip="Step 2: Review Logic&#10;Agent: Evaluator (Control)&#10;Role: Logic validation & edge cases">
+                  <rect class="node-rect" x="248" y="110" width="160" height="80" fill="url(#nodeGrad1)" stroke="#27272a" stroke-width="1.5"/>
+                  <circle cx="268" cy="132" r="6" fill="#06B6D4" opacity="0.8"/>
+                  <text class="node-step-num" x="278" y="136" fill="#06B6D4">2</text>
+                  <text class="node-label" x="328" y="148" text-anchor="middle">Review Logic</text>
+                  <text class="node-agent" x="328" y="164" text-anchor="middle">Evaluator (Control)</text>
+                  <text class="node-role" x="328" y="178" text-anchor="middle">Logic validation &amp; edges</text>
+                  <circle cx="393" cy="120" r="5" fill="#22c55e"><animate attributeName="opacity" values="1;0.4;1" dur="2s" repeatCount="indefinite"/></circle>
+                </g>
+
+                <!-- Arrow 2→Diamond -->
+                <line x1="408" y1="150" x2="460" y2="150" stroke="#52525b" stroke-width="1.5" marker-end="url(#arrowHead)"/>
+
+                <!-- Decision Diamond -->
+                <g id="decision-node">
+                  <polygon points="500,110 540,150 500,190 460,150" fill="url(#nodeGrad1)" stroke="#52525b" stroke-width="1.5"/>
+                  <text class="diamond-label" x="500" y="146" text-anchor="middle">Issues</text>
+                  <text class="diamond-label" x="500" y="158" text-anchor="middle">Found?</text>
+                </g>
+
+                <!-- Arrow Diamond→Yes (down to Step 3) -->
+                <line x1="500" y1="190" x2="500" y2="236" stroke="#06B6D4" stroke-width="1.5" marker-end="url(#arrowHeadCyan)"/>
+                <text class="arrow-label" x="512" y="215" fill="#06B6D4">Yes</text>
+
+                <!-- Arrow Diamond→No (right to End) -->
+                <line x1="540" y1="150" x2="600" y2="150" stroke="#52525b" stroke-width="1.5" marker-end="url(#arrowHead)"/>
+                <text class="arrow-label" x="558" y="142" fill="#52525b">No</text>
+
+                <!-- End Node -->
+                <g id="end-node">
+                  <circle cx="624" cy="150" r="16" fill="url(#nodeGrad1)" stroke="#27272a" stroke-width="1.5"/>
+                  <circle cx="624" cy="150" r="10" fill="#27272a"/>
+                  <text x="624" y="154" text-anchor="middle" font-size="8" font-weight="700" fill="#a1a1aa" style="pointer-events:none">END</text>
+                </g>
+
+                <!-- Step 3: Fix Issues -->
+                <g class="step-node" id="node-3" onclick="selectStep(3)" data-tooltip="Step 3: Fix Issues&#10;Agent: Debugger (Execution)&#10;Role: Apply fixes and patches">
+                  <rect class="node-rect" x="420" y="240" width="160" height="80" fill="url(#nodeGrad1)" stroke="#27272a" stroke-width="1.5"/>
+                  <circle cx="440" cy="262" r="6" fill="#0891B2" opacity="0.8"/>
+                  <text class="node-step-num" x="450" y="266" fill="#0891B2">3</text>
+                  <text class="node-label" x="500" y="278" text-anchor="middle">Fix Issues</text>
+                  <text class="node-agent" x="500" y="294" text-anchor="middle">Debugger (Execution)</text>
+                  <text class="node-role" x="500" y="308" text-anchor="middle">Apply fixes &amp; patches</text>
+                  <circle cx="565" cy="250" r="5" fill="#eab308"><animate attributeName="opacity" values="1;0.5;1" dur="1.5s" repeatCount="indefinite"/></circle>
+                </g>
+
+                <!-- Arrow 3→4 -->
+                <path d="M580,280 L640,280 L640,200" stroke="#52525b" stroke-width="1.5" fill="none" marker-end="url(#arrowHead)"/>
+
+                <!-- Step 4: Verify Fix -->
+                <g class="step-node" id="node-4" onclick="selectStep(4)" data-tooltip="Step 4: Verify Fix&#10;Agent: Tester (Execution)&#10;Role: Regression testing">
+                  <rect class="node-rect" x="580" y="110" width="160" height="80" fill="url(#nodeGrad1)" stroke="#27272a" stroke-width="1.5"/>
+                  <circle cx="600" cy="132" r="6" fill="#0891B2" opacity="0.8"/>
+                  <text class="node-step-num" x="610" y="136" fill="#0891B2">4</text>
+                  <text class="node-label" x="660" y="148" text-anchor="middle">Verify Fix</text>
+                  <text class="node-agent" x="660" y="164" text-anchor="middle">Tester (Execution)</text>
+                  <text class="node-role" x="660" y="178" text-anchor="middle">Regression testing</text>
+                  <circle cx="725" cy="120" r="5" fill="#52525b"/>
+                </g>
+
+                <!-- Feedback loop: Step 4 → Step 2 (dashed) -->
+                <path d="M740,150 L780,150 L780,310 L328,310 L328,190" stroke="#eab308" stroke-width="1.5" stroke-dasharray="6,4" fill="none" marker-end="url(#arrowHeadYellow)" opacity="0.6"/>
+                <text x="554" y="324" class="feedback-label" text-anchor="middle">Retry if failed</text>
+
+                <!-- Connecting line from end-node region -->
+                <line x1="640" y1="150" x2="580" y2="150" stroke="#52525b" stroke-width="1.5" marker-end="url(#arrowHead)" opacity="0.5"/>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Step Detail Panel -->
+          <div class="step-detail-panel expanded" id="step-detail-panel">
+            <div class="step-detail-header" onclick="toggleStepDetail()">
+              <div class="step-detail-title">
+                <span style="color:var(--cyan)">&#9654;</span>
+                <span id="detail-step-name">Fix Issues</span>
+                <span style="color:var(--text-muted);font-size:11px;font-weight:400" id="detail-step-agent">— Debugger (Execution)</span>
+              </div>
+              <span class="step-detail-toggle" id="detail-toggle-text">&#9660; Collapse</span>
+            </div>
+            <div class="step-detail-body" id="step-detail-body">
+              <div class="detail-section">
+                <div class="detail-section-title">Input Schema</div>
+                <pre id="detail-input-schema">{
+  "code": "string",
+  "issues": "Issue[]"
+}</pre>
+              </div>
+              <div class="detail-section">
+                <div class="detail-section-title">Output Schema</div>
+                <pre id="detail-output-schema">{
+  "fixedCode": "string",
+  "appliedFixes": "Fix[]"
+}</pre>
+              </div>
+              <div class="detail-section">
+                <div class="detail-section-title">Routing Rules</div>
+                <div class="rule-text" id="detail-routing">If issues.length &gt; 5 → escalate to Architect</div>
+              </div>
+              <div class="detail-section">
+                <div class="detail-section-title">Configuration</div>
+                <div id="detail-config">
+                  <div class="meta-row"><span class="meta-key">Timeout</span><span class="meta-val">300s</span></div>
+                  <div class="meta-row"><span class="meta-key">Retry Attempts</span><span class="meta-val">2</span></div>
+                  <div class="meta-row"><span class="meta-key">Retry Delay</span><span class="meta-val">30s</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== CREATE WORKFLOW TAB ===== -->
+      <div class="tab-view" id="tab-create">
+        <div class="create-form">
+          <div class="form-group">
+            <label class="form-label">Workflow Name</label>
+            <input class="form-input" type="text" placeholder="Enter workflow name...">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Description</label>
+            <textarea class="form-input" placeholder="Describe what this workflow does..."></textarea>
+          </div>
+          <div class="form-group">
+            <div class="step-builder">
+              <div class="step-builder-header">
+                <span class="step-builder-title">Steps</span>
+                <button class="add-step-btn" onclick="addStep()">+ Add Step</button>
+              </div>
+              <div id="step-rows">
+                <div class="step-row" data-step="1">
+                  <span class="step-row-num">1</span>
+                  <div class="step-row-inner">
+                    <div class="step-row-fields">
+                      <div class="step-row-field">
+                        <label>Agent</label>
+                        <select>
+                          <option value="">Select agent...</option>
+                          <option>Inspector (Control)</option>
+                          <option>Evaluator (Control)</option>
+                          <option>Debugger (Execution)</option>
+                          <option>Tester (Execution)</option>
+                          <option>Architect (Strategy)</option>
+                          <option>Coordinator (Tactics)</option>
+                        </select>
+                      </div>
+                      <div class="step-row-field">
+                        <label>Step Name</label>
+                        <input type="text" placeholder="e.g., Analyze Code" />
+                      </div>
+                      <div class="step-row-field">
+                        <label>Input Schema (JSON)</label>
+                        <textarea placeholder='{ "code": "string" }'></textarea>
+                      </div>
+                      <div class="step-row-field">
+                        <label>Output Schema (JSON)</label>
+                        <textarea placeholder='{ "result": "object" }'></textarea>
+                      </div>
+                    </div>
+                    <div class="step-row-actions">
+                      <span class="drag-handle">&#8942;&#8942;</span>
+                      <button class="remove-step" onclick="removeStep(this)">Remove</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="step-row" data-step="2">
+                  <span class="step-row-num">2</span>
+                  <div class="step-row-inner">
+                    <div class="step-row-fields">
+                      <div class="step-row-field">
+                        <label>Agent</label>
+                        <select>
+                          <option value="">Select agent...</option>
+                          <option>Inspector (Control)</option>
+                          <option>Evaluator (Control)</option>
+                          <option>Debugger (Execution)</option>
+                          <option>Tester (Execution)</option>
+                          <option>Architect (Strategy)</option>
+                          <option>Coordinator (Tactics)</option>
+                        </select>
+                      </div>
+                      <div class="step-row-field">
+                        <label>Step Name</label>
+                        <input type="text" placeholder="e.g., Review Logic" />
+                      </div>
+                      <div class="step-row-field">
+                        <label>Input Schema (JSON)</label>
+                        <textarea placeholder='{ "code": "string" }'></textarea>
+                      </div>
+                      <div class="step-row-field">
+                        <label>Output Schema (JSON)</label>
+                        <textarea placeholder='{ "result": "object" }'></textarea>
+                      </div>
+                    </div>
+                    <div class="step-row-actions">
+                      <span class="drag-handle">&#8942;&#8942;</span>
+                      <button class="remove-step" onclick="removeStep(this)">Remove</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="save-draft-btn">Save as Draft</button>
+            <button class="activate-btn">Activate Workflow</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== HISTORY TAB ===== -->
+      <div class="tab-view" id="tab-history">
+        <div class="history-container">
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th>Execution ID</th>
+                <th>Workflow</th>
+                <th>Started</th>
+                <th>Duration</th>
+                <th>Status</th>
+                <th>Steps Completed</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr onclick="toggleHistoryRow(this)">
+                <td>exec-0247</td>
+                <td>Code Review Pipeline</td>
+                <td>2025-06-14 14:32</td>
+                <td>45s</td>
+                <td><span class="status-cell"><span class="status-dot-sm dot-green"></span> Completed</span></td>
+                <td>4 / 4</td>
+              </tr>
+              <tr class="expanded-detail" id="hist-detail-1">
+                <td colspan="6">
+                  <div class="expanded-steps">
+                    <div class="expanded-step"><span class="step-idx">1</span><span class="step-name">Analyze Code</span><span class="step-result" style="color:var(--green)">Passed</span><span class="step-dur">12s</span></div>
+                    <div class="expanded-step"><span class="step-idx">2</span><span class="step-name">Review Logic</span><span class="step-result" style="color:var(--green)">Passed</span><span class="step-dur">8s</span></div>
+                    <div class="expanded-step"><span class="step-idx">3</span><span class="step-name">Fix Issues</span><span class="step-result" style="color:var(--green)">3 fixes applied</span><span class="step-dur">15s</span></div>
+                    <div class="expanded-step"><span class="step-idx">4</span><span class="step-name">Verify Fix</span><span class="step-result" style="color:var(--green)">All tests passed</span><span class="step-dur">10s</span></div>
+                  </div>
+                </td>
+              </tr>
+              <tr onclick="toggleHistoryRow(this)">
+                <td>exec-0246</td>
+                <td>Code Review Pipeline</td>
+                <td>2025-06-14 12:18</td>
+                <td>32s</td>
+                <td><span class="status-cell"><span class="status-dot-sm dot-green"></span> Completed</span></td>
+                <td>4 / 4</td>
+              </tr>
+              <tr class="expanded-detail">
+                <td colspan="6">
+                  <div class="expanded-steps">
+                    <div class="expanded-step"><span class="step-idx">1</span><span class="step-name">Analyze Code</span><span class="step-result" style="color:var(--green)">Passed</span><span class="step-dur">9s</span></div>
+                    <div class="expanded-step"><span class="step-idx">2</span><span class="step-name">Review Logic</span><span class="step-result" style="color:var(--green)">No issues</span><span class="step-dur">7s</span></div>
+                    <div class="expanded-step"><span class="step-idx">3</span><span class="step-name">Fix Issues</span><span class="step-result" style="color:var(--text-muted)">Skipped (no issues)</span><span class="step-dur">0s</span></div>
+                    <div class="expanded-step"><span class="step-idx">4</span><span class="step-name">Verify Fix</span><span class="step-result" style="color:var(--green)">Verified</span><span class="step-dur">16s</span></div>
+                  </div>
+                </td>
+              </tr>
+              <tr onclick="toggleHistoryRow(this)">
+                <td>exec-0245</td>
+                <td>Bug Triage Process</td>
+                <td>2025-06-14 10:45</td>
+                <td>28s</td>
+                <td><span class="status-cell"><span class="status-dot-sm dot-yellow"></span> Partial</span></td>
+                <td>2 / 3</td>
+              </tr>
+              <tr class="expanded-detail">
+                <td colspan="6">
+                  <div class="expanded-steps">
+                    <div class="expanded-step"><span class="step-idx">1</span><span class="step-name">Classify Bug</span><span class="step-result" style="color:var(--green)">Classified as P2</span><span class="step-dur">6s</span></div>
+                    <div class="expanded-step"><span class="step-idx">2</span><span class="step-name">Assign Owner</span><span class="step-result" style="color:var(--yellow)">Timeout - retried</span><span class="step-dur">18s</span></div>
+                    <div class="expanded-step"><span class="step-idx">3</span><span class="step-name">Create Fix Plan</span><span class="step-result" style="color:var(--red)">Failed</span><span class="step-dur">4s</span></div>
+                  </div>
+                </td>
+              </tr>
+              <tr onclick="toggleHistoryRow(this)">
+                <td>exec-0244</td>
+                <td>Code Review Pipeline</td>
+                <td>2025-06-14 09:12</td>
+                <td>52s</td>
+                <td><span class="status-cell"><span class="status-dot-sm dot-red"></span> Failed</span></td>
+                <td>3 / 4</td>
+              </tr>
+              <tr class="expanded-detail">
+                <td colspan="6">
+                  <div class="expanded-steps">
+                    <div class="expanded-step"><span class="step-idx">1</span><span class="step-name">Analyze Code</span><span class="step-result" style="color:var(--green)">Passed</span><span class="step-dur">11s</span></div>
+                    <div class="expanded-step"><span class="step-idx">2</span><span class="step-name">Review Logic</span><span class="step-result" style="color:var(--green)">5 critical issues</span><span class="step-dur">9s</span></div>
+                    <div class="expanded-step"><span class="step-idx">3</span><span class="step-name">Fix Issues</span><span class="step-result" style="color:var(--red)">Escalation timeout</span><span class="step-dur">30s</span></div>
+                    <div class="expanded-step"><span class="step-idx">4</span><span class="step-name">Verify Fix</span><span class="step-result" style="color:var(--text-muted)">Not reached</span><span class="step-dur">—</span></div>
+                  </div>
+                </td>
+              </tr>
+              <tr onclick="toggleHistoryRow(this)">
+                <td>exec-0243</td>
+                <td>Feature Development</td>
+                <td>2025-06-13 16:30</td>
+                <td>1m 22s</td>
+                <td><span class="status-cell"><span class="status-dot-sm dot-green"></span> Completed</span></td>
+                <td>5 / 5</td>
+              </tr>
+              <tr class="expanded-detail">
+                <td colspan="6">
+                  <div class="expanded-steps">
+                    <div class="expanded-step"><span class="step-idx">1</span><span class="step-name">Plan Feature</span><span class="step-result" style="color:var(--green)">Plan created</span><span class="step-dur">15s</span></div>
+                    <div class="expanded-step"><span class="step-idx">2</span><span class="step-name">Design API</span><span class="step-result" style="color:var(--green)">API spec ready</span><span class="step-dur">18s</span></div>
+                    <div class="expanded-step"><span class="step-idx">3</span><span class="step-name">Implement</span><span class="step-result" style="color:var(--green)">Code generated</span><span class="step-dur">28s</span></div>
+                    <div class="expanded-step"><span class="step-idx">4</span><span class="step-name">Test</span><span class="step-result" style="color:var(--green)">All tests pass</span><span class="step-dur">12s</span></div>
+                    <div class="expanded-step"><span class="step-idx">5</span><span class="step-name">Document</span><span class="step-result" style="color:var(--green)">Docs updated</span><span class="step-dur">9s</span></div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /content-area -->
+  </div><!-- /main-layout -->
+
+  <!-- ===== EXECUTION MODAL ===== -->
+  <div class="modal-overlay" id="exec-modal">
+    <div class="modal animate-in">
+      <div class="modal-header">
+        <div class="modal-title">Execute: Code Review Pipeline</div>
+        <button class="modal-close" onclick="hideExecutionModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <!-- Timeline -->
+        <div class="exec-timeline">
+          <div class="exec-step completed">
+            <div class="exec-step-icon">&#10003;</div>
+            <div class="exec-step-content">
+              <div class="exec-step-name">
+                Analyze Code
+                <span class="exec-step-duration">12s</span>
+              </div>
+              <div class="exec-step-agent">Inspector (Control)</div>
+              <div class="exec-step-status">Completed — 3 issues found in auth module</div>
+            </div>
+          </div>
+          <div class="exec-step completed">
+            <div class="exec-step-icon">&#10003;</div>
+            <div class="exec-step-content">
+              <div class="exec-step-name">
+                Review Logic
+                <span class="exec-step-duration">8s</span>
+              </div>
+              <div class="exec-step-agent">Evaluator (Control)</div>
+              <div class="exec-step-status">Completed — 2 critical issues found</div>
+            </div>
+          </div>
+          <div class="exec-step running">
+            <div class="exec-step-icon"><span class="spinner"></span></div>
+            <div class="exec-step-content">
+              <div class="exec-step-name">
+                Fix Issues
+                <span class="exec-step-duration">15s elapsed</span>
+              </div>
+              <div class="exec-step-agent">Debugger (Execution)</div>
+              <div class="exec-step-status">Running...</div>
+              <div class="progress-bar-container">
+                <div class="progress-bar-track">
+                  <div class="progress-bar-fill" style="width:62%"></div>
+                </div>
+                <span class="progress-bar-text">LLM call 62%</span>
+              </div>
+            </div>
+          </div>
+          <div class="exec-step pending">
+            <div class="exec-step-icon">&#9675;</div>
+            <div class="exec-step-content">
+              <div class="exec-step-name">
+                Verify Fix
+              </div>
+              <div class="exec-step-agent">Tester (Execution)</div>
+              <div class="exec-step-status">Pending</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Log Output -->
+        <div class="log-section">
+          <div class="log-title">Execution Log</div>
+          <div class="log-box" id="exec-log">
+            <div class="log-line"><span class="log-time">[14:32:01]</span> <span class="log-info">Step 1 started: Analyze Code</span></div>
+            <div class="log-line"><span class="log-time">[14:32:04]</span> <span class="log-agent">Inspector:</span> <span class="log-info">Found 3 issues in auth module</span></div>
+            <div class="log-line"><span class="log-time">[14:32:13]</span> <span class="log-info">Step 1 completed (12s)</span></div>
+            <div class="log-line"><span class="log-time">[14:32:14]</span> <span class="log-info">Step 2 started: Review Logic</span></div>
+            <div class="log-line"><span class="log-time">[14:32:22]</span> <span class="log-info">Step 2 completed (8s) — 2 critical issues found</span></div>
+            <div class="log-line"><span class="log-time">[14:32:23]</span> <span class="log-info">Step 3 started: Fix Issues</span></div>
+            <div class="log-line"><span class="log-time">[14:32:38]</span> <span class="log-agent">Debugger:</span> <span class="log-info">Applying fix for issue #1...</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="cancel-btn" onclick="hideExecutionModal()">Cancel Execution</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TOOLTIP ===== -->
+  <div class="tooltip" id="tooltip">
+    <div class="tooltip-title" id="tooltip-title"></div>
+    <div id="tooltip-body"></div>
+  </div>
+
+</div><!-- /root -->
+
+<script>
+// ===== Tab Switching =====
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.tab-btn[data-tab="${tab}"]`).classList.add('active');
+  document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
+  document.getElementById(`tab-${tab}`).classList.add('active');
+}
+
+// ===== Workflow Selection =====
+const wfData = {
+  'code-review': {
+    title: 'Code Review Pipeline',
+    status: 'Active', statusColor: 'var(--cyan)',
+    trigger: 'Manual + On PR',
+    created: '2025-06-10',
+    steps: [
+      { name: 'Analyze Code', agent: 'Inspector (Control)', role: 'Code analysis & quality check', input: '{\n  "code": "string",\n  "issues": "Issue[]"\n}', output: '{\n  "analysis": "AnalysisResult",\n  "issues": "Issue[]"\n}', routing: 'Always proceed to Review Logic', timeout: '120s', retries: '1', delay: '10s', dot: 'green' },
+      { name: 'Review Logic', agent: 'Evaluator (Control)', role: 'Logic validation & edge cases', input: '{\n  "code": "string",\n  "issues": "Issue[]"\n}', output: '{\n  "reviewResult": "ReviewResult",\n  "criticalIssues": "Issue[]"\n}', routing: 'If critical issues → Fix Issues\nIf no issues → End', timeout: '180s', retries: '2', delay: '15s', dot: 'green' },
+      { name: 'Fix Issues', agent: 'Debugger (Execution)', role: 'Apply fixes and patches', input: '{\n  "code": "string",\n  "issues": "Issue[]"\n}', output: '{\n  "fixedCode": "string",\n  "appliedFixes": "Fix[]"\n}', routing: 'If issues.length > 5 → escalate to Architect', timeout: '300s', retries: '2', delay: '30s', dot: 'yellow' },
+      { name: 'Verify Fix', agent: 'Tester (Execution)', role: 'Regression testing', input: '{\n  "fixedCode": "string",\n  "appliedFixes": "Fix[]"\n}', output: '{\n  "testResults": "TestResult[]",\n  "allPassed": "boolean"\n}', routing: 'If allPassed → End\nIf failed → Retry (back to Step 2)', timeout: '240s', retries: '3', delay: '20s', dot: 'gray' }
+    ]
+  },
+  'bug-triage': {
+    title: 'Bug Triage Process',
+    status: 'Active', statusColor: 'var(--cyan)',
+    trigger: 'On Bug Report',
+    created: '2025-06-08',
+    steps: [
+      { name: 'Classify Bug', agent: 'Analyst (Strategy)', role: 'Classify severity & category', input: '{\n  "bugReport": "BugReport"\n}', output: '{\n  "classification": "BugClass",\n  "priority": "string"\n}', routing: 'If P0/P1 → immediate fix path', timeout: '90s', retries: '1', delay: '10s', dot: 'green' },
+      { name: 'Assign Owner', agent: 'Coordinator (Tactics)', role: 'Find best agent for fix', input: '{\n  "classification": "BugClass"\n}', output: '{\n  "assignee": "string",\n  "fixPlan": "Plan"\n}', routing: 'If no available agent → queue', timeout: '60s', retries: '2', delay: '15s', dot: 'green' },
+      { name: 'Create Fix Plan', agent: 'Planner (Tactics)', role: 'Generate step-by-step fix', input: '{\n  "assignee": "string",\n  "fixPlan": "Plan"\n}', output: '{\n  "steps": "FixStep[]",\n  "estimatedTime": "number"\n}', routing: 'If estimate > 1hr → flag for review', timeout: '120s', retries: '1', delay: '10s', dot: 'yellow' }
+    ]
+  },
+  'feature-dev': {
+    title: 'Feature Development',
+    status: 'Draft', statusColor: 'var(--yellow)',
+    trigger: 'Manual',
+    created: '2025-06-12',
+    steps: [
+      { name: 'Plan Feature', agent: 'Architect (Strategy)', role: 'Design feature architecture', input: '{\n  "featureReq": "string"\n}', output: '{\n  "plan": "FeaturePlan"\n}', routing: 'If scope too large → split into sub-tasks', timeout: '180s', retries: '1', delay: '15s', dot: 'gray' },
+      { name: 'Design API', agent: 'Architect (Strategy)', role: 'Define API contracts', input: '{\n  "plan": "FeaturePlan"\n}', output: '{\n  "apiSpec": "OpenAPISpec"\n}', routing: 'Auto-proceed', timeout: '120s', retries: '1', delay: '10s', dot: 'gray' },
+      { name: 'Implement', agent: 'Coder (Execution)', role: 'Write feature code', input: '{\n  "apiSpec": "OpenAPISpec"\n}', output: '{\n  "code": "string",\n  "files": "string[]"\n}', routing: 'If compile error → retry with context', timeout: '600s', retries: '3', delay: '30s', dot: 'gray' },
+      { name: 'Test', agent: 'Tester (Execution)', role: 'Run test suite', input: '{\n  "code": "string"\n}', output: '{\n  "results": "TestResult[]"\n}', routing: 'If tests fail → back to Implement', timeout: '240s', retries: '2', delay: '20s', dot: 'gray' },
+      { name: 'Document', agent: 'Archivist (Memory)', role: 'Generate documentation', input: '{\n  "code": "string",\n  "results": "TestResult[]"\n}', output: '{\n  "docs": "string"\n}', routing: 'Always complete', timeout: '90s', retries: '1', delay: '10s', dot: 'gray' }
+    ]
+  }
+};
+
+function selectWorkflow(el, wfId) {
+  document.querySelectorAll('.wf-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+
+  const wf = wfData[wfId];
+  if (!wf) return;
+
+  document.getElementById('pipeline-title').textContent = wf.title;
+  document.getElementById('pipeline-meta').innerHTML = `
+    <span class="pipeline-meta-item"><span class="dot" style="background:${wf.statusColor};box-shadow:0 0 4px ${wf.statusColor}"></span> ${wf.status}</span>
+    <span class="pipeline-meta-item">Trigger: ${wf.trigger}</span>
+    <span class="pipeline-meta-item">Created: ${wf.created}</span>
+  `;
+
+  // Select first step
+  if (wf.steps.length > 0) selectStep(1);
+}
+
+// ===== Step Selection =====
+let selectedStep = 3;
+function selectStep(num) {
+  selectedStep = num;
+  const wf = wfData['code-review']; // current
+  if (!wf || !wf.steps[num-1]) return;
+
+  const step = wf.steps[num-1];
+
+  // Highlight SVG node
+  document.querySelectorAll('.step-node').forEach(n => n.classList.remove('selected-node'));
+  const node = document.getElementById(`node-${num}`);
+  if (node) node.classList.add('selected-node');
+
+  // Update detail panel
+  document.getElementById('detail-step-name').textContent = step.name;
+  document.getElementById('detail-step-agent').textContent = `— ${step.agent}`;
+  document.getElementById('detail-input-schema').textContent = step.input;
+  document.getElementById('detail-output-schema').textContent = step.output;
+  document.getElementById('detail-routing').textContent = step.routing;
+  document.getElementById('detail-config').innerHTML = `
+    <div class="meta-row"><span class="meta-key">Timeout</span><span class="meta-val">${step.timeout}</span></div>
+    <div class="meta-row"><span class="meta-key">Retry Attempts</span><span class="meta-val">${step.retries}</span></div>
+    <div class="meta-row"><span class="meta-key">Retry Delay</span><span class="meta-val">${step.delay}</span></div>
+  `;
+
+  // Ensure panel is visible
+  const panel = document.getElementById('step-detail-panel');
+  if (panel.classList.contains('collapsed')) toggleStepDetail();
+}
+
+// ===== Step Detail Panel Toggle =====
+function toggleStepDetail() {
+  const panel = document.getElementById('step-detail-panel');
+  const body = document.getElementById('step-detail-body');
+  const toggleText = document.getElementById('detail-toggle-text');
+  if (panel.classList.contains('expanded')) {
+    panel.classList.remove('expanded');
+    panel.classList.add('collapsed');
+    body.style.display = 'none';
+    toggleText.innerHTML = '&#9650; Expand';
+  } else {
+    panel.classList.remove('collapsed');
+    panel.classList.add('expanded');
+    body.style.display = 'grid';
+    toggleText.innerHTML = '&#9660; Collapse';
+  }
+}
+
+// ===== Execution Modal =====
+function showExecutionModal() {
+  document.getElementById('exec-modal').classList.add('visible');
+  startLogAnimation();
+}
+function hideExecutionModal() {
+  document.getElementById('exec-modal').classList.remove('visible');
+  stopLogAnimation();
+}
+
+// ===== Log Animation =====
+let logInterval = null;
+const logMessages = [
+  { agent: 'Debugger', msg: 'Applying fix for issue #2...' },
+  { info: 'LLM call in progress...' },
+  { agent: 'Debugger', msg: 'Fix #2 applied successfully' },
+  { agent: 'Debugger', msg: 'Applying fix for issue #3...' },
+  { info: 'Generating patch diff...' },
+  { agent: 'Debugger', msg: 'All 3 fixes applied' },
+  { info: 'Step 3 completed (22s)' },
+  { info: 'Step 4 started: Verify Fix' },
+  { agent: 'Tester', msg: 'Running regression suite...' },
+];
+let logIdx = 0;
+function startLogAnimation() {
+  logIdx = 0;
+  if (logInterval) clearInterval(logInterval);
+  logInterval = setInterval(() => {
+    if (logIdx >= logMessages.length) { clearInterval(logInterval); return; }
+    const m = logMessages[logIdx];
+    const logBox = document.getElementById('exec-log');
+    const now = new Date();
+    const ts = `[${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}]`;
+    let line;
+    if (m.agent) {
+      line = `<div class="log-line"><span class="log-time">${ts}</span> <span class="log-agent">${m.agent}:</span> <span class="log-info">${m.msg}</span></div>`;
+    } else {
+      line = `<div class="log-line"><span class="log-time">${ts}</span> <span class="log-info">${m.msg}</span></div>`;
+    }
+    logBox.innerHTML += line;
+    logBox.scrollTop = logBox.scrollHeight;
+    logIdx++;
+  }, 2500);
+}
+function stopLogAnimation() {
+  if (logInterval) clearInterval(logInterval);
+}
+
+// ===== Create Workflow - Add/Remove Steps =====
+let stepCount = 2;
+function addStep() {
+  stepCount++;
+  const container = document.getElementById('step-rows');
+  const row = document.createElement('div');
+  row.className = 'step-row';
+  row.setAttribute('data-step', stepCount);
+  row.innerHTML = `
+    <span class="step-row-num">${stepCount}</span>
+    <div class="step-row-inner">
+      <div class="step-row-fields">
+        <div class="step-row-field">
+          <label>Agent</label>
+          <select>
+            <option value="">Select agent...</option>
+            <option>Inspector (Control)</option>
+            <option>Evaluator (Control)</option>
+            <option>Debugger (Execution)</option>
+            <option>Tester (Execution)</option>
+            <option>Architect (Strategy)</option>
+            <option>Coordinator (Tactics)</option>
+          </select>
+        </div>
+        <div class="step-row-field">
+          <label>Step Name</label>
+          <input type="text" placeholder="e.g., Analyze Code" />
+        </div>
+        <div class="step-row-field">
+          <label>Input Schema (JSON)</label>
+          <textarea placeholder='{ "code": "string" }'></textarea>
+        </div>
+        <div class="step-row-field">
+          <label>Output Schema (JSON)</label>
+          <textarea placeholder='{ "result": "object" }'></textarea>
+        </div>
+      </div>
+      <div class="step-row-actions">
+        <span class="drag-handle">&#8942;&#8942;</span>
+        <button class="remove-step" onclick="removeStep(this)">Remove</button>
+      </div>
+    </div>
+  `;
+  container.appendChild(row);
+}
+function removeStep(btn) {
+  const row = btn.closest('.step-row');
+  if (document.querySelectorAll('.step-row').length > 1) {
+    row.remove();
+    renumberSteps();
+  }
+}
+function renumberSteps() {
+  document.querySelectorAll('.step-row').forEach((row, i) => {
+    row.querySelector('.step-row-num').textContent = i + 1;
+  });
+}
+
+// ===== History Row Expansion =====
+function toggleHistoryRow(tr) {
+  const detail = tr.nextElementSibling;
+  if (detail && detail.classList.contains('expanded-detail')) {
+    detail.classList.toggle('visible');
+  }
+}
+
+// ===== Tooltip on SVG Steps =====
+const tooltip = document.getElementById('tooltip');
+const tooltipTitle = document.getElementById('tooltip-title');
+const tooltipBody = document.getElementById('tooltip-body');
+
+document.querySelectorAll('.step-node').forEach(node => {
+  node.addEventListener('mouseenter', e => {
+    const text = node.getAttribute('data-tooltip');
+    if (!text) return;
+    const lines = text.split('&#10;');
+    tooltipTitle.textContent = lines[0] || '';
+    tooltipBody.innerHTML = lines.slice(1).join('<br>');
+    tooltip.classList.add('visible');
+  });
+  node.addEventListener('mousemove', e => {
+    tooltip.style.left = (e.clientX + 12) + 'px';
+    tooltip.style.top = (e.clientY - 10) + 'px';
+  });
+  node.addEventListener('mouseleave', () => {
+    tooltip.classList.remove('visible');
+  });
+});
+
+// ===== Init =====
+selectStep(3);
+</script>
+</body>
+</html>

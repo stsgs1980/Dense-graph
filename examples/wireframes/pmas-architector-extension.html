@@ -1,0 +1,2264 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>P-MAS Architector — Extension Wireframe</title>
+<style>
+/* ============================================================
+   DESIGN SYSTEM — EXACT P-MAS-architector tokens
+   ============================================================ */
+:root {
+  --background: #000000;
+  --foreground: #FFFFFF;
+  --card: #1A1A1A;
+  --primary: #06B6D4;
+  --primary-foreground: #FFFFFF;
+  --secondary: #2D2D2D;
+  --muted: #1A1A1A;
+  --muted-foreground: #B0B0B0;
+  --accent: #2D2D2D;
+  --destructive: #FFC107;
+  --border: rgba(51,51,51,0.5);
+  --input: rgba(51,51,51,0.5);
+  --ring: #06B6D4;
+  /* Role group colors */
+  --role-agent: #67E8F9;
+  --role-governance: #F59E0B;
+  --role-capabilities: #22D3EE;
+  --role-behavior: #A78BFA;
+  --role-infra: #34D399;
+  --role-control: #06B6D4;
+  /* Status */
+  --status-active: #22D3EE;
+  --status-idle: #6B7280;
+  --status-error: #EF4444;
+  --status-paused: #F59E0B;
+  /* Edge */
+  --edge-command: #22D3EE;
+  --edge-sync: #64748B;
+  --edge-twin: #0891B2;
+  --edge-delegate: #0891B2;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 13px;
+  line-height: 1.5;
+  overflow: hidden;
+  height: 100vh;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(6,182,212,0.3); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(6,182,212,0.5); }
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+.app-header {
+  height: 48px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 8px;
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+}
+.header-brand {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--primary);
+  margin-right: 8px;
+  white-space: nowrap;
+}
+.header-brand span { color: var(--muted-foreground); font-weight: 400; }
+.nav-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted-foreground);
+  padding: 4px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+.nav-btn:hover { background: var(--secondary); color: var(--foreground); }
+.nav-btn.active { background: var(--primary); color: var(--primary-foreground); border-color: var(--primary); }
+.nav-btn svg { width: 14px; height: 14px; }
+.new-badge {
+  font-size: 9px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  padding: 1px 5px;
+  border-radius: 8px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  animation: pulse-badge 2s ease-in-out infinite;
+}
+.nav-btn.active .new-badge { background: #fff; color: var(--primary); }
+@keyframes pulse-badge {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* ============================================================
+   SCREENS CONTAINER
+   ============================================================ */
+.screen-container {
+  position: fixed;
+  top: 48px;
+  left: 0; right: 0; bottom: 0;
+  overflow: hidden;
+}
+.screen {
+  display: none;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+}
+.screen.active { display: flex; flex-direction: column; }
+
+/* ============================================================
+   COMMON UI ELEMENTS
+   ============================================================ */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+}
+.card-sm { padding: 12px; }
+.card-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--foreground);
+}
+.card-desc {
+  font-size: 11px;
+  color: var(--muted-foreground);
+  line-height: 1.5;
+}
+input[type="text"], input[type="number"],
+select, textarea {
+  background: var(--input);
+  border: 1px solid var(--border);
+  color: var(--foreground);
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: inherit;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 2px rgba(6,182,212,0.15);
+}
+textarea { resize: vertical; min-height: 60px; }
+label {
+  display: block;
+  font-size: 11px;
+  color: var(--muted-foreground);
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+.form-group { margin-bottom: 14px; }
+.btn {
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1px solid transparent;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+.btn-primary {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+.btn-primary:hover { background: #0891B2; }
+.btn-secondary {
+  background: var(--secondary);
+  color: var(--foreground);
+  border-color: var(--border);
+}
+.btn-secondary:hover { background: #3a3a3a; }
+.btn-ghost {
+  background: transparent;
+  color: var(--muted-foreground);
+  border-color: var(--border);
+}
+.btn-ghost:hover { background: var(--secondary); color: var(--foreground); }
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+.badge-cyan { background: rgba(34,211,238,0.15); color: var(--role-capabilities); }
+.badge-amber { background: rgba(245,158,11,0.15); color: var(--role-governance); }
+.badge-purple { background: rgba(167,139,250,0.15); color: var(--role-behavior); }
+.badge-green { background: rgba(52,211,153,0.15); color: var(--role-infra); }
+.badge-blue { background: rgba(6,182,212,0.15); color: var(--role-control); }
+
+/* ============================================================
+   SCREEN 1: DASHBOARD
+   ============================================================ */
+.dashboard { padding: 24px; gap: 16px; }
+.kpi-strip {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.kpi-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 20px;
+  min-width: 150px;
+  flex: 1;
+}
+.kpi-label { font-size: 10px; color: var(--muted-foreground); text-transform: uppercase; letter-spacing: 0.5px; }
+.kpi-value { font-size: 22px; font-weight: 700; margin-top: 2px; }
+.kpi-value.cyan { color: var(--status-active); }
+.kpi-value.green { color: var(--role-infra); }
+.kpi-value.gray { color: var(--status-idle); }
+.kpi-value.red { color: var(--status-error); }
+.kpi-value.amber { color: var(--role-governance); }
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  flex: 1;
+}
+.dashboard-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+}
+.dashboard-card h3 {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.agent-mini-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(51,51,51,0.3);
+}
+.agent-mini-row:last-child { border-bottom: none; }
+.status-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.status-dot.active { background: var(--status-active); box-shadow: 0 0 6px rgba(34,211,238,0.5); }
+.status-dot.idle { background: var(--status-idle); }
+.status-dot.error { background: var(--status-error); }
+.status-dot.paused { background: var(--status-paused); }
+.agent-mini-name { font-size: 12px; flex: 1; }
+.agent-mini-score {
+  font-size: 10px;
+  color: var(--muted-foreground);
+  background: var(--secondary);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+.dashboard-footer {
+  text-align: center;
+  font-size: 10px;
+  color: var(--muted-foreground);
+  padding: 8px;
+  border-top: 1px solid var(--border);
+}
+.dashboard-footer .online { color: var(--status-active); }
+
+/* ============================================================
+   SCREEN 2: HIERARCHY
+   ============================================================ */
+.hierarchy { flex-direction: row; }
+.hierarchy-toolbar {
+  height: 40px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 8px;
+  border-right: 1px solid var(--border);
+}
+.toolbar-group:last-child { border-right: none; }
+.tb-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted-foreground);
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  font-family: inherit;
+  transition: all 0.1s;
+}
+.tb-btn:hover { background: var(--secondary); color: var(--foreground); }
+.tb-btn.active { background: var(--primary); color: var(--primary-foreground); }
+.tb-btn svg { width: 14px; height: 14px; }
+.hierarchy-body { display: flex; flex: 1; overflow: hidden; }
+
+/* Left sidebar */
+.hierarchy-sidebar {
+  width: 260px;
+  background: var(--card);
+  border-right: 1px solid var(--border);
+  padding: 12px;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+.sidebar-section-title {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted-foreground);
+  margin-bottom: 8px;
+  margin-top: 16px;
+}
+.sidebar-section-title:first-child { margin-top: 0; }
+.group-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  margin-bottom: 2px;
+  transition: background 0.1s;
+}
+.group-item:hover { background: var(--secondary); }
+.group-dot {
+  width: 8px; height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.group-count {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--muted-foreground);
+  background: var(--secondary);
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+
+/* Canvas */
+.hierarchy-canvas {
+  flex: 1;
+  position: relative;
+  background:
+    radial-gradient(circle, rgba(6,182,212,0.05) 1px, transparent 1px);
+  background-size: 24px 24px;
+  overflow: hidden;
+}
+.canvas-nodes {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+}
+
+/* Agent Node — exact P-MAS format */
+.agent-node {
+  position: absolute;
+  width: 180px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+.agent-node:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+.node-role-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 10px;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.node-body { padding: 10px; text-align: center; }
+.node-icon {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  margin: 0 auto 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+.node-name { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+.node-formula {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-bottom: 6px;
+}
+.node-score-bar {
+  height: 3px;
+  background: var(--secondary);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+.node-score-fill { height: 100%; border-radius: 2px; transition: width 0.3s; }
+
+/* Role color variants */
+.role-strategy .node-role-strip { background: rgba(103,232,249,0.12); color: var(--role-agent); }
+.role-strategy { border-color: rgba(103,232,249,0.25); background: rgba(103,232,249,0.04); }
+.role-strategy .node-icon { background: rgba(103,232,249,0.12); }
+.role-strategy .node-formula { background: rgba(103,232,249,0.1); color: var(--role-agent); }
+
+.role-tactics .node-role-strip { background: rgba(34,211,238,0.12); color: var(--role-capabilities); }
+.role-tactics { border-color: rgba(34,211,238,0.25); background: rgba(34,211,238,0.04); }
+.role-tactics .node-icon { background: rgba(34,211,238,0.12); }
+.role-tactics .node-formula { background: rgba(34,211,238,0.1); color: var(--role-capabilities); }
+
+.role-control .node-role-strip { background: rgba(6,182,212,0.12); color: var(--role-control); }
+.role-control { border-color: rgba(6,182,212,0.25); background: rgba(6,182,212,0.04); }
+.role-control .node-icon { background: rgba(6,182,212,0.12); }
+.role-control .node-formula { background: rgba(6,182,212,0.1); color: var(--role-control); }
+
+.role-execution .node-role-strip { background: rgba(52,211,153,0.12); color: var(--role-infra); }
+.role-execution { border-color: rgba(52,211,153,0.25); background: rgba(52,211,153,0.04); }
+.role-execution .node-icon { background: rgba(52,211,153,0.12); }
+.role-execution .node-formula { background: rgba(52,211,153,0.1); color: var(--role-infra); }
+
+.role-infrastructure .node-role-strip { background: rgba(167,139,250,0.12); color: var(--role-behavior); }
+.role-infrastructure { border-color: rgba(167,139,250,0.25); background: rgba(167,139,250,0.04); }
+.role-infrastructure .node-icon { background: rgba(167,139,250,0.12); }
+.role-infrastructure .node-formula { background: rgba(167,139,250,0.1); color: var(--role-behavior); }
+
+/* SVG Edges */
+.hierarchy-edges {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.hierarchy-edges line { stroke-width: 1.5; }
+.edge-command { stroke: var(--edge-command); }
+.edge-sync { stroke: var(--edge-sync); stroke-dasharray: 5,5; }
+.edge-twin { stroke: var(--edge-twin); stroke-dasharray: 8,4; }
+
+/* Right detail panel */
+.hierarchy-detail {
+  width: 280px;
+  background: var(--card);
+  border-left: 1px solid var(--border);
+  padding: 16px;
+  overflow-y: auto;
+  flex-shrink: 0;
+  display: none;
+}
+.hierarchy-detail.visible { display: block; }
+.detail-tabs {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0;
+}
+.detail-tab {
+  padding: 6px 12px;
+  font-size: 11px;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.1s;
+  background: none;
+  border-top: none; border-left: none; border-right: none;
+  font-family: inherit;
+}
+.detail-tab:hover { color: var(--foreground); }
+.detail-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+.detail-section { margin-bottom: 12px; }
+.detail-label { font-size: 10px; color: var(--muted-foreground); text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 4px; }
+.detail-value { font-size: 12px; }
+
+/* ============================================================
+   SCREEN 3: PROMPT STUDIO
+   ============================================================ */
+.prompt-studio { flex-direction: row; }
+.prompt-left {
+  flex: 1;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.prompt-right {
+  width: 300px;
+  background: var(--card);
+  border-left: 1px solid var(--border);
+  padding: 16px;
+  overflow-y: auto;
+}
+.prompt-input {
+  flex: 1;
+  min-height: 200px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  color: var(--foreground);
+  resize: none;
+}
+.prompt-input:focus { border-color: var(--ring); box-shadow: 0 0 0 2px rgba(6,182,212,0.15); outline: none; }
+.prompt-actions { display: flex; gap: 8px; }
+.quality-score-card {
+  text-align: center;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.grade-letter {
+  font-size: 48px;
+  font-weight: 800;
+  line-height: 1;
+}
+.grade-a { color: var(--role-infra); }
+.grade-num { font-size: 18px; color: var(--muted-foreground); margin-top: 4px; }
+.dim-bar-group { margin-bottom: 10px; }
+.dim-bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--muted-foreground);
+  margin-bottom: 3px;
+}
+.dim-bar {
+  height: 4px;
+  background: var(--secondary);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.dim-bar-fill { height: 100%; border-radius: 2px; }
+.history-item {
+  padding: 8px 10px;
+  border-radius: 6px;
+  margin-bottom: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--muted-foreground);
+  transition: background 0.1s;
+  border: 1px solid transparent;
+}
+.history-item:hover { background: var(--secondary); border-color: var(--border); }
+.history-time { font-size: 9px; color: var(--muted-foreground); opacity: 0.7; }
+
+/* ============================================================
+   SCREEN 4: WORKFLOWS
+   ============================================================ */
+.workflows { flex-direction: row; }
+.wf-sidebar {
+  width: 260px;
+  background: var(--card);
+  border-right: 1px solid var(--border);
+  padding: 12px;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+.wf-item {
+  padding: 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-bottom: 4px;
+  border: 1px solid transparent;
+  transition: all 0.1s;
+}
+.wf-item:hover { background: var(--secondary); border-color: var(--border); }
+.wf-item.active { background: rgba(6,182,212,0.08); border-color: rgba(6,182,212,0.3); }
+.wf-item-name { font-size: 12px; font-weight: 600; margin-bottom: 2px; }
+.wf-item-meta { font-size: 10px; color: var(--muted-foreground); }
+.wf-main {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+.wf-cards { display: flex; flex-direction: column; gap: 12px; max-width: 700px; }
+.wf-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+}
+.wf-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.wf-card-title { font-size: 14px; font-weight: 600; }
+.wf-pipeline {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 10px;
+}
+.wf-step {
+  background: var(--secondary);
+  border: 1px solid var(--border);
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 10px;
+  color: var(--muted-foreground);
+}
+.wf-arrow { color: var(--muted-foreground); font-size: 10px; }
+
+/* ============================================================
+   SCREEN 5: AGENT CREATOR (NEW)
+   ============================================================ */
+.agent-creator { flex-direction: row; }
+.creator-tabs {
+  display: flex;
+  gap: 0;
+  padding: 12px 20px 0;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.creator-tab-btn {
+  padding: 8px 20px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.creator-tab-btn:hover { color: var(--foreground); }
+.creator-tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+.tab-content { display: none; }
+.tab-content.active { display: flex; flex: 1; overflow: hidden; }
+
+/* Agent Tab */
+.creator-left {
+  flex: 6;
+  padding: 20px;
+  overflow-y: auto;
+}
+.creator-right {
+  flex: 4;
+  background: var(--card);
+  border-left: 1px solid var(--border);
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.form-section {
+  margin-bottom: 24px;
+}
+.form-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.form-row {
+  display: flex;
+  gap: 12px;
+}
+.form-row .form-group { flex: 1; }
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 11px;
+  transition: all 0.1s;
+}
+.checkbox-item:hover { border-color: var(--primary); }
+.checkbox-item.checked {
+  background: rgba(6,182,212,0.1);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.checkbox-item input { display: none; }
+.radio-group { display: flex; flex-wrap: wrap; gap: 6px; }
+.radio-item {
+  padding: 5px 12px;
+  background: var(--secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 11px;
+  transition: all 0.1s;
+}
+.radio-item:hover { border-color: var(--primary); }
+.radio-item.selected {
+  background: rgba(6,182,212,0.1);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.temp-slider {
+  width: 100%;
+  -webkit-appearance: none;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--secondary);
+  outline: none;
+  margin: 8px 0;
+}
+.temp-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--primary);
+  cursor: pointer;
+}
+.temp-value {
+  text-align: right;
+  font-size: 12px;
+  color: var(--primary);
+  font-weight: 600;
+}
+.prompt-textarea {
+  width: 100%;
+  min-height: 120px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 11px;
+  line-height: 1.6;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px;
+  color: var(--foreground);
+  resize: vertical;
+}
+.prompt-quality-bar {
+  height: 3px;
+  background: var(--secondary);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 6px;
+}
+.prompt-quality-fill { height: 100%; border-radius: 2px; transition: width 0.3s, background 0.3s; }
+.char-count { font-size: 10px; color: var(--muted-foreground); text-align: right; margin-top: 2px; }
+
+/* Live preview card */
+.preview-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.preview-section-title {
+  font-size: 11px;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+/* ============================================================
+   SCREEN 6: EXPORT HUB (NEW)
+   ============================================================ */
+.export-hub { padding: 20px; }
+.export-header {
+  margin-bottom: 20px;
+}
+.export-header h2 {
+  font-size: 16px;
+  font-weight: 600;
+}
+.export-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.export-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color 0.15s;
+}
+.export-card:hover { border-color: rgba(6,182,212,0.4); }
+.export-card-header { display: flex; align-items: center; gap: 10px; }
+.export-card-icon {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  background: rgba(6,182,212,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.export-card-title { font-size: 13px; font-weight: 600; }
+.export-card-desc { font-size: 11px; color: var(--muted-foreground); line-height: 1.5; }
+.export-formats { display: flex; gap: 4px; }
+.export-preview {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 8px 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--muted-foreground);
+  line-height: 1.5;
+  overflow: hidden;
+  max-height: 70px;
+}
+.export-card-actions { margin-top: auto; display: flex; justify-content: flex-end; }
+
+/* Recent exports table */
+.recent-section { margin-top: 8px; }
+.recent-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.export-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+.export-table th {
+  text-align: left;
+  padding: 8px 12px;
+  color: var(--muted-foreground);
+  font-weight: 500;
+  border-bottom: 1px solid var(--border);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.export-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(51,51,51,0.3);
+  color: var(--muted-foreground);
+}
+.export-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+/* ============================================================
+   SKILL EDITOR (TAB inside Agent Creator)
+   ============================================================ */
+.skill-form { padding: 20px; overflow-y: auto; flex: 1; }
+.skill-preview { width: 360px; background: var(--card); border-left: 1px solid var(--border); padding: 20px; overflow-y: auto; }
+.step-builder { margin-bottom: 16px; }
+.step-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px;
+  background: var(--secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+.step-number {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.step-content { flex: 1; }
+.step-name { font-size: 12px; font-weight: 600; }
+.step-desc { font-size: 10px; color: var(--muted-foreground); margin-top: 2px; }
+.step-remove {
+  background: none;
+  border: none;
+  color: var(--status-error);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px;
+}
+.tag-list { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.tag {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 500;
+}
+.tag-cyan { background: rgba(34,211,238,0.12); color: var(--role-capabilities); }
+.tag-amber { background: rgba(245,158,11,0.12); color: var(--role-governance); }
+.tag-purple { background: rgba(167,139,250,0.12); color: var(--role-behavior); }
+.tag-green { background: rgba(52,211,153,0.12); color: var(--role-infra); }
+.flow-preview-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  font-size: 11px;
+}
+.flow-step-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--primary);
+  flex-shrink: 0;
+}
+.flow-step-line {
+  width: 1px;
+  height: 14px;
+  background: var(--border);
+  margin-left: 4px;
+}
+
+/* ============================================================
+   UTILITY
+   ============================================================ */
+.flex { display: flex; }
+.items-center { align-items: center; }
+.gap-2 { gap: 8px; }
+.gap-3 { gap: 12px; }
+.mt-2 { margin-top: 8px; }
+.mt-3 { margin-top: 12px; }
+.mb-2 { margin-bottom: 8px; }
+.text-xs { font-size: 10px; }
+.text-sm { font-size: 12px; }
+.text-primary { color: var(--primary); }
+.text-muted { color: var(--muted-foreground); }
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mono { font-family: 'JetBrains Mono', 'Fira Code', monospace; }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     HEADER — SAME pattern across ALL screens
+     ============================================================ -->
+<header class="app-header">
+  <div class="header-brand">P-MAS <span>v5.2</span></div>
+
+  <button class="nav-btn" id="btn-back" style="display:none" onclick="goBack()">
+    &#8592; Назад
+  </button>
+
+  <div style="flex:1"></div>
+
+  <button class="nav-btn active" data-screen="dashboard" onclick="showScreen('dashboard', this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    Dashboard
+  </button>
+  <button class="nav-btn" data-screen="hierarchy" onclick="showScreen('hierarchy', this)">
+    Hierarchy
+  </button>
+  <button class="nav-btn" data-screen="workflows" onclick="showScreen('workflows', this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+    Workflow
+  </button>
+  <button class="nav-btn" data-screen="prompt-studio" onclick="showScreen('prompt-studio', this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.5 5.5H19l-4.5 3.5 1.5 5.5L12 14l-4 3.5 1.5-5.5L5 8.5h5.5z"/></svg>
+    Sparkles
+  </button>
+
+  <div style="width:1px;height:24px;background:var(--border);margin:0 4px"></div>
+
+  <button class="nav-btn" data-screen="agent-creator" onclick="showScreen('agent-creator', this)">
+    Agent Creator <span class="new-badge">NEW</span>
+  </button>
+  <button class="nav-btn" data-screen="export-hub" onclick="showScreen('export-hub', this)">
+    Export <span class="new-badge">NEW</span>
+  </button>
+</header>
+
+<!-- ============================================================
+     SCREENS CONTAINER
+     ============================================================ -->
+<div class="screen-container">
+
+<!-- ============================================================
+     SCREEN 1: DASHBOARD
+     ============================================================ -->
+<div class="screen active" id="screen-dashboard">
+  <div class="dashboard" style="flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:16px;">
+
+    <!-- KPI Strip -->
+    <div class="kpi-strip">
+      <div class="kpi-card">
+        <div class="kpi-label">Всего агентов</div>
+        <div class="kpi-value cyan">26</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Активных</div>
+        <div class="kpi-value green">18</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Простой</div>
+        <div class="kpi-value gray">5</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Ошибки</div>
+        <div class="kpi-value red">1</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Средний балл</div>
+        <div class="kpi-value amber">7.4</div>
+      </div>
+    </div>
+
+    <!-- Dashboard Grid -->
+    <div class="dashboard-grid" style="flex:1;">
+      <div class="dashboard-card">
+        <h3>Активные агенты</h3>
+        <div class="agent-mini-row"><span class="status-dot active"></span><span class="agent-mini-name">Orchestrator</span><span class="agent-mini-score">L0 | 8.2</span></div>
+        <div class="agent-mini-row"><span class="status-dot active"></span><span class="agent-mini-name">Planner</span><span class="agent-mini-score">L1 | 7.5</span></div>
+        <div class="agent-mini-row"><span class="status-dot active"></span><span class="agent-mini-name">Executor</span><span class="agent-mini-score">L2 | 6.8</span></div>
+        <div class="agent-mini-row"><span class="status-dot active"></span><span class="agent-mini-name">Evaluator</span><span class="agent-mini-score">L1 | 7.1</span></div>
+        <div class="agent-mini-row"><span class="status-dot paused"></span><span class="agent-mini-name">Monitor</span><span class="agent-mini-score">L3 | 5.5</span></div>
+        <div class="agent-mini-row"><span class="status-dot idle"></span><span class="agent-mini-name">Researcher</span><span class="agent-mini-score">L2 | 7.8</span></div>
+      </div>
+
+      <div class="dashboard-card">
+        <h3>Последние события</h3>
+        <div class="agent-mini-row" style="flex-direction:column;align-items:flex-start;gap:2px">
+          <span class="text-xs"><span style="color:var(--status-active)">12:45:30</span> &mdash; Orchestrator запустил workflow #17</span>
+        </div>
+        <div class="agent-mini-row" style="flex-direction:column;align-items:flex-start;gap:2px">
+          <span class="text-xs"><span style="color:var(--status-active)">12:44:12</span> &mdash; Executor завершил задачу T-092</span>
+        </div>
+        <div class="agent-mini-row" style="flex-direction:column;align-items:flex-start;gap:2px">
+          <span class="text-xs"><span style="color:var(--status-error)">12:43:01</span> &mdash; Monitor: ошибка подключения к API</span>
+        </div>
+        <div class="agent-mini-row" style="flex-direction:column;align-items:flex-start;gap:2px">
+          <span class="text-xs"><span style="color:var(--status-paused)">12:40:55</span> &mdash; Evaluator приостановлен (limiter)</span>
+        </div>
+        <div class="agent-mini-row" style="flex-direction:column;align-items:flex-start;gap:2px">
+          <span class="text-xs"><span style="color:var(--status-active)">12:38:20</span> &mdash; Planner обновил план выполнения</span>
+        </div>
+      </div>
+
+      <div class="dashboard-card">
+        <h3>Распределение по группам</h3>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+          <div style="flex:1;min-width:80px;padding:8px;background:rgba(103,232,249,0.06);border-radius:6px;text-align:center">
+            <div style="font-size:18px;font-weight:700;color:var(--role-agent)">3</div>
+            <div style="font-size:10px;color:var(--muted-foreground)">Strategy</div>
+          </div>
+          <div style="flex:1;min-width:80px;padding:8px;background:rgba(34,211,238,0.06);border-radius:6px;text-align:center">
+            <div style="font-size:18px;font-weight:700;color:var(--role-capabilities)">5</div>
+            <div style="font-size:10px;color:var(--muted-foreground)">Tactics</div>
+          </div>
+          <div style="flex:1;min-width:80px;padding:8px;background:rgba(6,182,212,0.06);border-radius:6px;text-align:center">
+            <div style="font-size:18px;font-weight:700;color:var(--role-control)">4</div>
+            <div style="font-size:10px;color:var(--muted-foreground)">Control</div>
+          </div>
+          <div style="flex:1;min-width:80px;padding:8px;background:rgba(52,211,153,0.06);border-radius:6px;text-align:center">
+            <div style="font-size:18px;font-weight:700;color:var(--role-infra)">8</div>
+            <div style="font-size:10px;color:var(--muted-foreground)">Execution</div>
+          </div>
+          <div style="flex:1;min-width:80px;padding:8px;background:rgba(167,139,250,0.06);border-radius:6px;text-align:center">
+            <div style="font-size:18px;font-weight:700;color:var(--role-behavior)">6</div>
+            <div style="font-size:10px;color:var(--muted-foreground)">Infra</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dashboard-card">
+        <h3>Быстрые действия</h3>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
+          <button class="btn btn-secondary" style="width:100%;text-align:left" onclick="showScreen('agent-creator',document.querySelector('[data-screen=agent-creator]'))">
+            + Создать нового агента <span class="new-badge" style="margin-left:auto">NEW</span>
+          </button>
+          <button class="btn btn-secondary" style="width:100%;text-align:left" onclick="showScreen('export-hub',document.querySelector('[data-screen=export-hub]'))">
+            Экспортировать систему <span class="new-badge" style="margin-left:auto">NEW</span>
+          </button>
+          <button class="btn btn-secondary" style="width:100%;text-align:left" onclick="showScreen('hierarchy',document.querySelector('[data-screen=hierarchy]'))">
+            Открыть иерархию
+          </button>
+          <button class="btn btn-secondary" style="width:100%;text-align:left" onclick="showScreen('prompt-studio',document.querySelector('[data-screen=prompt-studio]'))">
+            Prompt Studio
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="dashboard-footer">
+      P-MAS v5.2 | <span class="online">ONLINE</span> | Обновлено: 2025-01-15 12:45:30 UTC | Агентов: 26 | Память: 847 MB
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     SCREEN 2: HIERARCHY
+     ============================================================ -->
+<div class="screen" id="screen-hierarchy">
+  <!-- Toolbar -->
+  <div class="hierarchy-toolbar">
+    <div class="toolbar-group">
+      <button class="tb-btn active">Hierarchy</button>
+      <button class="tb-btn">Radial</button>
+      <button class="tb-btn">Grid</button>
+    </div>
+    <div class="toolbar-group">
+      <button class="tb-btn">Layers</button>
+      <button class="tb-btn">Layout</button>
+    </div>
+    <div class="toolbar-group">
+      <button class="tb-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Поиск
+      </button>
+    </div>
+    <div class="toolbar-group">
+      <button class="tb-btn" style="border-bottom:2px solid var(--edge-command);padding-bottom:2px">Command</button>
+      <button class="tb-btn" style="color:var(--edge-sync)">Sync</button>
+      <button class="tb-btn" style="color:var(--edge-twin)">Twin</button>
+      <button class="tb-btn">Delegate</button>
+      <button class="tb-btn">Supervise</button>
+      <button class="tb-btn">Broadcast</button>
+    </div>
+    <div class="toolbar-group">
+      <button class="tb-btn">+Zoom</button>
+      <button class="tb-btn">-Zoom</button>
+      <button class="tb-btn">Fit</button>
+      <button class="tb-btn">Focus</button>
+    </div>
+  </div>
+
+  <div class="hierarchy-body">
+    <!-- Left sidebar -->
+    <div class="hierarchy-sidebar">
+      <div class="sidebar-section-title">Группы агентов</div>
+      <div class="group-item">
+        <span class="group-dot" style="background:var(--role-agent)"></span>
+        Strategy
+        <span class="group-count">3</span>
+      </div>
+      <div class="group-item">
+        <span class="group-dot" style="background:var(--role-capabilities)"></span>
+        Tactics
+        <span class="group-count">5</span>
+      </div>
+      <div class="group-item">
+        <span class="group-dot" style="background:var(--role-control)"></span>
+        Control
+        <span class="group-count">4</span>
+      </div>
+      <div class="group-item">
+        <span class="group-dot" style="background:var(--role-infra)"></span>
+        Execution
+        <span class="group-count">8</span>
+      </div>
+      <div class="group-item">
+        <span class="group-dot" style="background:var(--role-behavior)"></span>
+        Infrastructure
+        <span class="group-count">6</span>
+      </div>
+
+      <div class="sidebar-section-title">По уровням</div>
+      <div class="group-item">
+        <span class="group-dot" style="background:var(--role-agent);border-radius:50%"></span>
+        L0 &mdash; Orchestrator
+        <span class="group-count">1</span>
+      </div>
+      <div class="group-item">
+        <span class="group-dot" style="background:var(--role-capabilities);border-radius:50%"></span>
+        L1 &mdash; Supervisor
+        <span class="group-count">4</span>
+      </div>
+      <div class="group-item">
+        <span class="group-dot" style="background:var(--role-infra);border-radius:50%"></span>
+        L2 &mdash; Worker
+        <span class="group-count">12</span>
+      </div>
+      <div class="group-item">
+        <span class="group-dot" style="background:var(--role-behavior);border-radius:50%"></span>
+        L3 &mdash; Support
+        <span class="group-count">7</span>
+      </div>
+      <div class="group-item">
+        <span class="group-dot" style="background:var(--status-idle);border-radius:50%"></span>
+        L4 &mdash; Monitor
+        <span class="group-count">2</span>
+      </div>
+    </div>
+
+    <!-- Canvas -->
+    <div class="hierarchy-canvas">
+      <!-- SVG Edges -->
+      <svg class="hierarchy-edges" viewBox="0 0 800 500">
+        <!-- Command: Orchestrator -> Planner -->
+        <line class="edge-command" x1="400" y1="82" x2="230" y2="175"/>
+        <!-- Command: Orchestrator -> Evaluator -->
+        <line class="edge-command" x1="400" y1="82" x2="570" y2="175"/>
+        <!-- Sync: Planner -> Executor -->
+        <line class="edge-sync" x1="230" y1="228" x2="120" y2="310"/>
+        <!-- Command: Evaluator -> Monitor -->
+        <line class="edge-command" x1="570" y1="228" x2="620" y2="325"/>
+        <!-- Twin: Planner <-> Evaluator -->
+        <line class="edge-twin" x1="310" y1="198" x2="490" y2="198"/>
+      </svg>
+
+      <!-- Agent Nodes -->
+      <!-- Orchestrator -->
+      <div class="agent-node role-strategy" style="left:310px;top:30px" onclick="showDetail(this)">
+        <div class="node-role-strip">
+          <span>Strategy &bull; L0</span>
+          <span class="status-dot active" style="box-shadow:0 0 6px rgba(34,211,238,0.5)"></span>
+        </div>
+        <div class="node-body">
+          <div class="node-icon">&#x1F3AE;</div>
+          <div class="node-name">Orchestrator</div>
+          <div class="node-formula">CoT</div>
+          <div class="node-score-bar"><div class="node-score-fill" style="width:82%;background:var(--role-agent)"></div></div>
+        </div>
+      </div>
+
+      <!-- Planner -->
+      <div class="agent-node role-tactics" style="left:140px;top:155px" onclick="showDetail(this)">
+        <div class="node-role-strip">
+          <span>Tactics &bull; L1</span>
+          <span class="status-dot active" style="box-shadow:0 0 6px rgba(34,211,238,0.5)"></span>
+        </div>
+        <div class="node-body">
+          <div class="node-icon">&#x1F4CB;</div>
+          <div class="node-name">Planner</div>
+          <div class="node-formula">PlanAndSolve</div>
+          <div class="node-score-bar"><div class="node-score-fill" style="width:75%;background:var(--role-capabilities)"></div></div>
+        </div>
+      </div>
+
+      <!-- Evaluator -->
+      <div class="agent-node role-control" style="left:480px;top:155px" onclick="showDetail(this)">
+        <div class="node-role-strip">
+          <span>Control &bull; L1</span>
+          <span class="status-dot active" style="box-shadow:0 0 6px rgba(34,211,238,0.5)"></span>
+        </div>
+        <div class="node-body">
+          <div class="node-icon">&#x2705;</div>
+          <div class="node-name">Evaluator</div>
+          <div class="node-formula">CoVe</div>
+          <div class="node-score-bar"><div class="node-score-fill" style="width:71%;background:var(--role-control)"></div></div>
+        </div>
+      </div>
+
+      <!-- Executor -->
+      <div class="agent-node role-execution" style="left:30px;top:290px" onclick="showDetail(this)">
+        <div class="node-role-strip">
+          <span>Execution &bull; L2</span>
+          <span class="status-dot active" style="box-shadow:0 0 6px rgba(34,211,238,0.5)"></span>
+        </div>
+        <div class="node-body">
+          <div class="node-icon">&#x26A1;</div>
+          <div class="node-name">Executor</div>
+          <div class="node-formula">ReAct</div>
+          <div class="node-score-bar"><div class="node-score-fill" style="width:68%;background:var(--role-infra)"></div></div>
+        </div>
+      </div>
+
+      <!-- Monitor -->
+      <div class="agent-node role-infrastructure" style="left:530px;top:310px" onclick="showDetail(this)">
+        <div class="node-role-strip">
+          <span>Infrastructure &bull; L3</span>
+          <span class="status-dot paused"></span>
+        </div>
+        <div class="node-body">
+          <div class="node-icon">&#x1F4E1;</div>
+          <div class="node-name">Monitor</div>
+          <div class="node-formula">Observe</div>
+          <div class="node-score-bar"><div class="node-score-fill" style="width:55%;background:var(--role-behavior)"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right detail panel -->
+    <div class="hierarchy-detail" id="detail-panel">
+      <div class="detail-tabs">
+        <button class="detail-tab active">Info</button>
+        <button class="detail-tab">Runtime</button>
+        <button class="detail-tab">Prompt</button>
+        <button class="detail-tab">History</button>
+      </div>
+      <div class="detail-section">
+        <div class="detail-label">Имя</div>
+        <div class="detail-value" style="font-weight:600">Orchestrator</div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-label">Роль</div>
+        <div class="detail-value"><span class="badge badge-cyan">Strategy</span></div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-label">Уровень</div>
+        <div class="detail-value">L0 &mdash; Orchestrator</div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-label">Статус</div>
+        <div class="detail-value flex items-center gap-2"><span class="status-dot active"></span> Active</div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-label">Когнитивная формула</div>
+        <div class="detail-value"><span class="badge badge-cyan">CoT</span></div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-label">Оценка качества</div>
+        <div class="detail-value" style="font-size:20px;font-weight:700;color:var(--role-agent)">8.2<span style="font-size:12px;color:var(--muted-foreground)">/10</span></div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-label">Модель</div>
+        <div class="detail-value">GPT-4o</div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-label">Температура</div>
+        <div class="detail-value">0.3</div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-label">Связи</div>
+        <div class="detail-value" style="font-size:11px;color:var(--muted-foreground);line-height:1.8">
+          <div>&#x2192; Planner <span style="color:var(--edge-command)">(Command)</span></div>
+          <div>&#x2192; Evaluator <span style="color:var(--edge-command)">(Command)</span></div>
+          <div>&#x2194; Researcher <span style="color:var(--edge-sync)">(Sync)</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     SCREEN 3: PROMPT STUDIO
+     ============================================================ -->
+<div class="screen" id="screen-prompt-studio">
+  <div class="prompt-left">
+    <div class="flex items-center gap-2" style="justify-content:space-between">
+      <h2 style="font-size:15px;font-weight:600">Prompt Studio</h2>
+      <div class="flex gap-2">
+        <button class="btn btn-primary">Анализ</button>
+        <button class="btn btn-ghost">Очистить</button>
+        <button class="btn btn-secondary">Оценка</button>
+      </div>
+    </div>
+    <textarea class="prompt-input" placeholder="Введите промпт для анализа...">Ты — Orchestrator системы P-MAS. Твоя задача — координировать работу агентов нижних уровней.
+
+Правила:
+1. Анализируй входной запрос и определяй, какие агенты необходимы
+2. Формируй план выполнения с учётом приоритетов
+3. Делегируй задачи агентам-исполнителям через Command-связь
+4. Мониторь статус выполнения через Sync-каналы
+5. При ошибках — пересчитай план и переназначь задачи
+
+Формат ответа: JSON с полями plan, agents, priority, timeout.</textarea>
+    <div class="text-xs text-muted" style="text-align:right">423 символа</div>
+  </div>
+
+  <div class="prompt-right">
+    <div class="quality-score-card">
+      <div class="grade-letter grade-a">A</div>
+      <div class="grade-num">8.2 / 10</div>
+    </div>
+    <div class="dim-bar-group">
+      <div class="dim-bar-label"><span>Ясность</span><span>9.1</span></div>
+      <div class="dim-bar"><div class="dim-bar-fill" style="width:91%;background:var(--role-infra)"></div></div>
+    </div>
+    <div class="dim-bar-group">
+      <div class="dim-bar-label"><span>Специфичность</span><span>8.5</span></div>
+      <div class="dim-bar"><div class="dim-bar-fill" style="width:85%;background:var(--role-capabilities)"></div></div>
+    </div>
+    <div class="dim-bar-group">
+      <div class="dim-bar-label"><span>Полнота</span><span>7.8</span></div>
+      <div class="dim-bar"><div class="dim-bar-fill" style="width:78%;background:var(--role-agent)"></div></div>
+    </div>
+    <div class="dim-bar-group">
+      <div class="dim-bar-label"><span>Когерентность</span><span>8.9</span></div>
+      <div class="dim-bar"><div class="dim-bar-fill" style="width:89%;background:var(--role-control)"></div></div>
+    </div>
+    <div class="dim-bar-group">
+      <div class="dim-bar-label"><span>Эффективность</span><span>7.2</span></div>
+      <div class="dim-bar"><div class="dim-bar-fill" style="width:72%;background:var(--role-governance)"></div></div>
+    </div>
+    <div class="dim-bar-group">
+      <div class="dim-bar-label"><span>Надёжность</span><span>8.0</span></div>
+      <div class="dim-bar"><div class="dim-bar-fill" style="width:80%;background:var(--role-behavior)"></div></div>
+    </div>
+
+    <div style="margin-top:20px">
+      <div class="preview-section-title">История анализа</div>
+      <div class="history-item">
+        <div style="margin-bottom:2px">System prompt для Orchestrator</div>
+        <div class="history-time">2025-01-15 12:40</div>
+      </div>
+      <div class="history-item">
+        <div style="margin-bottom:2px">RAG query template v2</div>
+        <div class="history-time">2025-01-15 11:22</div>
+      </div>
+      <div class="history-item">
+        <div style="margin-bottom:2px">Error handler prompt</div>
+        <div class="history-time">2025-01-15 10:05</div>
+      </div>
+      <div class="history-item">
+        <div style="margin-bottom:2px">Evaluation criteria for CoVe</div>
+        <div class="history-time">2025-01-14 18:30</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     SCREEN 4: WORKFLOWS
+     ============================================================ -->
+<div class="screen" id="screen-workflows">
+  <div class="wf-sidebar">
+    <div class="preview-section-title" style="margin-bottom:8px">Workflow</div>
+    <div class="wf-item active">
+      <div class="wf-item-name">Code Review Pipeline</div>
+      <div class="wf-item-meta flex items-center gap-2"><span class="status-dot active"></span> Выполняется &bull; 3/5 шагов</div>
+    </div>
+    <div class="wf-item">
+      <div class="wf-item-name">Bug Analysis Flow</div>
+      <div class="wf-item-meta flex items-center gap-2"><span class="status-dot idle"></span> Ожидание</div>
+    </div>
+    <div class="wf-item">
+      <div class="wf-item-name">Feature Planning</div>
+      <div class="wf-item-meta flex items-center gap-2"><span class="status-dot active"></span> Выполняется &bull; 1/4</div>
+    </div>
+    <div class="wf-item">
+      <div class="wf-item-name">Documentation Gen</div>
+      <div class="wf-item-meta flex items-center gap-2"><span class="status-dot paused"></span> Пауза</div>
+    </div>
+    <div class="wf-item">
+      <div class="wf-item-name">Testing Suite</div>
+      <div class="wf-item-meta flex items-center gap-2"><span class="status-dot error"></span> Ошибка</div>
+    </div>
+    <button class="btn btn-ghost" style="width:100%;margin-top:12px">+ Новый workflow</button>
+  </div>
+
+  <div class="wf-main">
+    <h2 style="font-size:15px;font-weight:600;margin-bottom:16px">Workflows</h2>
+    <div class="wf-cards">
+      <div class="wf-card">
+        <div class="wf-card-header">
+          <div>
+            <div class="wf-card-title">Code Review Pipeline</div>
+            <div class="text-xs text-muted">Trigger: git push &bull; Создан: 2025-01-15</div>
+          </div>
+          <span class="badge badge-green">Выполняется</span>
+        </div>
+        <div class="text-xs text-muted">Автоматический анализ и ревью кода при каждом push. Включает статический анализ, проверку стиля, тестирование.</div>
+        <div class="wf-pipeline">
+          <span class="wf-step">Fetch</span>
+          <span class="wf-arrow">&rarr;</span>
+          <span class="wf-step" style="border-color:var(--status-active)">Analyze</span>
+          <span class="wf-arrow">&rarr;</span>
+          <span class="wf-step" style="border-color:var(--status-active)">Review</span>
+          <span class="wf-arrow">&rarr;</span>
+          <span class="wf-step" style="opacity:0.5">Report</span>
+          <span class="wf-arrow">&rarr;</span>
+          <span class="wf-step" style="opacity:0.5">Notify</span>
+        </div>
+      </div>
+
+      <div class="wf-card">
+        <div class="wf-card-header">
+          <div>
+            <div class="wf-card-title">Feature Planning</div>
+            <div class="text-xs text-muted">Trigger: manual &bull; Создан: 2025-01-14</div>
+          </div>
+          <span class="badge badge-cyan">Выполняется</span>
+        </div>
+        <div class="text-xs text-muted">Планирование новой фичи: декомпозиция на задачи, оценка трудозатрат, назначение агентов.</div>
+        <div class="wf-pipeline">
+          <span class="wf-step" style="border-color:var(--status-active)">Parse</span>
+          <span class="wf-arrow">&rarr;</span>
+          <span class="wf-step" style="opacity:0.5">Decompose</span>
+          <span class="wf-arrow">&rarr;</span>
+          <span class="wf-step" style="opacity:0.5">Estimate</span>
+          <span class="wf-arrow">&rarr;</span>
+          <span class="wf-step" style="opacity:0.5">Assign</span>
+        </div>
+      </div>
+
+      <div class="wf-card" style="opacity:0.7">
+        <div class="wf-card-header">
+          <div>
+            <div class="wf-card-title">Testing Suite</div>
+            <div class="text-xs text-muted">Trigger: schedule (hourly) &bull; Создан: 2025-01-13</div>
+          </div>
+          <span class="badge" style="background:rgba(239,68,68,0.15);color:var(--status-error)">Ошибка</span>
+        </div>
+        <div class="text-xs text-muted">Запуск тестового набора с генерацией отчётов. Ошибка на шаге Coverage Analysis.</div>
+        <div class="wf-pipeline">
+          <span class="wf-step">Setup</span>
+          <span class="wf-arrow">&rarr;</span>
+          <span class="wf-step" style="border-color:var(--status-active)">Test</span>
+          <span class="wf-arrow">&rarr;</span>
+          <span class="wf-step" style="border-color:var(--status-error)">Coverage &#x26A0;</span>
+          <span class="wf-arrow">&rarr;</span>
+          <span class="wf-step" style="opacity:0.3">Report</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     SCREEN 5: AGENT CREATOR (NEW) — with tabs: Agent + Skill
+     ============================================================ -->
+<div class="screen" id="screen-agent-creator">
+  <!-- Tabs -->
+  <div class="creator-tabs">
+    <button class="creator-tab-btn active" onclick="showCreatorTab('agent', this)">Агент</button>
+    <button class="creator-tab-btn" onclick="showCreatorTab('skill', this)">Скилл</button>
+  </div>
+
+  <!-- TAB 1: Agent Form -->
+  <div class="tab-content active" id="tab-agent">
+    <div class="creator-left">
+      <!-- Section 1: Основная информация -->
+      <div class="form-section">
+        <div class="form-section-title">Основная информация</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Имя агента</label>
+            <input type="text" placeholder="Например: DataAnalyzer" id="agent-name" oninput="updatePreview()">
+          </div>
+          <div class="form-group" style="max-width:180px">
+            <label>Уровень</label>
+            <select id="agent-level" onchange="updatePreview()">
+              <option>L0 — Orchestrator</option>
+              <option>L1 — Supervisor</option>
+              <option selected>L2 — Worker</option>
+              <option>L3 — Support</option>
+              <option>L4 — Monitor</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Группа ролей</label>
+            <select id="agent-role" onchange="updatePreview()">
+              <option>Strategy</option>
+              <option>Tactics</option>
+              <option>Control</option>
+              <option selected>Execution</option>
+              <option>Infrastructure</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Статус</label>
+            <select id="agent-status" onchange="updatePreview()">
+              <option selected>active</option>
+              <option>idle</option>
+              <option>paused</option>
+              <option>standby</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Описание</label>
+          <textarea rows="2" placeholder="Краткое описание назначения агента...">Анализирует структурированные данные, выявляет паттерны и генерирует отчёты для команды.</textarea>
+        </div>
+      </div>
+
+      <!-- Section 2: Когнитивные способности -->
+      <div class="form-section">
+        <div class="form-section-title">Когнитивные способности</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Когнитивная формула</label>
+            <select id="agent-formula" onchange="updatePreview()">
+              <option>CoT (Chain-of-Thought)</option>
+              <option selected>ReAct (Reason+Act)</option>
+              <option>PlanAndSolve</option>
+              <option>Reflexion</option>
+              <option>ReWOO</option>
+              <option>CoVe (Chain-of-Verification)</option>
+              <option>SelfRefine</option>
+              <option>RITeS</option>
+              <option>LATS (Language Agent Tree Search)</option>
+              <option>GOT (Generative Offline Thinking)</option>
+              <option>DSPy</option>
+              <option>RAFT</option>
+              <option>Skeleton-of-Thought</option>
+              <option>Tree-of-Thought</option>
+              <option>Graph-of-Thought</option>
+              <option>Step-Back Prompting</option>
+              <option>Least-to-Most</option>
+              <option>Directional Stimulus Prompting</option>
+              <option>Meta-Prompting</option>
+              <option>Emotion Prompting</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>LLM модель</label>
+            <select>
+              <option selected>GPT-4o</option>
+              <option>Claude 3.5 Sonnet</option>
+              <option>Gemini Pro</option>
+              <option>Local Ollama (llama3)</option>
+              <option>Local Ollama (mixtral)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Температура</label>
+            <input type="range" class="temp-slider" min="0" max="2" step="0.1" value="0.4" oninput="document.getElementById('temp-val').textContent=this.value">
+            <div class="temp-value" id="temp-val">0.4</div>
+          </div>
+          <div class="form-group" style="max-width:140px">
+            <label>Max Tokens</label>
+            <input type="number" value="4096" min="256" max="128000">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Системный промпт</label>
+          <textarea class="prompt-textarea" rows="5" placeholder="Введите системный промпт для агента..." oninput="updatePromptQuality(this)">Ты — аналитик данных в системе P-MAS. Твоя задача:
+1. Принимай структурированные данные от агента-исполнителя
+2. Анализируй данные, выявляй паттерны и аномалии
+3. Формируй отчёт в формате JSON с метриками и выводами
+4. При низкой уверенности — запрашивай дополнительные данные
+
+Формат вывода: { summary, metrics: [...], anomalies: [...], confidence: 0-1 }</textarea>
+          <div class="prompt-quality-bar">
+            <div class="prompt-quality-fill" style="width:72%;background:var(--role-agent)"></div>
+          </div>
+          <div class="char-count">312 символов &bull; Оценка: 7.2/10</div>
+        </div>
+      </div>
+
+      <!-- Section 3: Инструменты и память -->
+      <div class="form-section">
+        <div class="form-section-title">Инструменты и память</div>
+        <div class="form-group">
+          <label>Инструменты</label>
+          <div class="checkbox-group">
+            <label class="checkbox-item checked" onclick="this.classList.toggle('checked')">
+              <input type="checkbox" checked>&#x1F50D; Web Search
+            </label>
+            <label class="checkbox-item checked" onclick="this.classList.toggle('checked')">
+              <input type="checkbox" checked>&#x1F4DA; RAG
+            </label>
+            <label class="checkbox-item" onclick="this.classList.toggle('checked')">
+              <input type="checkbox">&#x1F4BB; Code Execution
+            </label>
+            <label class="checkbox-item checked" onclick="this.classList.toggle('checked')">
+              <input type="checkbox" checked>&#x1F4C1; File Access
+            </label>
+            <label class="checkbox-item" onclick="this.classList.toggle('checked')">
+              <input type="checkbox">&#x1F517; API Call
+            </label>
+            <label class="checkbox-item" onclick="this.classList.toggle('checked')">
+              <input type="checkbox">&#x1F5C4; Database Query
+            </label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Тип памяти</label>
+          <div class="radio-group" id="memory-group">
+            <span class="radio-item" onclick="selectRadio(this,'memory-group')">None</span>
+            <span class="radio-item selected" onclick="selectRadio(this,'memory-group')">Short-term</span>
+            <span class="radio-item" onclick="selectRadio(this,'memory-group')">Long-term</span>
+            <span class="radio-item" onclick="selectRadio(this,'memory-group')">Shared</span>
+          </div>
+          <div class="text-xs text-muted mt-2">Short-term (conversation) — контекст сохраняется в рамках сессии</div>
+        </div>
+      </div>
+
+      <!-- Section 4: Связи -->
+      <div class="form-section">
+        <div class="form-section-title">Связи</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Тип связи</label>
+            <select>
+              <option>Command</option>
+              <option>Sync</option>
+              <option>Twin</option>
+              <option>Delegate</option>
+              <option>Supervise</option>
+              <option>Broadcast</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Направление</label>
+            <select>
+              <option>Исходящая (от этого агента)</option>
+              <option>Входящая (к этому агенту)</option>
+              <option>Двунаправленная</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Подключить к</label>
+          <div class="checkbox-group">
+            <label class="checkbox-item" onclick="this.classList.toggle('checked')"><input type="checkbox">Orchestrator <span class="badge badge-cyan" style="margin-left:4px">L0</span></label>
+            <label class="checkbox-item checked" onclick="this.classList.toggle('checked')"><input type="checkbox" checked>Planner <span class="badge badge-cyan" style="margin-left:4px">L1</span></label>
+            <label class="checkbox-item" onclick="this.classList.toggle('checked')"><input type="checkbox">Evaluator <span class="badge badge-blue" style="margin-left:4px">L1</span></label>
+            <label class="checkbox-item" onclick="this.classList.toggle('checked')"><input type="checkbox">Monitor <span class="badge badge-purple" style="margin-left:4px">L3</span></label>
+            <label class="checkbox-item" onclick="this.classList.toggle('checked')"><input type="checkbox">Researcher <span class="badge badge-green" style="margin-left:4px">L2</span></label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Preview + Actions -->
+    <div class="creator-right">
+      <!-- Preview -->
+      <div>
+        <div class="preview-section-title">Предпросмотр агента</div>
+        <div class="agent-node role-execution" style="position:relative;left:auto;top:auto;width:100%;cursor:default" id="preview-node">
+          <div class="node-role-strip">
+            <span id="preview-role-strip">Execution &bull; L2</span>
+            <span class="status-dot active" id="preview-status-dot"></span>
+          </div>
+          <div class="node-body">
+            <div class="node-icon" id="preview-icon">&#x1F4CA;</div>
+            <div class="node-name" id="preview-name">DataAnalyzer</div>
+            <div class="node-formula" id="preview-formula">ReAct</div>
+            <div style="font-size:10px;color:var(--muted-foreground);margin-top:2px" id="preview-tools">3 инструмента</div>
+            <div class="node-score-bar"><div class="node-score-fill" id="preview-score" style="width:72%;background:var(--role-infra)"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Prompt Quality -->
+      <div>
+        <div class="preview-section-title">Качество промпта</div>
+        <div class="card-sm" style="text-align:center;padding:14px">
+          <div style="font-size:36px;font-weight:800;color:var(--role-agent);line-height:1">B</div>
+          <div style="font-size:14px;color:var(--muted-foreground);margin-top:2px">7.2 / 10</div>
+          <div style="margin-top:10px">
+            <div class="dim-bar-group">
+              <div class="dim-bar-label"><span>Ясность</span><span>8.0</span></div>
+              <div class="dim-bar"><div class="dim-bar-fill" style="width:80%;background:var(--role-infra)"></div></div>
+            </div>
+            <div class="dim-bar-group">
+              <div class="dim-bar-label"><span>Специфичность</span><span>7.5</span></div>
+              <div class="dim-bar"><div class="dim-bar-fill" style="width:75%;background:var(--role-capabilities)"></div></div>
+            </div>
+            <div class="dim-bar-group">
+              <div class="dim-bar-label"><span>Полнота</span><span>7.0</span></div>
+              <div class="dim-bar"><div class="dim-bar-fill" style="width:70%;background:var(--role-agent)"></div></div>
+            </div>
+            <div class="dim-bar-group">
+              <div class="dim-bar-label"><span>Когерентность</span><span>7.8</span></div>
+              <div class="dim-bar"><div class="dim-bar-fill" style="width:78%;background:var(--role-control)"></div></div>
+            </div>
+            <div class="dim-bar-group">
+              <div class="dim-bar-label"><span>Эффективность</span><span>6.5</span></div>
+              <div class="dim-bar"><div class="dim-bar-fill" style="width:65%;background:var(--role-governance)"></div></div>
+            </div>
+            <div class="dim-bar-group">
+              <div class="dim-bar-label"><span>Надёжность</span><span>7.4</span></div>
+              <div class="dim-bar"><div class="dim-bar-fill" style="width:74%;background:var(--role-behavior)"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div style="margin-top:auto;display:flex;flex-direction:column;gap:8px">
+        <button class="btn btn-primary" style="width:100%;padding:10px">Добавить в иерархию</button>
+        <button class="btn btn-secondary" style="width:100%">Сохранить как шаблон</button>
+        <button class="btn btn-ghost" style="width:100%">Сбросить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: Skill Form -->
+  <div class="tab-content" id="tab-skill">
+    <div class="skill-form">
+      <div class="form-section">
+        <div class="form-section-title">Создание скилла</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Название скилла</label>
+            <input type="text" placeholder="Например: Data Pattern Detector" value="Pattern Recognition Engine">
+          </div>
+          <div class="form-group" style="max-width:220px">
+            <label>Тип скилла</label>
+            <select>
+              <option>Prompt Template</option>
+              <option selected>Cognitive Formula</option>
+              <option>Tool Wrapper</option>
+              <option>Evaluation Criteria</option>
+              <option>Composite</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Описание</label>
+          <textarea rows="2">Многошаговый скилл распознавания паттернов в данных. Комбинирует структурированный анализ с эвристической оценкой.</textarea>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Построитель шагов</div>
+        <div class="step-builder">
+          <div class="step-item">
+            <div class="step-number">1</div>
+            <div class="step-content">
+              <div class="step-name">Нормализация данных</div>
+              <div class="step-desc">Приведение входных данных к единому формату, очистка от шума</div>
+              <div style="margin-top:4px"><span class="badge badge-green">CoT</span></div>
+            </div>
+            <button class="step-remove">&times;</button>
+          </div>
+          <div class="step-item">
+            <div class="step-number">2</div>
+            <div class="step-content">
+              <div class="step-name">Поиск паттернов</div>
+              <div class="step-desc">Статистический анализ с выявлением корреляций и аномалий</div>
+              <div style="margin-top:4px"><span class="badge badge-cyan">ReAct</span></div>
+            </div>
+            <button class="step-remove">&times;</button>
+          </div>
+          <div class="step-item">
+            <div class="step-number">3</div>
+            <div class="step-content">
+              <div class="step-name">Валидация результатов</div>
+              <div class="step-desc">Перекрёстная проверка найденных паттернов</div>
+              <div style="margin-top:4px"><span class="badge badge-blue">CoVe</span></div>
+            </div>
+            <button class="step-remove">&times;</button>
+          </div>
+          <div class="step-item">
+            <div class="step-number">4</div>
+            <div class="step-content">
+              <div class="step-name">Генерация отчёта</div>
+              <div class="step-desc">Форматирование результатов в структурированный отчёт</div>
+              <div style="margin-top:4px"><span class="badge badge-purple">PlanAndSolve</span></div>
+            </div>
+            <button class="step-remove">&times;</button>
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <button class="btn btn-secondary">+ Добавить шаг</button>
+          <button class="btn btn-ghost">Удалить последний</button>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Теги</div>
+        <input type="text" value="analysis, patterns, data, multi-step" style="margin-bottom:8px">
+        <div class="tag-list">
+          <span class="tag tag-cyan">analysis</span>
+          <span class="tag tag-green">patterns</span>
+          <span class="tag tag-amber">data</span>
+          <span class="tag tag-purple">multi-step</span>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <button class="btn btn-primary" style="padding:10px 24px">Сохранить скилл</button>
+      </div>
+    </div>
+
+    <!-- Skill Preview -->
+    <div class="skill-preview">
+      <div class="preview-section-title">Предпросмотр скилла</div>
+      <div class="card-sm">
+        <div style="font-size:14px;font-weight:600;margin-bottom:6px">Pattern Recognition Engine</div>
+        <div style="font-size:11px;color:var(--muted-foreground);margin-bottom:10px">Cognitive Formula &bull; 4 шага</div>
+        <div class="tag-list" style="margin-bottom:12px">
+          <span class="tag tag-cyan">analysis</span>
+          <span class="tag tag-green">patterns</span>
+          <span class="tag tag-amber">data</span>
+          <span class="tag tag-purple">multi-step</span>
+        </div>
+      </div>
+
+      <div class="preview-section-title" style="margin-top:16px">Поток выполнения</div>
+      <div class="flow-preview-step"><div class="flow-step-dot"></div>Нормализация данных <span class="badge badge-green" style="margin-left:auto">CoT</span></div>
+      <div class="flow-step-line"></div>
+      <div class="flow-preview-step"><div class="flow-step-dot"></div>Поиск паттернов <span class="badge badge-cyan" style="margin-left:auto">ReAct</span></div>
+      <div class="flow-step-line"></div>
+      <div class="flow-preview-step"><div class="flow-step-dot"></div>Валидация результатов <span class="badge badge-blue" style="margin-left:auto">CoVe</span></div>
+      <div class="flow-step-line"></div>
+      <div class="flow-preview-step"><div class="flow-step-dot"></div>Генерация отчёта <span class="badge badge-purple" style="margin-left:auto">PlanAndSolve</span></div>
+
+      <div class="preview-section-title" style="margin-top:20px">Шаблон промпта</div>
+      <div class="export-preview" style="max-height:160px;font-size:10px">
+Шаг 1: Нормализация
+  Вход: {{input}}
+  Контекст: {{context}}
+  Действие: очистка, нормализация
+
+Шаг 2: Анализ
+  Метод: ReAct
+  Цель: поиск паттернов
+
+Шаг 3: Валидация
+  Метод: CoVe
+  Цель: проверка гипотез
+
+Шаг 4: Отчёт
+  Выход: {{output}}
+  Формат: JSON
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     SCREEN 6: EXPORT HUB (NEW)
+     ============================================================ -->
+<div class="screen" id="screen-export-hub">
+  <div class="export-hub" style="overflow-y:auto;height:100%;padding:24px">
+    <div class="export-header">
+      <h2>P-MAS | Export Hub</h2>
+      <div class="text-xs text-muted">Экспорт данных и конфигураций системы</div>
+    </div>
+
+    <!-- Export Cards Grid -->
+    <div class="export-grid">
+      <!-- Card 1: Agent Documentation -->
+      <div class="export-card">
+        <div class="export-card-header">
+          <div class="export-card-icon">&#x1F4C4;</div>
+          <div class="export-card-title">Документация агента</div>
+        </div>
+        <div class="export-card-desc">Сгенерировать MD-файл с конфигурацией агента, системным промптом, спецификацией I/O и метриками качества.</div>
+        <div class="export-formats">
+          <span class="badge badge-cyan">MD</span>
+          <span class="badge badge-amber">PDF</span>
+        </div>
+        <div class="export-preview mono"># Agent: Orchestrator
+## Configuration
+- Role: Strategy | Level: L0
+- Formula: CoT | Model: GPT-4o
+- Score: 8.2/10
+## System Prompt
+"You are the P-MAS orchestrator..."</div>
+        <div class="export-card-actions"><button class="btn btn-primary btn-sm">Экспорт</button></div>
+      </div>
+
+      <!-- Card 2: System Architecture -->
+      <div class="export-card">
+        <div class="export-card-header">
+          <div class="export-card-icon">&#x1F3D7;</div>
+          <div class="export-card-title">Архитектура системы</div>
+        </div>
+        <div class="export-card-desc">Mermaid-диаграмма иерархии агентов + описание связей и потоков данных.</div>
+        <div class="export-formats">
+          <span class="badge badge-cyan">MD</span>
+          <span class="badge badge-green">PNG</span>
+          <span class="badge badge-purple">SVG</span>
+        </div>
+        <div class="export-preview mono">graph TD
+  A[Orchestrator] -->|Command| B[Planner]
+  A -->|Command| C[Evaluator]
+  B -->|Sync| D[Executor]
+  C -->|Command| E[Monitor]
+  B -.->|Twin| C</div>
+        <div class="export-card-actions"><button class="btn btn-primary btn-sm">Экспорт</button></div>
+      </div>
+
+      <!-- Card 3: Execution Report -->
+      <div class="export-card">
+        <div class="export-card-header">
+          <div class="export-card-icon">&#x1F4CA;</div>
+          <div class="export-card-title">Отчёт выполнения</div>
+        </div>
+        <div class="export-card-desc">Полный отчёт о запуске системы: логи агентов, время выполнения, метрики, результаты.</div>
+        <div class="export-formats">
+          <span class="badge badge-cyan">MD</span>
+          <span class="badge badge-amber">PDF</span>
+          <span class="badge badge-blue">JSON</span>
+        </div>
+        <div class="export-preview mono">| Agent       | Status | Time  | Score |
+|-------------|--------|-------|-------|
+| Orchestrator| Active | 12.4s | 8.2   |
+| Planner     | Active | 8.1s  | 7.5   |
+| Executor    | Active | 15.2s | 6.8   |
+| Evaluator   | Idle   | 3.2s  | 7.1   |</div>
+        <div class="export-card-actions"><button class="btn btn-primary btn-sm">Экспорт</button></div>
+      </div>
+
+      <!-- Card 4: System Config -->
+      <div class="export-card">
+        <div class="export-card-header">
+          <div class="export-card-icon">&#x2699;</div>
+          <div class="export-card-title">Конфигурация системы</div>
+        </div>
+        <div class="export-card-desc">Полная конфигурация всех агентов, связей и параметров для импорта/переиспользования.</div>
+        <div class="export-formats">
+          <span class="badge badge-blue">JSON</span>
+          <span class="badge badge-green">YAML</span>
+        </div>
+        <div class="export-preview mono">{
+  "version": "5.2",
+  "agents": [...],
+  "connections": [...],
+  "settings": {
+    "maxConcurrency": 10,
+    "timeout": 30000
+  }
+}</div>
+        <div class="export-card-actions"><button class="btn btn-primary btn-sm">Экспорт</button></div>
+      </div>
+
+      <!-- Card 5: Prompt Library -->
+      <div class="export-card">
+        <div class="export-card-header">
+          <div class="export-card-icon">&#x1F4DD;</div>
+          <div class="export-card-title">Библиотека промптов</div>
+        </div>
+        <div class="export-card-desc">Все системные промпты агентов в структурированном формате с метаданными и скорингом.</div>
+        <div class="export-formats">
+          <span class="badge badge-cyan">MD</span>
+          <span class="badge badge-blue">JSON</span>
+        </div>
+        <div class="export-preview mono">## Orchestrator Prompt
+**Score:** A (8.5)
+**Formula:** CoT
+**Tokens:** 245
+---
+"You are the P-MAS orchestrator..."
+
+## Planner Prompt
+**Score:** B (7.2)
+**Formula:** PlanAndSolve</div>
+        <div class="export-card-actions"><button class="btn btn-primary btn-sm">Экспорт</button></div>
+      </div>
+
+      <!-- Card 6: Skill Bundle -->
+      <div class="export-card">
+        <div class="export-card-header">
+          <div class="export-card-icon">&#x1F4E6;</div>
+          <div class="export-card-title">Пакет скиллов</div>
+        </div>
+        <div class="export-card-desc">Bundle когнитивных формул, инструментов и конфигураций для обмена между проектами.</div>
+        <div class="export-formats">
+          <span class="badge badge-blue">JSON</span>
+          <span class="badge badge-amber">TAR.GZ</span>
+        </div>
+        <div class="export-preview mono">skills-bundle/
+  cognitive/
+    cot.json
+    react.json
+    plansolve.json
+  tools/
+    web-search.json
+    rag.json
+  config/
+    defaults.json</div>
+        <div class="export-card-actions"><button class="btn btn-primary btn-sm">Экспорт</button></div>
+      </div>
+    </div>
+
+    <!-- Recent Exports -->
+    <div class="recent-section">
+      <div class="recent-title">Последние экспорты</div>
+      <table class="export-table">
+        <thead>
+          <tr>
+            <th>Дата</th>
+            <th>Тип</th>
+            <th>Формат</th>
+            <th>Размер</th>
+            <th>Действия</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>2025-01-15 12:40</td>
+            <td>Документация агента</td>
+            <td><span class="badge badge-cyan">MD</span></td>
+            <td>24 KB</td>
+            <td>
+              <button class="btn btn-ghost" style="padding:2px 8px;font-size:10px">&#x2B07; Скачать</button>
+              <button class="btn btn-ghost" style="padding:2px 8px;font-size:10px;color:var(--status-error)">&#x1F5D1;</button>
+            </td>
+          </tr>
+          <tr>
+            <td>2025-01-15 11:15</td>
+            <td>Архитектура системы</td>
+            <td><span class="badge badge-purple">SVG</span></td>
+            <td>156 KB</td>
+            <td>
+              <button class="btn btn-ghost" style="padding:2px 8px;font-size:10px">&#x2B07; Скачать</button>
+              <button class="btn btn-ghost" style="padding:2px 8px;font-size:10px;color:var(--status-error)">&#x1F5D1;</button>
+            </td>
+          </tr>
+          <tr>
+            <td>2025-01-14 18:30</td>
+            <td>Отчёт выполнения</td>
+            <td><span class="badge badge-blue">JSON</span></td>
+            <td>89 KB</td>
+            <td>
+              <button class="btn btn-ghost" style="padding:2px 8px;font-size:10px">&#x2B07; Скачать</button>
+              <button class="btn btn-ghost" style="padding:2px 8px;font-size:10px;color:var(--status-error)">&#x1F5D1;</button>
+            </td>
+          </tr>
+          <tr>
+            <td>2025-01-14 15:00</td>
+            <td>Конфигурация системы</td>
+            <td><span class="badge badge-green">YAML</span></td>
+            <td>42 KB</td>
+            <td>
+              <button class="btn btn-ghost" style="padding:2px 8px;font-size:10px">&#x2B07; Скачать</button>
+              <button class="btn btn-ghost" style="padding:2px 8px;font-size:10px;color:var(--status-error)">&#x1F5D1;</button>
+            </td>
+          </tr>
+          <tr>
+            <td>2025-01-13 09:45</td>
+            <td>Библиотека промптов</td>
+            <td><span class="badge badge-cyan">MD</span></td>
+            <td>67 KB</td>
+            <td>
+              <button class="btn btn-ghost" style="padding:2px 8px;font-size:10px">&#x2B07; Скачать</button>
+              <button class="btn btn-ghost" style="padding:2px 8px;font-size:10px;color:var(--status-error)">&#x1F5D1;</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</div><!-- /screen-container -->
+
+<!-- ============================================================
+     JAVASCRIPT
+     ============================================================ -->
+<script>
+// --- Screen switching ---
+function showScreen(id, btnEl) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(n => n.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  if (btnEl) btnEl.classList.add('active');
+
+  // Back button visibility
+  const backBtn = document.getElementById('btn-back');
+  backBtn.style.display = (id === 'dashboard') ? 'none' : 'flex';
+}
+
+function goBack() {
+  showScreen('dashboard', document.querySelector('[data-screen="dashboard"]'));
+}
+
+// --- Agent Creator tabs ---
+function showCreatorTab(tabId, btnEl) {
+  const container = document.getElementById('screen-agent-creator');
+  container.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  container.querySelectorAll('.creator-tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tabId).classList.add('active');
+  btnEl.classList.add('active');
+}
+
+// --- Radio selection ---
+function selectRadio(el, groupId) {
+  const group = document.getElementById(groupId);
+  group.querySelectorAll('.radio-item').forEach(r => r.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+// --- Hierarchy detail panel ---
+function showDetail(nodeEl) {
+  document.getElementById('detail-panel').classList.add('visible');
+}
+
+// --- Update preview card ---
+function updatePreview() {
+  const name = document.getElementById('agent-name').value || 'Новый агент';
+  const level = document.getElementById('agent-level').value;
+  const role = document.getElementById('agent-role').value;
+  const status = document.getElementById('agent-status').value;
+  const formula = document.getElementById('agent-formula').value;
+
+  const shortLevel = level.split('—')[0].trim();
+  document.getElementById('preview-name').textContent = name;
+  document.getElementById('preview-role-strip').textContent = role + ' \u2022 ' + shortLevel;
+  document.getElementById('preview-formula').textContent = formula.split('(')[0].trim();
+
+  // Status dot
+  const dot = document.getElementById('preview-status-dot');
+  dot.className = 'status-dot ' + status;
+  if (status === 'active') dot.style.boxShadow = '0 0 6px rgba(34,211,238,0.5)';
+  else dot.style.boxShadow = 'none';
+
+  // Role class on preview node
+  const node = document.getElementById('preview-node');
+  const roleMap = { Strategy: 'role-strategy', Tactics: 'role-tactics', Control: 'role-control', Execution: 'role-execution', Infrastructure: 'role-infrastructure' };
+  node.className = 'agent-node ' + (roleMap[role] || 'role-execution');
+  node.style.cssText = 'position:relative;left:auto;top:auto;width:100%;cursor:default';
+
+  // Icon
+  const icons = { Strategy: '\u{1F3AE}', Tactics: '\u{1F4CB}', Control: '\u2705', Execution: '\u26A1', Infrastructure: '\u{1F4E1}' };
+  document.getElementById('preview-icon').textContent = icons[role] || '\u26A1';
+}
+
+// --- Prompt quality indicator ---
+function updatePromptQuality(textarea) {
+  const len = textarea.value.length;
+  const score = Math.min(10, (len / 40) * 1.5 + 4).toFixed(1);
+  const pct = Math.min(100, score * 10);
+  let color = 'var(--status-error)';
+  if (score >= 8) color = 'var(--role-infra)';
+  else if (score >= 7) color = 'var(--role-agent)';
+  else if (score >= 5) color = 'var(--role-governance)';
+
+  const fill = textarea.parentElement.querySelector('.prompt-quality-fill');
+  if (fill) {
+    fill.style.width = pct + '%';
+    fill.style.background = color;
+  }
+  const count = textarea.parentElement.querySelector('.char-count');
+  if (count) count.textContent = len + ' символов \u2022 Оценка: ' + score + '/10';
+}
+</script>
+
+</body>
+</html>
