@@ -26,3 +26,4 @@ venv/
 # Local-only artifacts
 _snapshots/
 *.local.json
+_hierarchy-inline.json
