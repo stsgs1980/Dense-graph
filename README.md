@@ -8,8 +8,8 @@ Interactive D3.js v7 visualization of the **Z-ai platform ID-graph**: 60 identif
 
 | Path | What | Size |
 |---|---|---|
-| `viewer/id-graph-dense-viewer.html` | **Main artifact.** Full D3.js v7 force-directed viewer with zoom/pan, BFS path search, edge-type filters, per-ID panel | 47 KB |
-| `viewer/submodule-graph.html` | Submodule dependency graph (4 repos) + dense-viewer preview matrix | 51 KB |
+| `examples/id-graph-dense-viewer.html` | **Main artifact.** Full D3.js v7 force-directed viewer with zoom/pan, BFS path search, edge-type filters, per-ID panel | 47 KB |
+| `examples/submodule-graph.html` | Submodule dependency graph (4 repos) + dense-viewer preview matrix | 51 KB |
 | `data/id-graph-full.json` | Complete ID-graph: 60 nodes + 113 links + summary. Each node has `id`, `repo`, `file`, `title`, `prefix`, degrees. Each link has `src`, `tgt`, `src_repo`, `tgt_repo`, `type`. | 35 KB |
 | `data/id-graph-full-inline.json` | Compact form (short keys: `m`=matrix, `o`/`i`=top-15 hubs, `e`=edges as arrays, `s`=summary) for embedding inline in HTML | 14 KB |
 | `data/id-graph-inline.json` | Compact form, related-edges only (no `Aligned_with:`) | 7 KB |
@@ -40,7 +40,7 @@ Top hub (in-degree): STD-SKILL-001 — 23 in-edges
 
 ## Viewer features
 
-### `id-graph-dense-viewer.html`
+### `examples/id-graph-dense-viewer.html`
 
 - **Force-directed layout** (D3.js v7 `forceSimulation`)
   - Live-adjustable charge & link distance sliders
@@ -61,7 +61,7 @@ Top hub (in-degree): STD-SKILL-001 — 23 in-edges
 - **Search** — type ID substring to highlight matching nodes
 - **Color scheme** — each repo gets its own color (standards blue, guard green, skills purple)
 
-### `submodule-graph.html`
+### `examples/submodule-graph.html`
 
 - Submodule dependency graph: L0 platform → L1 standards → L2 guard → L3 skills
 - 3 edge layers (toggleable):
@@ -72,6 +72,20 @@ Top hub (in-degree): STD-SKILL-001 — 23 in-edges
 - Click any node → details panel
 - Dense-viewer preview embedded: Matrix / Edge list / Top hubs tabs
 
+## Repository layout
+
+```
+Dense-graph/
+├── examples/      # HTML viewers + wireframe sketches (discussion artifacts)
+├── data/          # JSON snapshots of the ID-graph (source of truth for viewers)
+├── renders/       # Static Graphviz renders (DOT / SVG / PNG)
+├── scripts/       # Python extractors that produce data/ from live repos
+├── README.md
+└── .gitignore
+```
+
+The `examples/` folder is where all interactive HTML lives — both finished viewers and upcoming wireframe sketches for design discussion. Drop new wireframes here as `examples/wireframe-*.html` so they're easy to compare side-by-side with the production viewers.
+
 ## How to use
 
 ```bash
@@ -80,9 +94,9 @@ git clone https://github.com/stsgs1980/Dense-graph.git
 cd Dense-graph
 
 # 2. Open the main viewer in any browser
-open viewer/id-graph-dense-viewer.html       # macOS
-xdg-open viewer/id-graph-dense-viewer.html   # Linux
-start viewer/id-graph-dense-viewer.html      # Windows
+open examples/id-graph-dense-viewer.html       # macOS
+xdg-open examples/id-graph-dense-viewer.html   # Linux
+start examples/id-graph-dense-viewer.html      # Windows
 ```
 
 No build step. No server. No dependencies to install. The viewer loads D3.js v7 from a CDN, so you need internet on first open (cached after).
